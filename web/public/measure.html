@@ -1,0 +1,25 @@
+<!doctype html><body style="font:12px/1.5 monospace"><pre id="o">läuft…</pre><div id="c"></div>
+<script>
+const out=[];const sizes=[390,600,768];let n=0;
+for(const w of sizes){
+ const f=document.createElement('iframe');
+ f.src='/';f.width=w;f.height=900;f.style.cssText='position:absolute;left:-9999px';
+ f.onload=()=>setTimeout(()=>{
+   const d=f.contentDocument,win=f.contentWindow;
+   const portal=d.querySelector('.tb-loop.panther-center');
+   const h1=d.querySelector('.tresor-text');
+   const quote=d.querySelector('.poetic-quote-wrapper');
+   const circles=d.querySelectorAll('.portal-circle');
+   const pr=portal.getBoundingClientRect(), hr=h1.getBoundingClientRect(), qr=quote.getBoundingClientRect();
+   out.push(w+'px:');
+   out.push('  Portal      '+Math.round(pr.width)+'x'+Math.round(pr.height)+'  ('+Math.round(pr.width/w*100)+'vw)  unten y='+Math.round(pr.bottom));
+   out.push('  Tagline     oben y='+Math.round(hr.top)+'  Schrift '+win.getComputedStyle(h1).fontSize+'  margin-top '+win.getComputedStyle(h1).marginTop);
+   out.push('  ABSTAND Portal->Tagline: '+Math.round(hr.top-pr.bottom)+'px  '+(hr.top-pr.bottom<32?'<<< ZU WENIG':'ok'));
+   out.push('  Zitat       oben y='+Math.round(qr.top)+'  Abstand zur Tagline: '+Math.round(qr.top-hr.bottom)+'px');
+   out.push('  Seitenportale: '+[...circles].map(c=>win.getComputedStyle(c).display).join(', '));
+   out.push('  h-Ueberlauf: '+(d.documentElement.scrollWidth>win.innerWidth?'JA ('+d.documentElement.scrollWidth+'>'+win.innerWidth+')':'nein'));
+   if(++n===sizes.length) document.getElementById('o').textContent=out.join('\n');
+ },2600);
+ document.getElementById('c').appendChild(f);
+}
+</script></body>

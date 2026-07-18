@@ -1,0 +1,12 @@
+mysql_data/
+Projekt_TrustboxRoyale.zip
+*.zip
+# Lokale Werkzeuge - liegen auf der Platte, gehoeren aber nicht ins Repo.
+# stripe.exe wird fuer `stripe listen` im lokalen Dev-Modus gebraucht,
+# ngrok fuer Webhooks von aussen. Beide werden bei Bedarf neu geladen.
+stripe.exe
+stripe.zip
+ngrok.exe
+ngrok.zip
+web/ngrok.exe
+web/ngrok.zip

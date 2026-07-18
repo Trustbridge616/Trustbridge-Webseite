@@ -1,0 +1,9 @@
+<!doctype html><body style="margin:0;background:#1a1a1a;display:flex;gap:12px;padding:12px;align-items:flex-start">
+<script>
+for(const w of [390,600,768]){
+ const d=document.createElement('div');
+ const l=document.createElement('div');l.textContent=w+'px';l.style.cssText='color:#8fe3d0;font:13px monospace;padding:2px 0';
+ const f=document.createElement('iframe');f.src='/';f.width=w;f.height=1000;f.style.cssText='border:0;display:block';
+ d.appendChild(l);d.appendChild(f);document.body.appendChild(d);
+}
+</script></body>

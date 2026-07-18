@@ -1,0 +1,16 @@
+<!doctype html><body style="font:12px/1.5 monospace"><pre id="o">läuft…</pre><div id="c"></div>
+<script>
+const f=document.createElement('iframe');
+f.src='/';f.width=390;f.height=900;f.style.cssText='position:absolute;left:-9999px';
+f.onload=()=>setTimeout(()=>{
+ const d=f.contentDocument,w=f.contentWindow,out=[];
+ const h1=d.querySelector('h1');
+ out.push('h1 Klassen: '+h1.className);
+ out.push('h1 outerHTML-Anfang: '+h1.outerHTML.slice(0,160));
+ // Kette nach oben pruefen: wer setzt text-fill-color?
+ let el=h1;
+ while(el){ out.push('  <'+el.tagName.toLowerCase()+(el.className?'.'+String(el.className).split(' ').join('.'):'')+'>  fill='+w.getComputedStyle(el).webkitTextFillColor); el=el.parentElement; if(el===d.documentElement)break; }
+ document.getElementById('o').textContent=out.join('\n');
+},2600);
+document.getElementById('c').appendChild(f);
+</script></body>

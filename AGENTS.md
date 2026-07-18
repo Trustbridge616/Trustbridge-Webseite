@@ -1,0 +1,5 @@
+- Local Dev: Project is in web directory.
+- We have a docker container in project folder for local dev purpose. Start it when necessary
+- Use best practises for coding.
+- If i write a new prompt: If it's a new task and you are working on an other task, write it complete down in a markup. Save screenshots as file in a temp folder in project, link the path to the screenshot / attachment.
+- AUtomatically when starting dev, make or set a loop to check for tasks in the task file and process them autoamtiscally one by one.

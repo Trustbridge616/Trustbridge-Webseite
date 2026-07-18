@@ -1,0 +1,21 @@
+<!doctype html><body style="font:12px/1.5 monospace"><pre id="o">läuft…</pre><div id="c"></div>
+<script>
+const f=document.createElement('iframe');
+f.src='/';f.width=390;f.height=900;f.style.cssText='position:absolute;left:-9999px';
+f.onload=()=>setTimeout(()=>{
+ const d=f.contentDocument,w=f.contentWindow,out=[];
+ for(const sel of ['.tresor-mint','.tresor-gold','.hero-poetic-quote','.tresor-text']){
+   const e=d.querySelector(sel);const cs=w.getComputedStyle(e);
+   out.push(sel.padEnd(20)+' color='+cs.color+'  opacity='+cs.opacity+'  mix-blend='+cs.mixBlendMode+'  filter='+cs.filter);
+ }
+ const h1=d.querySelector('.tresor-text');
+ out.push('');
+ out.push('.tresor-text  background='+w.getComputedStyle(h1).background.slice(0,60));
+ out.push('.tresor-text  webkit-text-fill-color='+w.getComputedStyle(h1).webkitTextFillColor);
+ const sp=d.querySelector('.tresor-mint');
+ out.push('.tresor-mint  webkit-text-fill-color='+w.getComputedStyle(sp).webkitTextFillColor);
+ out.push('.tresor-mint  background-clip='+w.getComputedStyle(sp).webkitBackgroundClip);
+ document.getElementById('o').textContent=out.join('\n');
+},2600);
+document.getElementById('c').appendChild(f);
+</script></body>

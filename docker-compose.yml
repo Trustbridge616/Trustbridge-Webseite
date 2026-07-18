@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: trustbridge_db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: retouren_abo
+      MYSQL_USER: retouren_user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "33062:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - retouren_network
+
+networks:
+  retouren_network:
+    driver: bridge
