@@ -13,6 +13,16 @@
    fielen still auf die generische cursive-Vorgabe zurueck, unter
    Windows-Chrome ist das Comic Sans. Selbst gehostet (Latin-Subset,
    43 kB), damit zur Laufzeit kein externer Font-Host noetig ist. */
+/* Headline-Serife im Tresor-Stil: Versalien, stark gesperrt.
+   Selbst gehostet (Latin-Subset, 23 kB). */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/cormorant-garamond-500-latin.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: 'Great Vibes';
   src: url('/fonts/great-vibes-latin.woff2') format('woff2');

@@ -237,8 +237,11 @@
                Hier bleibt sie nur noch fuer Screenreader und Suchmaschinen
                im Dokument, ist aber nicht mehr sichtbar. -->
           <div class="brand-name brand-name--sr">Trustbridge</div>
+          <!-- Das & traegt als einziger Akzent die Schreibschrift -
+               ein warmer Rest im kuehlen Wordmark-Look, und zugleich
+               die kleine Bruecke zwischen den beiden Zeilen. -->
           <h1 class="tresor-text">
-            <span class="tresor-mint">Trust</span> <span class="tresor-gold">Yourself &</span><br/>
+            <span class="tresor-mint">Trust</span> <span class="tresor-gold">Yourself <span class="tresor-amp">&amp;</span></span><br/>
             <span class="tresor-gold">Bridge</span> <span class="tresor-mint">your Gap</span>
           </h1>
           <div class="poetic-quote-wrapper">
@@ -1917,15 +1920,31 @@ onUnmounted(() => {
     filter: blur(25px);
   }
 
+  /* Tresor-Look: feine Serife, Versalien, starke Sperrung - kuehl-
+     luxurioes statt romantisch. Die Schreibschrift lebt nur noch im
+     &-Akzent weiter (.tresor-amp). text-indent gleicht die Sperrung
+     am Zeilenende aus, sonst saesse der zentrierte Text leicht links. */
   .tresor-text {
-    font-family: 'Great Vibes', cursive;
-    font-size: 4rem;
-    line-height: 1.1;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.3rem;
+    line-height: 1.45;
+    text-transform: uppercase;
+    letter-spacing: 0.30em;
+    text-indent: 0.30em;
     text-align: center;
     margin-top: 3.2rem; /* ersetzt den Abstand der ausgeblendeten Wortmarke */
     margin-bottom: 30px;
     text-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    font-weight: 500;
+  }
+
+  .tresor-amp {
+    font-family: 'Great Vibes', cursive;
+    font-size: 1.45em;
     font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    vertical-align: -0.12em;
   }
   
   /* Ebene 1 – Legacy Mint, Glow-Aufbau wie bei .brand-name */
@@ -2593,10 +2612,15 @@ onUnmounted(() => {
   .merkaba-3d-container { opacity: 0.07; }
 
   /* Mindestens 40 px Luft zur Portalgrafik darueber. */
+  /* Versalien + Sperrung laufen deutlich breiter als die fruehere
+     Schreibschrift - kleinere Groessen und engere Sperrung, damit
+     beide Zeilen ohne Umbruch stehen. */
   .tresor-text {
     margin-top: 2.6rem;
     margin-bottom: 0;
-    font-size: clamp(2rem, 8.2vw, 3rem);
+    font-size: clamp(1.15rem, 4.6vw, 1.6rem);
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
   }
 
   /* Klare Trennung der drei Bloecke: Tagline - Trennlinie - Zitat. */
@@ -2616,7 +2640,7 @@ onUnmounted(() => {
 @media (max-width: 600px) {
   .tresor-text {
     margin-top: 2.1rem;
-    font-size: clamp(1.7rem, 8.4vw, 2.3rem);
+    font-size: clamp(1rem, 5vw, 1.3rem);
   }
 
   .poetic-quote-wrapper {
