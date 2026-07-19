@@ -1,8 +1,8 @@
 <template>
   <AppLayout>
     <SeoHead
-      title="Trustbridge – Dein Portal"
-      description="Trustbridge – Dein Zugang zu Coaching und weiteren Bereichen."
+      title="Trustbridge – Die Brücke zu dir selbst"
+      description="Trustbridge – Die Brücke zu dir selbst."
       keywords="Trustbridge, Portal, Coaching"
       canonical="https://trustbridge.de/"
       :jsonLd="homeLd"
@@ -190,9 +190,15 @@
         <li style="--i:4"><i class="climb-tread"></i><span>Komfort</span></li>
       </ul>
 
+      <!-- Feste Paare zur linken Liste, Position fuer Position:
+           Angst->Vertrauen, Zweifel->Klarheit, Aufschieben->Handlung,
+           Meinung anderer->Eigenverantwortung, Komfort->Wachstum.
+           Beide Listen sind 5 hoch - die Paare stehen auf gleicher
+           Zeilenhoehe, die Verwandlung ist ablesbar. -->
       <ul class="climb-words climb-words--right" aria-hidden="true">
-        <li style="--i:3"><i class="climb-tread"></i><span>Vertrauen</span></li>
-        <li style="--i:2"><i class="climb-tread"></i><span>Klarheit</span></li>
+        <li style="--i:4"><i class="climb-tread"></i><span>Vertrauen</span></li>
+        <li style="--i:3"><i class="climb-tread"></i><span>Klarheit</span></li>
+        <li style="--i:2"><i class="climb-tread"></i><span>Handlung</span></li>
         <li style="--i:1"><i class="climb-tread"></i><span>Eigenverantwortung</span></li>
         <li style="--i:0"><i class="climb-tread"></i><span>Wachstum</span></li>
       </ul>
@@ -417,7 +423,7 @@ const homeLd = {
   '@type': 'WebSite',
   name: 'Trustbridge',
   url: 'https://trustbridge.de/',
-  description: 'Trustbridge – Dein Zugang zu Coaching und weiteren Bereichen.',
+  description: 'Trustbridge – Die Brücke zu dir selbst.',
   inLanguage: 'de',
 };
 
@@ -468,6 +474,25 @@ const climbState = { c: 0, c1: 0, c2: 0, c3: 0 };
 let gsapCtx = null;
 let magnetDelegate = null;
 
+/* Die Wortstufen fuer die Kaskade: Element, Richtung und Schwelle.
+   Die Schwellen stehen als --from im Stylesheet (inklusive der
+   Mobil-Overrides in den Media Queries) und werden hier als
+   berechneter Wert ausgelesen - nach einem Resize neu, weil dann
+   andere Media-Query-Werte gelten koennen. */
+let climbWords = [];
+let climbWordsDirty = false;
+const markClimbWordsDirty = () => { climbWordsDirty = true; };
+
+function collectClimbWords() {
+  climbWords = [];
+  document.querySelectorAll('.climb-words--left li').forEach((el) => {
+    climbWords.push({ el, cls: 'w-out', from: parseFloat(getComputedStyle(el).getPropertyValue('--from')) || 0 });
+  });
+  document.querySelectorAll('.climb-words--right li').forEach((el) => {
+    climbWords.push({ el, cls: 'w-in', from: parseFloat(getComputedStyle(el).getPropertyValue('--from')) || 0 });
+  });
+}
+
 /* Breiter Viewport: steuert, ob die Seitenportale ueberhaupt im DOM
    stehen. Gleicher Breakpoint wie im Stylesheet (1024px). */
 const isWideView = ref(true);
@@ -495,6 +520,14 @@ function writeClimb() {
     showLookBack.value = offer;
     /* Verlaesst man das Fenster, klappt auch die Zeile wieder zu. */
     if (!offer) isLookingBack.value = false;
+  }
+
+  /* Kaskade der Wortstufen: der Scroll schaltet nur die Klasse, das
+     Faden laeuft als Zeit-Transition im Stylesheet aus. toggle mit
+     unveraendertem Zustand ist praktisch kostenlos. */
+  if (climbWordsDirty) { collectClimbWords(); climbWordsDirty = false; }
+  for (const w of climbWords) {
+    w.el.classList.toggle(w.cls, climbState.c2 >= w.from);
   }
 }
 
@@ -572,6 +605,9 @@ onMounted(() => {
     }
   });
 
+  collectClimbWords();
+  window.addEventListener('resize', markClimbWordsDirty, { passive: true });
+
   /* Erster Zustand sofort, auch mitten auf der Seite (Reload mit
      erhaltener Scrollposition): ScrollTrigger setzt die Timeline beim
      Anlegen auf die aktuelle Position, hier nur noch rausschreiben. */
@@ -620,6 +656,8 @@ onUnmounted(() => {
      Inertia nur die Seite tauscht und ein verwaister Trigger sonst
      auf der naechsten Seite weiterfeuerte. */
   gsapCtx?.revert();
+  window.removeEventListener('resize', markClimbWordsDirty);
+  climbWords = [];
   mqWide?.removeEventListener('change', syncWide);
   mqMerkaba?.removeEventListener('change', syncMerkaba);
   if (magnetDelegate) {
@@ -977,14 +1015,32 @@ onUnmounted(() => {
 .climb-words--left  li:nth-child(4) { --from: 0.26; }
 .climb-words--left  li:nth-child(5) { --from: 0.34; }
 
+/* Jede rechte Schwelle = linker Partner + 0.28: dieselbe
+   Reihenfolge, derselbe Rhythmus - erst geht Angst, spaeter kommt an
+   ihrer Hoehe Vertrauen. */
 .climb-words--right li:nth-child(1) { --from: 0.30; }
-.climb-words--right li:nth-child(2) { --from: 0.42; }
-.climb-words--right li:nth-child(3) { --from: 0.54; }
-.climb-words--right li:nth-child(4) { --from: 0.66; }
+.climb-words--right li:nth-child(2) { --from: 0.38; }
+.climb-words--right li:nth-child(3) { --from: 0.46; }
+.climb-words--right li:nth-child(4) { --from: 0.54; }
+.climb-words--right li:nth-child(5) { --from: 0.62; }
 
+/* Kaskade: die Schwelle (--from) haengt am gescrubbten Scroll-Wert,
+   das Faden selbst ist eine ZEIT-Transition. Frueher war die
+   Deckkraft eine reine Funktion des Scrollwerts - bei normalem
+   Tempo rauschten alle Fenster in einem Wimpernschlag vorbei und
+   die Liste wirkte wie ein Block. Jetzt stoesst der Scroll nur den
+   Wechsel an; die ~0.4s pro Wort laufen in Echtzeit aus, auch wenn
+   der Nutzer schneller ist. Kein Snapping, kein Anhalten: der
+   Scrollfluss wird nie beruehrt. */
 .climb-words--left li {
-  opacity: calc(1 - (var(--climb-2, 0) - var(--from)) * 6);
-  transform: translate3d(calc(var(--i) * -0.5rem), calc(var(--climb-2, 0) * 5vh), 0);
+  opacity: 1;
+  transform: translate3d(calc(var(--i) * -0.5rem), 0, 0);
+  transition: opacity 0.38s ease, transform 0.45s cubic-bezier(0.22, 0.68, 0, 1);
+}
+
+.climb-words--left li.w-out {
+  opacity: 0;
+  transform: translate3d(calc(var(--i) * -0.5rem - 0.4rem), 3vh, 0);
 }
 
 /* Rechts: tritt hervor. Die Stufen steigen nach oben aussen. */
@@ -1038,8 +1094,10 @@ onUnmounted(() => {
 .climb-words--right li:nth-child(2) span::before { animation-delay: -1.7s; }
 .climb-words--right li:nth-child(3) span::before { animation-delay: -3.0s; }
 .climb-words--right li:nth-child(4) span::before { animation-delay: -2.2s; }
+.climb-words--right li:nth-child(5) span::before { animation-delay: -1.1s; }
 .climb-words--right li:nth-child(2) span::after  { animation-delay: -0.9s; }
 .climb-words--right li:nth-child(4) span::after  { animation-delay: -3.4s; }
+.climb-words--right li:nth-child(5) span::after  { animation-delay: -2.7s; }
 
 @keyframes shard-twinkle {
   0%, 100% { opacity: 0.25; transform: scale(0.8); }
@@ -1048,9 +1106,31 @@ onUnmounted(() => {
 
 .climb-words--right li {
   flex-direction: row-reverse;
-  opacity: calc((var(--climb-2, 0) - var(--from)) * 6);
-  transform: translate3d(calc(var(--i) * 0.5rem), calc((1 - var(--climb-2, 0)) * 5vh), 0);
+  opacity: 0;
+  transform: translate3d(calc(var(--i) * 0.5rem + 0.4rem), 3vh, 0);
+  transition: opacity 0.38s ease, transform 0.45s cubic-bezier(0.22, 0.68, 0, 1);
 }
+
+.climb-words--right li.w-in {
+  opacity: 1;
+  transform: translate3d(calc(var(--i) * 0.5rem), 0, 0);
+}
+
+/* Der Feinschliff fuer schnelles Scrollen: bei einem Mausrad-Wurf
+   kollabieren alle Schwellen in denselben Frame, und ohne Versatz
+   faedeln die Woerter als Block. Kleine Delays in Erscheinungs-
+   richtung halten die Welle - beim langsamen Scrollen sind sie
+   unmerklich, weil die Schwellen ohnehin nacheinander fallen. */
+.climb-words--left  li:nth-child(1),
+.climb-words--right li:nth-child(1) { transition-delay: 0s; }
+.climb-words--left  li:nth-child(2),
+.climb-words--right li:nth-child(2) { transition-delay: 0.07s; }
+.climb-words--left  li:nth-child(3),
+.climb-words--right li:nth-child(3) { transition-delay: 0.14s; }
+.climb-words--left  li:nth-child(4),
+.climb-words--right li:nth-child(4) { transition-delay: 0.21s; }
+.climb-words--left  li:nth-child(5),
+.climb-words--right li:nth-child(5) { transition-delay: 0.28s; }
 
 /* --- Die Zeilen des Aufstiegs --- */
 .climb-line {
@@ -1170,14 +1250,17 @@ onUnmounted(() => {
   .climb-words--left li:nth-child(5) { --from: 0.26; }
 
   .climb-words--right li:nth-child(1) { --from: 0.40; }
-  .climb-words--right li:nth-child(2) { --from: 0.48; }
-  .climb-words--right li:nth-child(3) { --from: 0.56; }
-  .climb-words--right li:nth-child(4) { --from: 0.64; }
+  .climb-words--right li:nth-child(2) { --from: 0.46; }
+  .climb-words--right li:nth-child(3) { --from: 0.52; }
+  .climb-words--right li:nth-child(4) { --from: 0.58; }
+  .climb-words--right li:nth-child(5) { --from: 0.64; }
 
   /* Ohne die seitliche Staffelung, die nur im Spaltenlayout als
      Treppe lesbar ist. */
   .climb-words--left li,
-  .climb-words--right li {
+  .climb-words--right li,
+  .climb-words--left li.w-out,
+  .climb-words--right li.w-in {
     transform: none;
   }
 
@@ -1209,8 +1292,18 @@ onUnmounted(() => {
   .climb-fog,
   .climb-sky,
   .climb-words--left li,
-  .climb-words--right li {
+  .climb-words--right li,
+  .climb-words--left li.w-out,
+  .climb-words--right li.w-in {
     transform: none;
+  }
+
+  /* Keine Kaskade: die Woerter springen an der Schwelle direkt in
+     ihren Endzustand. */
+  .climb-words--left li,
+  .climb-words--right li {
+    transition: none;
+    transition-delay: 0s;
   }
 
   .climb-line--foot { transform: translateX(-50%); }
