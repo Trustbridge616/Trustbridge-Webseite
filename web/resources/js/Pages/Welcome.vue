@@ -231,6 +231,20 @@
               Die Natur erinnert uns: Was nicht wächst, verwelkt.
             </p>
           </div>
+
+          <!-- Die Schwelle. Oben endet der Aufstieg ("Danke deiner
+               Angst"), direkt darunter begann bisher die Kasse
+               ("Gebuendelter Einkauf") - ein Tonbruch. Diese zwei
+               Zeilen uebersetzen, warum der Weg in etwas Greifbares
+               muendet, bevor die Kacheln sprechen. Der Goldfaden
+               darueber fuehrt die Linie des Portals nach unten fort. -->
+          <div class="climb-threshold">
+            <p class="climb-threshold-line">
+              Vertrauen beginnt mit einem ersten Schritt.<br />
+              Wir haben ihn greifbar gemacht.
+            </p>
+          </div>
+
              <!-- 3 Premium Hero Shards -->
           <div class="hero-shards-grid">
             <!-- Shard 1 (LEFT): Erklärvideo -->
@@ -1837,6 +1851,33 @@ onUnmounted(() => {
     color: #E2E8F0;
   }
   
+  /* --- Die Schwelle zwischen Aufstieg und Angebot --- */
+  .climb-threshold {
+    margin: 0.5rem auto 3rem;
+    text-align: center;
+  }
+
+  /* Der Faden: eine duenne Goldlinie, die von oben kommend im Text
+     endet - die Fortsetzung der Portallinie in den Handel. */
+  .climb-threshold::before {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 52px;
+    margin: 0 auto 1.3rem;
+    background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.75));
+  }
+
+  .climb-threshold-line {
+    margin: 0;
+    font-family: 'Century Gothic', system-ui, sans-serif;
+    font-size: clamp(0.98rem, 1.3vw, 1.15rem);
+    line-height: 1.85;
+    letter-spacing: 0.04em;
+    color: rgba(248, 250, 252, 0.88);
+    text-shadow: 0 2px 10px rgba(4, 2, 10, 0.9);
+  }
+
   .poetic-quote-wrapper {
     position: relative;
     display: inline-block;
