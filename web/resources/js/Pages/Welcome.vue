@@ -10,7 +10,29 @@
     <div class="welcome-page">
       <!-- Preview Merkaba entfernt, jetzt im Hero-Hintergrund -->
 
-    <div class="hero-section animate-fade-in" id="hero">
+    <div class="hero-section animate-fade-in" id="hero" ref="heroEl">
+      <!-- ===== DER AUFSTIEG =====
+           Der Scrollfortschritt liegt als CSS-Variable --climb (0..1) auf
+           dieser Sektion. Alle Ebenen darunter lesen nur diese eine Zahl -
+           es laeuft kein JS pro Ebene und kein Vue-Rerender pro Frame.
+
+           0 = am Fuss der Treppe: Nebel steht, Licht ist kuehl,
+               das Portal liegt gedaempft dahinter.
+           1 = oben: Nebel ist gesunken, das Licht warm und golden,
+               der Blick offen, das Portal klar.
+
+           Die Treppe wird nicht neu gebaut - sie ist im Portalmotiv
+           bereits gemalt. Der Aufstieg fuehrt auf sie zu. -->
+      <div class="climb-layer climb-cool" aria-hidden="true"></div>
+      <div class="climb-layer climb-warmth" aria-hidden="true"></div>
+      <div class="climb-layer climb-sky" aria-hidden="true"></div>
+      <div class="climb-layer climb-fog" aria-hidden="true"></div>
+
+      <!-- Die Angst. Kein Wesen, kein Gegner: eine ruhige, warme Praesenz,
+           die am Fuss der Treppe stehen bleibt. Sie wird leiser, je weiter
+           man steigt - aber sie verschwindet nie ganz. -->
+      <div class="climb-presence" :class="{ 'is-acknowledged': isLookingBack }" aria-hidden="true"></div>
+
       <!-- ===== 3D STAGE SCENE ===== -->
       
       <!-- Echte 3D SVG Merkaba (Dezent im Hintergrund) -->
@@ -113,6 +135,29 @@
         <div class="panther-shadow shadow-right"></div>
       </div>
 
+      <!-- Was am Fuss der Treppe zurueckbleibt: verblasst beim Steigen. -->
+      <ul class="climb-words climb-words--left" aria-hidden="true">
+        <li>Angst</li>
+        <li>Zweifel</li>
+        <li>Aufschieben</li>
+        <li>Meinung anderer</li>
+        <li>Komfort</li>
+      </ul>
+
+      <!-- Was der Aufstieg freilegt: tritt mit jeder Stufe klarer hervor. -->
+      <ul class="climb-words climb-words--right" aria-hidden="true">
+        <li>Vertrauen</li>
+        <li>Klarheit</li>
+        <li>Eigenverantwortung</li>
+        <li>Wachstum</li>
+      </ul>
+
+      <!-- Die Zeile am Fuss der Treppe - sie steht, solange man unten steht. -->
+      <p class="climb-line climb-line--foot">
+        Die gr&ouml;&szlig;te Grenze ist selten der Weg.<br />
+        Sie ist die Angst davor, ihn zu gehen.
+      </p>
+
             <div class="container hero-content">
         <!-- Trustbridge Logo / Title -->
         <div class="hero-title-wrapper" style="position: relative; z-index: 10;">
@@ -202,6 +247,30 @@
       </div>
     </div>
 
+    <!-- Der Moment des Zurueckblickens. Bewusst freiwillig und leise:
+         kein Kampf, kein Sieg - ein Dank, dann geht es weiter.
+
+         Steht ausserhalb von .hero-section: dessen perspective erzeugt
+         einen Containing Block, an dem position: fixed nicht mehr am
+         Viewport haengt, sondern mitscrollen wuerde - der Knopf waere
+         genau dann weg, wenn man ihn braucht. -->
+    <div class="climb-lookback" v-if="showLookBack && !isVideoOpen && !isHowItWorksOpen">
+      <button
+        type="button"
+        class="climb-lookback-btn"
+        :aria-expanded="isLookingBack"
+        @click="isLookingBack = !isLookingBack"
+      >
+        {{ isLookingBack ? 'Weitergehen' : 'Zurückblicken' }}
+      </button>
+      <transition name="fade">
+        <p v-if="isLookingBack" class="climb-line climb-line--thanks">
+          Danke deiner Angst.<br />
+          Und entscheide trotzdem: du selbst.
+        </p>
+      </transition>
+    </div>
+
     <!-- ===== Modals ===== -->
     <!-- Video Modal -->
       <transition name="fade">
@@ -275,6 +344,72 @@ import { onMounted, onUnmounted, ref } from 'vue';
 
 const isVideoOpen = ref(false);
 const isHowItWorksOpen = ref(false);
+
+/* ===================================================================
+   DER AUFSTIEG - Scrollfortschritt als CSS-Variable
+   -------------------------------------------------------------------
+   Der Fortschritt liegt bewusst NICHT in einem reaktiven ref: ein ref,
+   der 60-mal pro Sekunde schreibt, wuerde die ganze Seite genauso oft
+   neu rendern. Stattdessen landet der Wert direkt als CSS-Variable
+   --climb auf der Hero-Sektion, und das Stylesheet erledigt den Rest.
+
+   Reaktiv ist nur, was sich selten aendert: ob der Rueckblick-Moment
+   schon angeboten wird. Der schaltet genau einmal um.
+   =================================================================== */
+const heroEl = ref(null);
+const showLookBack = ref(false);
+const isLookingBack = ref(false);
+
+/* Der Aufstieg ist nach 85 % der Hero-Hoehe vollendet - die letzten
+   Prozent gehoeren schon dem Text darunter. */
+const CLIMB_SPAN = 0.85;
+/* Fenster, in dem sich der Rueckblick anbietet: weit genug oben, dass
+   die Geste etwas bedeutet, und oben angekommen wieder vorbei - wer
+   das Portal erreicht hat, schaut nicht mehr zurueck. */
+const LOOKBACK_FROM = 0.22;
+const LOOKBACK_UNTIL = 0.9;
+
+let climb = 0;
+let ticking = false;
+
+function applyClimb() {
+  ticking = false;
+  const el = heroEl.value;
+  if (!el) return;
+
+  const span = (el.offsetHeight || window.innerHeight) * CLIMB_SPAN;
+  const next = Math.min(1, Math.max(0, window.scrollY / span));
+
+  /* Unterhalb eines viertel Prozent ist nichts zu sehen - dann auch
+     kein Style-Recalc. */
+  if (Math.abs(next - climb) < 0.0025) return;
+  climb = next;
+  el.style.setProperty('--climb', climb.toFixed(4));
+
+  const offer = climb > LOOKBACK_FROM && climb < LOOKBACK_UNTIL;
+  if (showLookBack.value !== offer) {
+    showLookBack.value = offer;
+    /* Verlaesst man das Fenster, klappt auch die Zeile wieder zu. */
+    if (!offer) isLookingBack.value = false;
+  }
+}
+
+function onClimbScroll() {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(applyClimb);
+}
+
+onMounted(() => {
+  applyClimb();
+  window.addEventListener('scroll', onClimbScroll, { passive: true });
+  window.addEventListener('resize', onClimbScroll, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', onClimbScroll);
+  window.removeEventListener('resize', onClimbScroll);
+});
 </script>
 
 <style scoped>
@@ -323,6 +458,297 @@ const isHowItWorksOpen = ref(false);
   /* 3D Bühne: Perspektive für alle Kinder */
   perspective: 1200px;
   perspective-origin: 50% 40%;
+
+  /* Scrollfortschritt des Aufstiegs, geschrieben aus onClimbScroll(). */
+  --climb: 0;
+}
+
+/* ===================================================================
+   DER AUFSTIEG
+   -------------------------------------------------------------------
+   Vier Lichtebenen im ersten Viewport, gesteuert allein ueber --climb.
+   Bewegt werden ausschliesslich opacity und transform - beides laeuft
+   auf dem Compositor und kostet kein Layout. Kein Filter und keine
+   Farbe wird pro Frame neu berechnet; der Farbwechsel von kuehl nach
+   warm entsteht durch Kreuzblende zweier fertiger Verlaeufe.
+
+   z-index 2 legt die Ebenen ueber den .panthers-container (1), aber
+   unter .hero-content (2, spaeter im DOM) - Nebel darf das Portal
+   verhaengen, niemals den Text.
+   =================================================================== */
+.climb-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Kuehles Bodenlicht am Fuss der Treppe - weicht beim Steigen. */
+.climb-cool {
+  background: radial-gradient(
+    ellipse 120% 62% at 50% 100%,
+    rgba(74, 92, 190, 0.38) 0%,
+    rgba(45, 27, 84, 0.20) 42%,
+    transparent 74%
+  );
+  mix-blend-mode: screen;
+  opacity: calc(1 - var(--climb) * 0.85);
+}
+
+/* Warmes Licht von oben - nimmt mit jeder Stufe zu. */
+.climb-warmth {
+  background: radial-gradient(
+    ellipse 96% 60% at 50% 12%,
+    rgba(240, 207, 90, 0.30) 0%,
+    rgba(201, 162, 39, 0.13) 40%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  opacity: var(--climb);
+}
+
+/* Oben oeffnet sich der Blick: der Himmel wird hoeher und heller. */
+.climb-sky {
+  height: 58vh;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 244, 214, 0.20) 0%,
+    rgba(255, 244, 214, 0.07) 38%,
+    transparent 78%
+  );
+  mix-blend-mode: screen;
+  opacity: var(--climb);
+  transform: translate3d(0, calc((1 - var(--climb)) * -7vh), 0);
+}
+
+/* Der Nebel. Steht dicht am Fuss der Treppe und sinkt beim Steigen
+   zurueck nach unten, statt einfach zu verschwinden. */
+.climb-fog {
+  background: linear-gradient(
+    to top,
+    rgba(198, 188, 234, 0.52) 0%,
+    rgba(150, 132, 200, 0.30) 17%,
+    rgba(120, 104, 170, 0.12) 32%,
+    transparent 50%
+  );
+  opacity: calc(1 - var(--climb) * 0.92);
+  transform: translate3d(0, calc(var(--climb) * 15vh), 0);
+  will-change: opacity, transform;
+}
+
+/* --- Die Angst ---
+   Bewusst kein Umriss, keine Gestalt, nichts Dunkles: zwei weiche,
+   warme Lichtfelder, die zusammen als stehende Praesenz lesbar sind.
+   Sie steht am Fuss der Treppe, mittig, wo das Motiv die Stufen zeigt.
+   Beim Steigen wird sie leiser - aber sie bleibt bis zuletzt sichtbar.
+   Wer sie ausblendet, macht sie zum besiegten Gegner; genau das soll
+   sie nicht sein. */
+.climb-presence {
+  position: absolute;
+  /* Zentriert ueber auto-Margins statt ueber translateX: transform
+     gehoert hier der Atem-Animation, beides ginge nicht zusammen. */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  top: 66vh;
+  width: clamp(110px, 13vw, 200px);
+  height: clamp(140px, 19vh, 260px);
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 42% 25% at 50% 15%, rgba(255, 238, 198, 0.34) 0%, transparent 70%),
+    radial-gradient(ellipse 56% 48% at 50% 65%, rgba(214, 196, 240, 0.26) 0%, transparent 74%);
+  filter: blur(16px);
+  opacity: calc(0.9 - var(--climb) * 0.55);
+  animation: presence-breathe 9s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@keyframes presence-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.045) translateY(-5px); }
+}
+
+/* Die Zuwendung beim Zurueckblicken: ein eigener Schein mit eigener
+   Blende. Getrennt von der scrollgesteuerten Deckkraft, damit die
+   Ueberblendung nicht am Scrollwert klebt und nachzieht. */
+.climb-presence::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  background: radial-gradient(ellipse 50% 42% at 50% 50%, rgba(255, 232, 176, 0.5) 0%, transparent 72%);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.climb-presence.is-acknowledged::after { opacity: 1; }
+
+/* --- Die beiden Wortgruppen --- */
+.climb-words {
+  position: absolute;
+  top: 21vh;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  pointer-events: none;
+  font-family: 'Century Gothic', system-ui, sans-serif;
+  font-size: clamp(0.78rem, 1.1vw, 1rem);
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+
+/* Links bleibt zurueck: verblasst und sinkt ab. */
+.climb-words--left {
+  left: 4.5%;
+  text-align: left;
+  color: rgba(214, 196, 240, 0.72);
+  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.9);
+  opacity: calc(1 - var(--climb) * 1.3);
+  transform: translate3d(0, calc(var(--climb) * 9vh), 0);
+}
+
+/* Rechts tritt hervor: klart auf und steigt mit. */
+.climb-words--right {
+  right: 4.5%;
+  text-align: right;
+  color: #F0CF5A;
+  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.9), 0 0 24px rgba(201, 162, 39, 0.45);
+  opacity: calc(var(--climb) * 1.35 - 0.18);
+  transform: translate3d(0, calc((1 - var(--climb)) * 9vh), 0);
+}
+
+/* --- Die Zeilen des Aufstiegs --- */
+.climb-line {
+  margin: 0;
+  font-family: 'Century Gothic', system-ui, sans-serif;
+  text-align: center;
+  line-height: 1.75;
+  text-shadow: 0 2px 12px rgba(4, 2, 10, 0.95);
+}
+
+/* Am Fuss der Treppe. Steht, solange man unten steht, und tritt beim
+   ersten Schritt zurueck. */
+.climb-line--foot {
+  position: absolute;
+  /* Ohne eigenen Stacking-Kontext faellt das ::before mit z-index: -1
+     hinter den Seitenhintergrund und die Abdunklung waere unsichtbar. */
+  isolation: isolate;
+  left: 50%;
+  top: 85vh;
+  width: min(90vw, 620px);
+  z-index: 3;
+  pointer-events: none;
+  font-size: clamp(0.95rem, 1.45vw, 1.18rem);
+  color: rgba(232, 238, 250, 0.92);
+  opacity: calc(1 - var(--climb) * 2.4);
+  transform: translate3d(-50%, calc(var(--climb) * -4vh), 0);
+}
+
+/* Die Zeile liegt ueber der gemalten Treppe. Ohne lokale Abdunklung
+   verliert heller Text dort seinen Kontrast - gleiche Loesung wie
+   hinter der Tagline, weicher Radialverlauf statt Kasten. */
+.climb-line--foot::before {
+  content: '';
+  position: absolute;
+  inset: -90% -30%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(6, 3, 14, 0.55) 0%,
+    rgba(6, 3, 14, 0.30) 38%,
+    transparent 72%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* --- Der Rueckblick ---
+   Fixiert, weil der Moment waehrend des Steigens erreichbar bleiben
+   soll - ein absolut positioniertes Element waere laengst
+   vorbeigescrollt. Bewusst klein und ohne Signalfarbe: ein Angebot,
+   keine Aufforderung. */
+.climb-lookback {
+  position: fixed;
+  left: 50%;
+  bottom: 3.2vh;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  pointer-events: none;
+}
+
+.climb-lookback-btn {
+  pointer-events: auto;
+  background: rgba(20, 10, 40, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 999px;
+  padding: 0.55rem 1.5rem;
+  color: rgba(240, 207, 90, 0.9);
+  font-family: 'Century Gothic', system-ui, sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition: color 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+}
+
+.climb-lookback-btn:hover,
+.climb-lookback-btn:focus-visible {
+  color: #FFE9A3;
+  border-color: rgba(212, 175, 55, 0.75);
+  background: rgba(30, 16, 55, 0.7);
+}
+
+.climb-line--thanks {
+  order: -1;                    /* die Zeile erscheint ueber dem Knopf */
+  max-width: min(88vw, 460px);
+  font-size: clamp(0.92rem, 1.35vw, 1.1rem);
+  color: rgba(240, 207, 90, 0.94);
+  text-shadow: 0 2px 12px rgba(4, 2, 10, 0.95), 0 0 30px rgba(201, 162, 39, 0.4);
+}
+
+@media (max-width: 1024px) {
+  /* Im gestapelten Mobil-Layout stehen die Wortgruppen sonst neben
+     dem Text und zerfasern die Seite. Nebel, Licht und Praesenz
+     bleiben - sie tragen die Stimmung, ohne Platz zu brauchen. */
+  .climb-words { display: none; }
+
+  .climb-line--foot {
+    top: auto;
+    bottom: 4vh;
+    font-size: 0.95rem;
+    width: min(92vw, 420px);
+  }
+
+  .climb-presence {
+    top: auto;
+    bottom: 16vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Die Lichtwechsel bleiben - sie sind der Inhalt. Was entfaellt,
+     ist die scrollgekoppelte Verschiebung und das Atmen. */
+  .climb-fog,
+  .climb-sky,
+  .climb-words--left,
+  .climb-words--right,
+  .climb-line--foot {
+    transform: none;
+  }
+
+  .climb-line--foot { transform: translateX(-50%); }
+
+  .climb-presence { animation: none; }
 }
 
 /* ===== SPOTLIGHT BEAMS ===== */

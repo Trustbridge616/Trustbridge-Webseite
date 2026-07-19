@@ -90,12 +90,28 @@ const isActive = (path) => {
   return page.url.startsWith(path);
 };
 
+/*
+  Die Navbar liegt fixiert und schaltet gescrollt auf einen fast
+  deckenden weissen Grund. Auf der Startseite lief das schon nach
+  10 Pixeln los: die Headline "Trust Yourself & Bridge your Gap"
+  schob sich beim Scrollen unter diesen hellen Balken und wurde
+  dort abgeschnitten.
+
+  Ueber einem dunklen Hero bleibt die Navbar deshalb transparent und
+  wechselt erst, wenn der Hero durchgelaufen ist. Seiten ohne #hero
+  verhalten sich unveraendert wie bisher.
+*/
+const NAVBAR_HEIGHT = 90;
+
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 10;
+  const hero = document.getElementById('hero');
+  const threshold = hero ? hero.offsetHeight - NAVBAR_HEIGHT : 10;
+  isScrolled.value = window.scrollY > threshold;
 };
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
+  handleScroll();
+  window.addEventListener('scroll', handleScroll, { passive: true });
 
   // ===== SCROLL REVEAL =====
   const revealEls = document.querySelectorAll('.reveal, .anim-card');
