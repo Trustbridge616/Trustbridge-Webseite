@@ -267,7 +267,8 @@
           <div class="climb-threshold">
             <p class="climb-threshold-line">
               Vertrauen beginnt mit einem ersten Schritt.<br />
-              Wir haben ihn greifbar gemacht.
+              Nicht die Treppe hält dich auf.<br />
+              Sondern die Geschichte, die dir deine Angst über sie erzählt.
             </p>
           </div>
 
