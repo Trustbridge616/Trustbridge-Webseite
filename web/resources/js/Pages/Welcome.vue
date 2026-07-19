@@ -389,6 +389,18 @@ gsap.registerPlugin(ScrollTrigger);
 const isVideoOpen = ref(false);
 const isHowItWorksOpen = ref(false);
 
+/* Strukturierte Daten fuer Suchmaschinen. Das Template band homeLd
+   seit jeher - definiert war es nie, was bei jedem Laden eine
+   Vue-Warnung ausloeste und das JSON-LD still verschluckte. */
+const homeLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Trustbridge',
+  url: 'https://trustbridge.de/',
+  description: 'Trustbridge – Dein Zugang zu Coaching und weiteren Bereichen.',
+  inLanguage: 'de',
+};
+
 /* ===================================================================
    DER AUFSTIEG - Scrollfortschritt als CSS-Variable
    -------------------------------------------------------------------
@@ -434,6 +446,7 @@ const LOOKBACK_UNTIL = 0.75;
    =================================================================== */
 const climbState = { c: 0, c1: 0, c2: 0, c3: 0 };
 let gsapCtx = null;
+let magnetDelegate = null;
 
 function writeClimb() {
   /* Auf <html>, nicht auf der Hero-Sektion: die Szene muss denselben
@@ -510,6 +523,11 @@ onMounted(() => {
       reveal('.climb-threshold', '.climb-threshold', { y: 24 });
       reveal('.hero-shard', '.hero-shards-grid', { stagger: 0.12 });
       reveal('.hero-guarantee-bar', '.hero-guarantee-bar', { y: 26, duration: 0.8 });
+
+      /* Der Footer tritt leise ein. Bewusst von HIER angesteuert statt
+         in SiteFooter.vue - die Komponente ist geteilt, und die
+         Unterseiten sind handdesignt und bleiben unangetastet. */
+      reveal('.site-footer .footer-inner', '.site-footer', { y: 24, duration: 0.8 });
     }
   });
 
@@ -517,6 +535,43 @@ onMounted(() => {
      erhaltener Scrollposition): ScrollTrigger setzt die Timeline beim
      Anlegen auf die aktuelle Position, hier nur noch rausschreiben. */
   writeClimb();
+
+  /* --- Magnetische Knoepfe ---
+     Nur auf Zielen, deren Hover transform-frei ist (Rueckblick,
+     Garantie-Link) - auf den Kacheln wuerde ein Inline-Transform den
+     bestehenden CSS-Lift ueberschreiben. Delegation statt direkter
+     Bindung, weil der Rueckblick-Knopf erst mitten im Aufstieg in den
+     DOM kommt. Nur fuer echte Zeiger (hover+fine), nie bei
+     reduzierter Bewegung. */
+  if (!reduced && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const MAGNET = '.climb-lookback-btn, .guarantee-link';
+    const PULL = 5;
+
+    const onMove = (e) => {
+      const el = e.currentTarget;
+      const r = el.getBoundingClientRect();
+      gsap.to(el, {
+        x: ((e.clientX - r.left) / r.width - 0.5) * 2 * PULL,
+        y: ((e.clientY - r.top) / r.height - 0.5) * 2 * PULL,
+        scale: 1.04,
+        duration: 0.3,
+        ease: 'power2.out',
+      });
+    };
+    const onLeave = (e) => {
+      gsap.to(e.currentTarget, { x: 0, y: 0, scale: 1, duration: 0.55, ease: 'elastic.out(1, 0.55)' });
+    };
+
+    magnetDelegate = (e) => {
+      const el = e.target.closest?.(MAGNET);
+      if (el && !el.dataset.magnet) {
+        el.dataset.magnet = '1';
+        el.addEventListener('pointermove', onMove);
+        el.addEventListener('pointerleave', onLeave);
+      }
+    };
+    document.addEventListener('pointerover', magnetDelegate, { passive: true });
+  }
 });
 
 onUnmounted(() => {
@@ -524,6 +579,10 @@ onUnmounted(() => {
      Inertia nur die Seite tauscht und ein verwaister Trigger sonst
      auf der naechsten Seite weiterfeuerte. */
   gsapCtx?.revert();
+  if (magnetDelegate) {
+    document.removeEventListener('pointerover', magnetDelegate);
+    magnetDelegate = null;
+  }
   /* Das <html> bleibt bei Inertia stehen - ohne das hier truege jede
      Folgeseite den letzten Stand mit sich. */
   const root = document.documentElement.style;
