@@ -392,13 +392,59 @@ const trackEl = ref(null);
 const LOOKBACK_FROM = 0.22;
 const LOOKBACK_UNTIL = 0.75;
 
-let climb = 0;
-let ticking = false;
+/* ===================================================================
+   INTERPOLATION UND CHOREOGRAFIE
+   -------------------------------------------------------------------
+   Der Rohfortschritt aus der Bahn ist eine harte, lineare Groesse: ein
+   Mausrad rastet in Stufen, ein Trackpad springt, und jede dieser
+   Stufen schlug bisher unveraendert auf Deckkraft und Leuchtkraft
+   durch - daher das Springen des Logo-Kranzes.
 
-function applyClimb() {
-  ticking = false;
+   Dagegen hilft keine Drosselung (die gab es schon), sondern eine
+   zeitliche Glaettung: ein angezeigter Wert laeuft dem Zielwert
+   nachgiebig hinterher. Die Annaeherung ist ueber die Bildzeit
+   normiert, damit sie bei 60 und bei 144 Hz gleich schnell wirkt.
+
+   Darauf liegt die Easing-Kurve, und darauf der Versatz: jede Gruppe
+   bekommt ihren eigenen Startpunkt im Fortschritt, sodass die Szene
+   in einer Reihenfolge atmet statt auf einen Schlag umzuschalten.
+
+     --climb     Rohwert, geglaettet (fuer Schwellen und Logik)
+     --climb-1   Nebel und kuehles Licht  - reagieren zuerst
+     --climb-2   Waerme, Natur, Wortstufen, Zitat
+     --climb-3   Logo-Klaerung und Praesenz - kommen zuletzt an
+
+   Die Schleife laeuft nur, solange sich etwas bewegt, und legt sich
+   danach wieder schlafen.
+   =================================================================== */
+
+/* Sanftes Ein- und Auslaufen, Standardkurve fuer Szenenwechsel. */
+const easeInOutCubic = (t) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* Startversatz je Gruppe. Der groesste Versatz verkuerzt die Strecke
+   der spaeten Gruppen, deshalb wird auf die Restlaenge normiert -
+   sonst kaeme die Logo-Klaerung nie ganz oben an. */
+const STAGGER = [0, 0.07, 0.14];
+const STAGGER_MAX = STAGGER[STAGGER.length - 1];
+
+/* Anteil, der pro Sekunde vom Restweg abgebaut wird. 0.0015 heisst:
+   nach einer Sekunde sind 99,85 % der Differenz aufgeholt - schnell
+   genug, um am Finger zu kleben, langsam genug, um Rastungen zu
+   verschleifen. */
+const SMOOTH_PER_SECOND = 0.0015;
+
+/* Naeher als das ist am Bildschirm nicht mehr zu unterscheiden. */
+const SETTLED = 0.0004;
+
+let climb = 0;        // angezeigter, geglaetteter Wert
+let climbTarget = 0;  // Zielwert aus der Scrollposition
+let rafId = null;
+let lastTime = 0;
+
+function measureClimb() {
   const track = trackEl.value;
-  if (!track) return;
+  if (!track) return climbTarget;
 
   /* Der Fortschritt ergibt sich aus der Bahn selbst: sobald ihre
      Oberkante den Viewport verlaesst, klebt die Buehne, und die
@@ -407,15 +453,31 @@ function applyClimb() {
      sehen ist - unabhaengig von Bildschirmhoehe und Inhalt darunter. */
   const rect = track.getBoundingClientRect();
   const span = track.offsetHeight - window.innerHeight;
-  const next = span <= 0 ? 1 : Math.min(1, Math.max(0, -rect.top / span));
+  return span <= 0 ? 1 : Math.min(1, Math.max(0, -rect.top / span));
+}
 
-  /* Unterhalb eines viertel Prozent ist nichts zu sehen - dann auch
-     kein Style-Recalc. */
-  if (Math.abs(next - climb) < 0.0025) return;
-  climb = next;
-  /* Auf <html>, nicht auf der Hero-Sektion: die fixierte Szene liegt
-     ausserhalb von ihr und muss denselben Wert lesen koennen. */
-  document.documentElement.style.setProperty('--climb', climb.toFixed(4));
+function writeClimb(value) {
+  /* Auf <html>, nicht auf der Hero-Sektion: die Szene muss denselben
+     Wert lesen koennen wie das Portal. */
+  const root = document.documentElement.style;
+  root.setProperty('--climb', value.toFixed(4));
+
+  for (let i = 0; i < STAGGER.length; i += 1) {
+    const local = (value - STAGGER[i]) / (1 - STAGGER_MAX);
+    const clamped = Math.min(1, Math.max(0, local));
+    root.setProperty(`--climb-${i + 1}`, easeInOutCubic(clamped).toFixed(4));
+  }
+}
+
+function frame(now) {
+  const dt = lastTime ? Math.min(0.1, (now - lastTime) / 1000) : 1 / 60;
+  lastTime = now;
+
+  /* Exponentielle Annaeherung, bildwiederholratenunabhaengig. */
+  climb += (climbTarget - climb) * (1 - Math.pow(SMOOTH_PER_SECOND, dt));
+  if (Math.abs(climbTarget - climb) < SETTLED) climb = climbTarget;
+
+  writeClimb(climb);
 
   const offer = climb > LOOKBACK_FROM && climb < LOOKBACK_UNTIL;
   if (showLookBack.value !== offer) {
@@ -423,16 +485,31 @@ function applyClimb() {
     /* Verlaesst man das Fenster, klappt auch die Zeile wieder zu. */
     if (!offer) isLookingBack.value = false;
   }
+
+  if (climb !== climbTarget) {
+    rafId = requestAnimationFrame(frame);
+  } else {
+    rafId = null;
+    lastTime = 0;
+  }
 }
 
 function onClimbScroll() {
-  if (ticking) return;
-  ticking = true;
-  requestAnimationFrame(applyClimb);
+  climbTarget = measureClimb();
+  if (rafId === null) {
+    lastTime = 0;
+    rafId = requestAnimationFrame(frame);
+  }
 }
 
 onMounted(() => {
-  applyClimb();
+  /* Ohne Glaettung in den Ausgangszustand, sonst faehrt die Szene beim
+     Laden sichtbar von 0 hoch, obwohl man mitten auf der Seite steht
+     (etwa nach einem Reload mit erhaltener Scrollposition). */
+  climbTarget = measureClimb();
+  climb = climbTarget;
+  writeClimb(climb);
+
   window.addEventListener('scroll', onClimbScroll, { passive: true });
   window.addEventListener('resize', onClimbScroll, { passive: true });
 });
@@ -440,9 +517,11 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', onClimbScroll);
   window.removeEventListener('resize', onClimbScroll);
+  if (rafId !== null) cancelAnimationFrame(rafId);
   /* Inertia tauscht nur die Seite aus, das <html> bleibt stehen -
      ohne das hier truege jede Folgeseite den letzten Stand mit sich. */
-  document.documentElement.style.removeProperty('--climb');
+  const root = document.documentElement.style;
+  ['--climb', '--climb-1', '--climb-2', '--climb-3'].forEach((n) => root.removeProperty(n));
 });
 </script>
 
@@ -511,9 +590,19 @@ onUnmounted(() => {
    nach oben aus dem Bild. Rechnerisch lief der Aufstieg, zu sehen war
    davon nichts.
 
-   Gesteuert wird alles ueber --climb (0..1) auf dem <html>-Element.
-   Ueberall steht var(--climb, 0), damit die Szene auch vor dem ersten
-   Frame einen sinnvollen Zustand hat.
+   Gesteuert wird alles ueber vier Werte auf dem <html>-Element, die
+   das Skript pro Frame schreibt. Ueberall steht ein Vorgabewert im
+   var(), damit die Szene auch vor dem ersten Frame stimmt.
+
+     --climb     geglaetteter Rohwert, fuer Schwellen und Uebergabe
+     --climb-1   Nebel, kuehles Licht, Zitat  - reagieren zuerst
+     --climb-2   Waerme, Natur, Wortstufen
+     --climb-3   Logo-Klaerung und Praesenz   - kommen zuletzt an
+
+   Die drei Gruppen sind gegeneinander versetzt und laufen durch eine
+   Easing-Kurve. Dadurch schaltet die Szene nicht auf einen Schlag um,
+   sondern in einer Reihenfolge: der Nebel weicht, dann wird es warm,
+   zuletzt klaert sich das Portal.
 
    Bewegt werden ausschliesslich opacity und transform - beides laeuft
    auf dem Compositor und kostet kein Layout.
@@ -566,7 +655,7 @@ onUnmounted(() => {
     transparent 74%
   );
   mix-blend-mode: screen;
-  opacity: calc(1 - var(--climb, 0) * 0.85);
+  opacity: calc(1 - var(--climb-1, 0) * 0.85);
 }
 
 /* Warmes Licht von oben - nimmt mit jeder Stufe zu. */
@@ -578,7 +667,7 @@ onUnmounted(() => {
     transparent 72%
   );
   mix-blend-mode: screen;
-  opacity: var(--climb, 0);
+  opacity: var(--climb-2, 0);
 }
 
 /* Oben oeffnet sich der Blick: der Himmel wird hoeher und heller. */
@@ -592,8 +681,8 @@ onUnmounted(() => {
     transparent 78%
   );
   mix-blend-mode: screen;
-  opacity: var(--climb, 0);
-  transform: translate3d(0, calc((1 - var(--climb, 0)) * -7vh), 0);
+  opacity: var(--climb-2, 0);
+  transform: translate3d(0, calc((1 - var(--climb-2, 0)) * -7vh), 0);
 }
 
 /* Die Natur wird lebendiger: weiches Blattwerk waechst aus den unteren
@@ -608,7 +697,7 @@ onUnmounted(() => {
     radial-gradient(ellipse 20% 16% at 88% 100%, rgba(120, 210, 180, 0.20) 0%, transparent 70%);
   filter: blur(6px);
   mix-blend-mode: screen;
-  opacity: calc(var(--climb, 0) * 1.25 - 0.12);
+  opacity: calc(var(--climb-2, 0) * 1.25 - 0.12);
   animation: leaves-sway 13s ease-in-out infinite;
   transform-origin: 50% 100%;
 }
@@ -628,8 +717,8 @@ onUnmounted(() => {
     rgba(120, 104, 170, 0.13) 32%,
     transparent 50%
   );
-  opacity: calc(1 - var(--climb, 0) * 0.95);
-  transform: translate3d(0, calc(var(--climb, 0) * 16vh), 0);
+  opacity: calc(1 - var(--climb-1, 0) * 0.95);
+  transform: translate3d(0, calc(var(--climb-1, 0) * 16vh), 0);
   will-change: opacity, transform;
 }
 
@@ -651,7 +740,7 @@ onUnmounted(() => {
     radial-gradient(ellipse 42% 25% at 50% 15%, rgba(255, 238, 198, 0.36) 0%, transparent 70%),
     radial-gradient(ellipse 56% 48% at 50% 65%, rgba(214, 196, 240, 0.28) 0%, transparent 74%);
   filter: blur(16px);
-  opacity: calc(0.9 - var(--climb, 0) * 0.55);
+  opacity: calc(0.9 - var(--climb-3, 0) * 0.55);
   animation: presence-breathe 9s ease-in-out infinite;
   will-change: opacity, transform;
 }
@@ -692,7 +781,7 @@ onUnmounted(() => {
     transparent 74%
   );
   filter: blur(24px);
-  opacity: calc(1 - var(--climb, 0) * 1.15);
+  opacity: calc(1 - var(--climb-3, 0) * 1.15);
   z-index: 4;
   pointer-events: none;
 }
@@ -734,15 +823,27 @@ onUnmounted(() => {
   width: clamp(1rem, 2.2vw, 2rem);
   height: 1px;
   background: currentColor;
-  opacity: 0.5;
+  /* currentColor traegt den Schein: die Kante leuchtet damit
+     automatisch im Ton ihrer Seite, ohne zweite Farbdefinition. */
+  box-shadow: 0 0 8px currentColor, 0 0 20px currentColor;
+  opacity: 0.7;
   flex: none;
 }
 
 /* Links: bleibt zurueck. Die Stufen verlieren sich nach unten aussen. */
 .climb-words--left {
   left: 3.2vw;
-  color: rgba(214, 196, 240, 0.8);
-  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.95);
+  color: #4FE3D4;
+  /* Fuenf Lagen mit einer Aufgabe je Lage: die beiden dunklen zuerst
+     setzen die Kante gegen den Hintergrund und halten die Lesbarkeit,
+     die drei tuerkisen darueber staffeln den Hof von eng nach weit.
+     Ohne die dunklen Lagen frisst der Hof die Buchstabenkontur auf. */
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.95),
+    0 2px 8px rgba(4, 2, 10, 0.95),
+    0 0 12px rgba(79, 227, 212, 0.85),
+    0 0 30px rgba(45, 212, 191, 0.55),
+    0 0 64px rgba(45, 212, 191, 0.3);
 }
 
 /* Die Zeitpunkte stehen im Stylesheet, nicht inline: inline gesetzte
@@ -760,21 +861,73 @@ onUnmounted(() => {
 .climb-words--right li:nth-child(4) { --from: 0.66; }
 
 .climb-words--left li {
-  opacity: calc(1 - (var(--climb, 0) - var(--from)) * 6);
-  transform: translate3d(calc(var(--i) * -0.5rem), calc(var(--climb, 0) * 5vh), 0);
+  opacity: calc(1 - (var(--climb-2, 0) - var(--from)) * 6);
+  transform: translate3d(calc(var(--i) * -0.5rem), calc(var(--climb-2, 0) * 5vh), 0);
 }
 
 /* Rechts: tritt hervor. Die Stufen steigen nach oben aussen. */
 .climb-words--right {
   right: 3.2vw;
-  color: #F0CF5A;
-  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.95), 0 0 22px rgba(201, 162, 39, 0.45);
+  /* Der Kern bleibt hell. Die Buchstaben selbst zu vertiefen haette
+     den Kontrast gegen den dunklen Grund gekostet - vertieft wird
+     stattdessen der Hof nach aussen, von hellem Gold ueber Messing
+     bis Bernstein. Das liest sich satter, ohne Lesbarkeit zu opfern. */
+  color: #FFD873;
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.95),
+    0 2px 8px rgba(4, 2, 10, 0.95),
+    0 0 12px rgba(255, 216, 115, 0.9),
+    0 0 32px rgba(212, 175, 55, 0.6),
+    0 0 70px rgba(180, 116, 20, 0.42);
+}
+
+/* Lichtsplitter an den goldenen Stufen. Aufgebaut wie die bestehenden
+   .particle im Hero - weisser Kern, goldener Abfall, weicher Schein -
+   damit sie zum Funkeln der Ringlogos gehoeren und nicht daneben.
+   Sie sitzen am Wortende, wo sie keine Buchstaben ueberdecken. */
+.climb-words--right span {
+  position: relative;
+}
+
+.climb-words--right span::before,
+.climb-words--right span::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(240, 207, 90, 0.55) 45%, transparent 70%);
+  box-shadow: 0 0 6px rgba(240, 207, 90, 0.9);
+  pointer-events: none;
+  animation: shard-twinkle 4.6s ease-in-out infinite;
+}
+
+.climb-words--right span::before {
+  width: 4px; height: 4px;
+  top: -6px; right: -10px;
+}
+
+.climb-words--right span::after {
+  width: 3px; height: 3px;
+  bottom: -4px; right: 14%;
+  animation-delay: -2.3s;
+}
+
+/* Versetzte Takte, damit die Splitter nicht im Gleichschritt blinken. */
+.climb-words--right li:nth-child(1) span::before { animation-delay: -0.4s; }
+.climb-words--right li:nth-child(2) span::before { animation-delay: -1.7s; }
+.climb-words--right li:nth-child(3) span::before { animation-delay: -3.0s; }
+.climb-words--right li:nth-child(4) span::before { animation-delay: -2.2s; }
+.climb-words--right li:nth-child(2) span::after  { animation-delay: -0.9s; }
+.climb-words--right li:nth-child(4) span::after  { animation-delay: -3.4s; }
+
+@keyframes shard-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50%      { opacity: 1;    transform: scale(1.15); }
 }
 
 .climb-words--right li {
   flex-direction: row-reverse;
-  opacity: calc((var(--climb, 0) - var(--from)) * 6);
-  transform: translate3d(calc(var(--i) * 0.5rem), calc((1 - var(--climb, 0)) * 5vh), 0);
+  opacity: calc((var(--climb-2, 0) - var(--from)) * 6);
+  transform: translate3d(calc(var(--i) * 0.5rem), calc((1 - var(--climb-2, 0)) * 5vh), 0);
 }
 
 /* --- Die Zeilen des Aufstiegs --- */
@@ -806,8 +959,8 @@ onUnmounted(() => {
   );
   font-size: clamp(0.95rem, 1.45vw, 1.18rem);
   color: #F2F6FF;
-  opacity: calc(1 - var(--climb, 0) * 2.6);
-  transform: translate3d(-50%, calc(var(--climb, 0) * -3vh), 0);
+  opacity: calc(1 - var(--climb-1, 0) * 2.6);
+  transform: translate3d(-50%, calc(var(--climb-1, 0) * -3vh), 0);
 }
 
 /* --- Der Rueckblick ---
@@ -942,6 +1095,12 @@ onUnmounted(() => {
 
   .climb-presence,
   .climb-leaves { animation: none; }
+
+  .climb-words--right span::before,
+  .climb-words--right span::after {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 /* ===== SPOTLIGHT BEAMS ===== */
