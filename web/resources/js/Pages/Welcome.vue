@@ -367,6 +367,10 @@ import SeoHead from '../Components/SeoHead.vue';
 import Merkaba3D from '../Components/Merkaba3D.vue';
 import PortalLoop from '../Components/Hero/PortalLoop.vue';
 import { onMounted, onUnmounted, ref } from 'vue';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const isVideoOpen = ref(false);
 const isHowItWorksOpen = ref(false);
@@ -393,133 +397,94 @@ const LOOKBACK_FROM = 0.22;
 const LOOKBACK_UNTIL = 0.75;
 
 /* ===================================================================
-   INTERPOLATION UND CHOREOGRAFIE
+   CHOREOGRAFIE UEBER GSAP SCROLLTRIGGER
    -------------------------------------------------------------------
-   Der Rohfortschritt aus der Bahn ist eine harte, lineare Groesse: ein
-   Mausrad rastet in Stufen, ein Trackpad springt, und jede dieser
-   Stufen schlug bisher unveraendert auf Deckkraft und Leuchtkraft
-   durch - daher das Springen des Logo-Kranzes.
+   Die Architektur bleibt: das Stylesheet liest vier Variablen vom
+   <html>-Element, kein Vue-Rerender pro Frame. Getauscht ist nur der
+   Treiber - statt handgebauter Glaettung (exponentielle Annaeherung
+   plus eigene Easing-Funktion) fuehrt jetzt eine ScrollTrigger-
+   Timeline mit scrub. Das entfernt ~90 Zeilen Eigenbau, macht die
+   Kurven deklarativ und gibt den Rahmen fuer die kommenden Seiten
+   vor, die dieselbe Sprache sprechen sollen.
 
-   Dagegen hilft keine Drosselung (die gab es schon), sondern eine
-   zeitliche Glaettung: ein angezeigter Wert laeuft dem Zielwert
-   nachgiebig hinterher. Die Annaeherung ist ueber die Bildzeit
-   normiert, damit sie bei 60 und bei 144 Hz gleich schnell wirkt.
+     --climb     Rohfortschritt (fuer Schwellen wie den Rueckblick)
+     --climb-1   Nebel, kuehles Licht, Zitat  - reagieren zuerst
+     --climb-2   Waerme, Natur, Wortstufen
+     --climb-3   Logo-Klaerung und Praesenz   - kommen zuletzt an
 
-   Darauf liegt die Easing-Kurve, und darauf der Versatz: jede Gruppe
-   bekommt ihren eigenen Startpunkt im Fortschritt, sodass die Szene
-   in einer Reihenfolge atmet statt auf einen Schlag umzuschalten.
-
-     --climb     Rohwert, geglaettet (fuer Schwellen und Logik)
-     --climb-1   Nebel und kuehles Licht  - reagieren zuerst
-     --climb-2   Waerme, Natur, Wortstufen, Zitat
-     --climb-3   Logo-Klaerung und Praesenz - kommen zuletzt an
-
-   Die Schleife laeuft nur, solange sich etwas bewegt, und legt sich
-   danach wieder schlafen.
+   scrub: 1.1 uebernimmt die zeitliche Glaettung (der Wert laeuft dem
+   Finger nachgiebig hinterher, Mausrad-Rastungen verschleifen).
+   Bei reduzierter Bewegung wird scrub: true daraus - die Werte folgen
+   dann exakt der Scrollposition, ohne nachlaufende Eigenbewegung.
+   Die Lichtwechsel selbst bleiben: sie sind der Inhalt, nicht Dekor.
    =================================================================== */
+const climbState = { c: 0, c1: 0, c2: 0, c3: 0 };
+let gsapCtx = null;
 
-/* Sanftes Ein- und Auslaufen, Standardkurve fuer Szenenwechsel. */
-const easeInOutCubic = (t) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-/* Startversatz je Gruppe. Der groesste Versatz verkuerzt die Strecke
-   der spaeten Gruppen, deshalb wird auf die Restlaenge normiert -
-   sonst kaeme die Logo-Klaerung nie ganz oben an. */
-const STAGGER = [0, 0.07, 0.14];
-const STAGGER_MAX = STAGGER[STAGGER.length - 1];
-
-/* Anteil, der pro Sekunde vom Restweg abgebaut wird. 0.0015 heisst:
-   nach einer Sekunde sind 99,85 % der Differenz aufgeholt - schnell
-   genug, um am Finger zu kleben, langsam genug, um Rastungen zu
-   verschleifen. */
-const SMOOTH_PER_SECOND = 0.0015;
-
-/* Naeher als das ist am Bildschirm nicht mehr zu unterscheiden. */
-const SETTLED = 0.0004;
-
-let climb = 0;        // angezeigter, geglaetteter Wert
-let climbTarget = 0;  // Zielwert aus der Scrollposition
-let rafId = null;
-let lastTime = 0;
-
-function measureClimb() {
-  const track = trackEl.value;
-  if (!track) return climbTarget;
-
-  /* Der Fortschritt ergibt sich aus der Bahn selbst: sobald ihre
-     Oberkante den Viewport verlaesst, klebt die Buehne, und die
-     Strecke bis zum Ende der Bahn ist genau der Aufstieg. Damit
-     stimmt der Fortschritt zwangslaeufig mit dem ueberein, was zu
-     sehen ist - unabhaengig von Bildschirmhoehe und Inhalt darunter. */
-  const rect = track.getBoundingClientRect();
-  const span = track.offsetHeight - window.innerHeight;
-  return span <= 0 ? 1 : Math.min(1, Math.max(0, -rect.top / span));
-}
-
-function writeClimb(value) {
+function writeClimb() {
   /* Auf <html>, nicht auf der Hero-Sektion: die Szene muss denselben
      Wert lesen koennen wie das Portal. */
   const root = document.documentElement.style;
-  root.setProperty('--climb', value.toFixed(4));
+  root.setProperty('--climb', climbState.c.toFixed(4));
+  root.setProperty('--climb-1', climbState.c1.toFixed(4));
+  root.setProperty('--climb-2', climbState.c2.toFixed(4));
+  root.setProperty('--climb-3', climbState.c3.toFixed(4));
 
-  for (let i = 0; i < STAGGER.length; i += 1) {
-    const local = (value - STAGGER[i]) / (1 - STAGGER_MAX);
-    const clamped = Math.min(1, Math.max(0, local));
-    root.setProperty(`--climb-${i + 1}`, easeInOutCubic(clamped).toFixed(4));
-  }
-}
-
-function frame(now) {
-  const dt = lastTime ? Math.min(0.1, (now - lastTime) / 1000) : 1 / 60;
-  lastTime = now;
-
-  /* Exponentielle Annaeherung, bildwiederholratenunabhaengig. */
-  climb += (climbTarget - climb) * (1 - Math.pow(SMOOTH_PER_SECOND, dt));
-  if (Math.abs(climbTarget - climb) < SETTLED) climb = climbTarget;
-
-  writeClimb(climb);
-
-  const offer = climb > LOOKBACK_FROM && climb < LOOKBACK_UNTIL;
+  const offer = climbState.c > LOOKBACK_FROM && climbState.c < LOOKBACK_UNTIL;
   if (showLookBack.value !== offer) {
     showLookBack.value = offer;
     /* Verlaesst man das Fenster, klappt auch die Zeile wieder zu. */
     if (!offer) isLookingBack.value = false;
   }
-
-  if (climb !== climbTarget) {
-    rafId = requestAnimationFrame(frame);
-  } else {
-    rafId = null;
-    lastTime = 0;
-  }
-}
-
-function onClimbScroll() {
-  climbTarget = measureClimb();
-  if (rafId === null) {
-    lastTime = 0;
-    rafId = requestAnimationFrame(frame);
-  }
 }
 
 onMounted(() => {
-  /* Ohne Glaettung in den Ausgangszustand, sonst faehrt die Szene beim
-     Laden sichtbar von 0 hoch, obwohl man mitten auf der Seite steht
-     (etwa nach einem Reload mit erhaltener Scrollposition). */
-  climbTarget = measureClimb();
-  climb = climbTarget;
-  writeClimb(climb);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  window.addEventListener('scroll', onClimbScroll, { passive: true });
-  window.addEventListener('resize', onClimbScroll, { passive: true });
+  gsapCtx = gsap.context(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: trackEl.value,
+        /* Exakt die Strecke, auf der die Buehne klebt: von Bahnanfang
+           bis Bahnende. Deckungsgleich mit position: sticky. */
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: reduced ? true : 1.1,
+        /* invalidateOnRefresh: die Bahnhoehe steht in vh - nach einem
+           Resize misst ScrollTrigger neu, sonst laege das Timeline-
+           Ende neben dem Sticky-Ende. */
+        invalidateOnRefresh: true,
+      },
+      defaults: { duration: 1, ease: 'none' },
+      onUpdate: writeClimb,
+    });
+
+    /* Der Rohwert laeuft linear ueber die volle Strecke - Schwellen
+       (Rueckblick, Uebergabe an die Headline) brauchen die unverzerrte
+       Position. */
+    tl.to(climbState, { c: 1 }, 0);
+
+    /* Die drei Gruppen starten versetzt und laufen durch dieselbe
+       Kurve. 0.86 Dauer + 0.14 max. Versatz = 1: auch die letzte
+       Gruppe kommt exakt am Bahnende bei 1 an. */
+    tl.to(climbState, { c1: 1, duration: 0.86, ease: 'power2.inOut' }, 0);
+    tl.to(climbState, { c2: 1, duration: 0.86, ease: 'power2.inOut' }, 0.07);
+    tl.to(climbState, { c3: 1, duration: 0.86, ease: 'power2.inOut' }, 0.14);
+  });
+
+  /* Erster Zustand sofort, auch mitten auf der Seite (Reload mit
+     erhaltener Scrollposition): ScrollTrigger setzt die Timeline beim
+     Anlegen auf die aktuelle Position, hier nur noch rausschreiben. */
+  writeClimb();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', onClimbScroll);
-  window.removeEventListener('resize', onClimbScroll);
-  if (rafId !== null) cancelAnimationFrame(rafId);
-  /* Inertia tauscht nur die Seite aus, das <html> bleibt stehen -
-     ohne das hier truege jede Folgeseite den letzten Stand mit sich. */
+  /* revert() raeumt Timeline UND ScrollTrigger ab - noetig, weil
+     Inertia nur die Seite tauscht und ein verwaister Trigger sonst
+     auf der naechsten Seite weiterfeuerte. */
+  gsapCtx?.revert();
+  /* Das <html> bleibt bei Inertia stehen - ohne das hier truege jede
+     Folgeseite den letzten Stand mit sich. */
   const root = document.documentElement.style;
   ['--climb', '--climb-1', '--climb-2', '--climb-3'].forEach((n) => root.removeProperty(n));
 });
@@ -784,6 +749,16 @@ onUnmounted(() => {
   opacity: calc(1 - var(--climb-3, 0) * 1.15);
   z-index: 4;
   pointer-events: none;
+  /* Eigenleben ueber die separate scale-Eigenschaft, nicht ueber
+     transform - das traegt bereits die Zentrierung. Der Schleier
+     atmet dadurch traege wie Nebel, statt als starre Scheibe zu
+     stehen, und laeuft komplett auf dem Compositor. */
+  animation: haze-drift 14s ease-in-out infinite;
+}
+
+@keyframes haze-drift {
+  0%, 100% { scale: 1; }
+  50%      { scale: 1.06 1.03; }
 }
 
 /* --- Die Wortgruppen als Stufen ---
@@ -1094,7 +1069,8 @@ onUnmounted(() => {
   .climb-line--foot { transform: translateX(-50%); }
 
   .climb-presence,
-  .climb-leaves { animation: none; }
+  .climb-leaves,
+  .climb-portal-haze { animation: none; }
 
   .climb-words--right span::before,
   .climb-words--right span::after {
