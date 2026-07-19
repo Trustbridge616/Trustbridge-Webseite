@@ -531,7 +531,10 @@ onUnmounted(() => {
   max-height: 1400px;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.18; /* Sehr dezent und edel leuchtend */
+  /* Licht-Hierarchie: das Portal ist die eine dominante Quelle der
+     Szene, alles andere traegt zu, statt zu konkurrieren. Die Merkaba
+     war mit 0.18 hell genug, um mit dem Ring zu ringen. */
+  opacity: 0.10;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1100,7 +1103,9 @@ onUnmounted(() => {
   width: 350px;
   height: 100%;
   pointer-events: none;
-  opacity: 0.35;
+  /* Leiser als frueher (0.35): drei Lichtkegel von oben sind Buehne,
+     nicht Hauptdarsteller. */
+  opacity: 0.16;
   mix-blend-mode: screen;
   animation: spotlight-pulse 8s ease-in-out infinite;
 }
@@ -1120,8 +1125,8 @@ onUnmounted(() => {
   animation-delay: -5s;
 }
 @keyframes spotlight-pulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.5; }
+  0%, 100% { opacity: 0.10; }
+  50% { opacity: 0.22; }
 }
 
 /* ===== 3D STAGE FLOOR ===== */
@@ -1191,7 +1196,8 @@ onUnmounted(() => {
   position: absolute;
   top: 0; left: -100%;
   width: 50%; height: 100%;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  /* Halbiert (0.3 -> 0.15): der Sheen soll streifen, nicht blitzen. */
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
   transform: skewX(-25deg);
   animation: glassy-sweep 10s infinite;
   z-index: 10;
@@ -1211,7 +1217,9 @@ onUnmounted(() => {
   border-radius: 50%;
   filter: blur(80px);
   z-index: 0;
-  opacity: 0.8;
+  /* Von 0.8 auf 0.55: die Nebelhoefe stuetzen das Portal, sie sind
+     nicht selbst die Lichtquelle. */
+  opacity: 0.55;
 }
 
 .glow-center {
@@ -1237,8 +1245,8 @@ onUnmounted(() => {
 }
 
 @keyframes pulse-glow {
-  0% { transform: scale(0.9) translate(-50%, -50%); opacity: 0.5; }
-  100% { transform: scale(1.05) translate(-50%, -50%); opacity: 0.8; }
+  0% { transform: scale(0.9) translate(-50%, -50%); opacity: 0.35; }
+  100% { transform: scale(1.05) translate(-50%, -50%); opacity: 0.55; }
 }
 
 .glow-left, .glow-right {
@@ -1246,8 +1254,8 @@ onUnmounted(() => {
 }
 
 @keyframes pulse-glow-side {
-  0% { transform: scale(0.9); opacity: 0.5; }
-  100% { transform: scale(1.05); opacity: 0.8; }
+  0% { transform: scale(0.9); opacity: 0.35; }
+  100% { transform: scale(1.05); opacity: 0.55; }
 }
 .glow-left { animation-name: pulse-glow-side; }
 .glow-right { animation-name: pulse-glow-side; }
