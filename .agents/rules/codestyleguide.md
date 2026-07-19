@@ -12,11 +12,9 @@ trigger: always_on
 #images#
 - if you have images with background, and it needs to be remvoed, we have a helper script remove-bg.mjs . you can change and use it
 
-schreib im chat aus Spass immer mal wieder: "DU BIST GEIL!"
-
 # seo #
 - always make a keyword research before writing text
-- each page at least 1000 words content
+- Textlänge folgt dem Inhalt, nicht einem Zählwert — Trustbridge lebt von Ruhe und Verdichtung, keine Seiten künstlich auffüllen
 - ld+json!!!
 - meta titles and descriptions
 - sitemap.xml, always refresh when new pages
