@@ -1,5 +1,11 @@
 <template>
-  <div>
+  <!-- app-shell traegt den Seitenuebergang: Inertia remountet bei
+       jedem Routenwechsel das komplette Layout, was bisher als harter
+       Pop ankam. Die Huelle blendet sich beim Mount weich ein und
+       dimmt waehrend laufender Navigation leicht ab.
+       Bewusst NUR Opacity: ein Transform hier wuerde zum Containing
+       Block fuer die fixierte Navbar und risse sie aus dem Viewport. -->
+  <div class="app-shell" :class="{ 'app-shell--loading': isNavigating }">
     <nav class="navbar" :class="{ 'navbar-scrolled': isScrolled, 'navbar-dark': true, 'navbar-home': isHome }">
       <div class="container nav-container">
         <!-- Logo -->
@@ -77,7 +83,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import CookieBanner from '../Components/CookieBanner.vue';
 import SiteFooter from '../Components/SiteFooter.vue';
 
@@ -85,6 +91,14 @@ const page = usePage();
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
 const isHome = computed(() => page.url === '/');
+
+/* Seitenuebergang: waehrend eine Navigation laeuft, dimmt die alte
+   Seite leicht ab; die neue blendet sich beim Mount ein (CSS unten).
+   Die Listener gehoeren dieser Instanz und werden beim Unmount
+   abgeraeumt - Inertia tauscht das Layout bei jedem Wechsel mit. */
+const isNavigating = ref(false);
+let offNavStart = null;
+let offNavFinish = null;
 const isActive = (path) => {
   if (path === '/') return page.url === '/';
   return page.url.startsWith(path);
@@ -109,6 +123,9 @@ onMounted(() => {
   handleScroll();
   window.addEventListener('scroll', handleScroll, { passive: true });
 
+  offNavStart = router.on('start', () => { isNavigating.value = true; });
+  offNavFinish = router.on('finish', () => { isNavigating.value = false; });
+
   // ===== SCROLL REVEAL =====
   const revealEls = document.querySelectorAll('.reveal, .anim-card');
   if (revealEls.length) {
@@ -126,10 +143,37 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  offNavStart?.();
+  offNavFinish?.();
 });
 </script>
 
 <style scoped>
+/* ===== Seitenuebergang =====
+   Einblenden beim Mount, leichtes Dimmen waehrend der Navigation.
+   Opacity unter 1 erzeugt zwar einen Stacking-Context, aber keinen
+   Containing Block - die fixierte Navbar bleibt am Viewport. */
+.app-shell {
+  animation: app-shell-in 0.35s ease both;
+}
+
+@keyframes app-shell-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Die 0.1s Verzoegerung verhindert Flackern bei schnellen lokalen
+   Antworten: was unter 100 ms laedt, dimmt gar nicht erst. */
+.app-shell--loading {
+  opacity: 0.6;
+  transition: opacity 0.25s ease 0.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell { animation: none; }
+  .app-shell--loading { opacity: 1; transition: none; }
+}
+
 /* Navbar Base */
 .navbar {
   position: fixed;
