@@ -271,7 +271,10 @@
             </p>
           </div>
 
-             <!-- 3 Premium Hero Shards -->
+             <!-- Drei Standpunkte: wo der Besucher gerade steht.
+               Die Kacheln behalten Optik und bisheriges Verhalten -
+               die Ziel-Verlinkung folgt, wenn die Unterseiten stehen. -->
+          <h2 class="shards-heading">Wo stehst du gerade?</h2>
           <div class="hero-shards-grid">
             <!-- Shard 1 (LEFT): Erklärvideo -->
             <button @click="isVideoOpen = true" class="hero-shard shard-left shard-purple">
@@ -284,8 +287,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>Erklärvideo ansehen</h3>
-                <p>Sieh in wenigen Minuten, wie das System funktioniert.</p>
+                <h3>Orientierung</h3>
+                <p>Ich weiß nicht, wohin.</p>
               </div>
             </button>
   
@@ -300,8 +303,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>Box auswählen</h3>
-                <p>Wähle dein Level und starte direkt.</p>
+                <h3>Veränderung</h3>
+                <p>Ich weiß, wohin – aber ich traue mich noch nicht.</p>
               </div>
             </Link>
   
@@ -318,8 +321,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>So funktioniert's</h3>
-                <p>Gebündelter Einkauf. Faire Boxen. Echter Spielraum.</p>
+                <h3>Persönliche Begleitung</h3>
+                <p>Ich möchte meinen Weg nicht allein gehen.</p>
               </div>
             </button>
           </div>
@@ -2167,6 +2170,23 @@ onUnmounted(() => {
     color: #E2E8F0;
   }
   
+  /* Die Frage ueber den drei Standpunkten. Bewusst kein Gradient und
+     kein grosser Auftritt - eine ruhige, direkte Frage in der
+     Systemschrift, die zur Selbstverortung einlaedt. */
+  .shards-heading {
+    margin: 0 0 1.8rem;
+    font-family: 'Century Gothic', system-ui, sans-serif;
+    font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: rgba(248, 250, 252, 0.94);
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: rgba(248, 250, 252, 0.94);
+    text-shadow: 0 2px 12px rgba(4, 2, 10, 0.9), 0 0 30px rgba(212, 175, 55, 0.25);
+  }
+
   /* --- Die Schwelle zwischen Aufstieg und Angebot --- */
   .climb-threshold {
     margin: 0.5rem auto 3rem;
