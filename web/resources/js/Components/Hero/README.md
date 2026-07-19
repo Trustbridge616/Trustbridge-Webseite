@@ -140,8 +140,9 @@ Bei `prefers-reduced-motion: reduce` (verifiziert):
 - Der Panther ist nur eine Standbildebene mit Auftritt und Idle-Atmen. Für den
   im Auftrag beschriebenen Ablauf (Blinzeln, Umhangbewegung) braucht es eine
   eigene Videogenerierung; die Komponente ist dafür vorbereitet.
-- `Partner_original.vue` ist UTF-16-kodiert und lässt `vite build` scheitern.
-  Das bestand vor diesem Umbau und wurde nicht angefasst.
+- `Partner_original.vue` (UTF-16-kodierte Altkopie) liess `vite build`
+  scheitern; am 19.07.2026 mit Freigabe geloescht. Seitdem baut das
+  Projekt in Produktion.
 
 ## Mögliche Erweiterungen
 
