@@ -8,7 +8,11 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 const appName = import.meta.env.VITE_APP_NAME || 'Retouren Abo';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    /* Kein automatisches "- Trustbridge" mehr: SeoHead liefert bereits
+       vollstaendige Titel mit Markennamen, das Suffix stapelte sich zu
+       "... | Trustbridge - Trustbridge". Der Fallback greift nur, wenn
+       eine Seite gar keinen Titel setzt. */
+    title: (title) => title || appName,
     resolve: (name) => {
         return resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue'));
     },

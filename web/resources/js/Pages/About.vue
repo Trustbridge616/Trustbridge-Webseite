@@ -61,7 +61,7 @@ const aboutLd = {
     '@type': 'Organization',
     name: 'Trustbridge',
     url: 'https://trustbridge.de',
-    description: 'Trustbridge – Dein Portal für Coaching & mehr.',
+    description: 'Trustbridge – Die Brücke zu dir selbst.',
   }
 };
 </script>
