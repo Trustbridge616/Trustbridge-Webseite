@@ -10,29 +10,30 @@
     <div class="welcome-page">
       <!-- Preview Merkaba entfernt, jetzt im Hero-Hintergrund -->
 
-    <div class="hero-section animate-fade-in" id="hero" ref="heroEl">
-      <!-- ===== DER AUFSTIEG =====
-           Der Scrollfortschritt liegt als CSS-Variable --climb (0..1) auf
-           dieser Sektion. Alle Ebenen darunter lesen nur diese eine Zahl -
-           es laeuft kein JS pro Ebene und kein Vue-Rerender pro Frame.
+    <!-- ===== DER AUFSTIEG =====
+         Die Szene braucht einen EIGENEN Scrollbereich. Gemessen auf
+         dieser Seite treten die Kacheln schon bei scrollY 350 (Desktop)
+         beziehungsweise 72 (Mobile) in den Viewport - eine fixierte
+         Szene lag damit zwangslaeufig ueber fremdem Inhalt, und ein
+         Aufstieg, der laenger dauert, war ueberhaupt nicht darstellbar.
 
-           0 = am Fuss der Treppe: Nebel steht, Licht ist kuehl,
-               das Portal liegt gedaempft dahinter.
-           1 = oben: Nebel ist gesunken, das Licht warm und golden,
-               der Blick offen, das Portal klar.
+         Deshalb .climb-track: eine Bahn mit eigener Hoehe, in der
+         .climb-stage klebt (position: sticky). Solange man durch die
+         Bahn scrollt, steht die Szene still im Bild und wandelt sich.
+         Danach gibt sie den Fluss frei und die Headline uebernimmt -
+         ohne Ueberlappung, weil der Inhalt erst hinter der Bahn folgt.
 
-           Die Treppe wird nicht neu gebaut - sie ist im Portalmotiv
-           bereits gemalt. Der Aufstieg fuehrt auf sie zu. -->
-      <div class="climb-layer climb-cool" aria-hidden="true"></div>
-      <div class="climb-layer climb-warmth" aria-hidden="true"></div>
-      <div class="climb-layer climb-sky" aria-hidden="true"></div>
-      <div class="climb-layer climb-fog" aria-hidden="true"></div>
+         Das Portal steht mit in der Bahn: man steigt darauf zu,
+         waehrend es sich klaert. Die Treppe wird nicht neu gebaut -
+         sie ist im Portalmotiv bereits gemalt.
 
-      <!-- Die Angst. Kein Wesen, kein Gegner: eine ruhige, warme Praesenz,
-           die am Fuss der Treppe stehen bleibt. Sie wird leiser, je weiter
-           man steigt - aber sie verschwindet nie ganz. -->
-      <div class="climb-presence" :class="{ 'is-acknowledged': isLookingBack }" aria-hidden="true"></div>
-
+         Gesteuert wird alles ueber eine Zahl: --climb (0..1) auf dem
+         <html>-Element. Kein JS pro Ebene, kein Rerender pro Frame.
+         0 = am Fuss: Nebel steht, Licht kuehl.
+         1 = oben: Nebel gesunken, Licht warm, Portal klar. -->
+    <div class="hero-section animate-fade-in" id="hero">
+      <div class="climb-track" ref="trackEl">
+        <div class="climb-stage">
       <!-- ===== 3D STAGE SCENE ===== -->
       
       <!-- Echte 3D SVG Merkaba (Dezent im Hintergrund) -->
@@ -129,34 +130,83 @@
           </div>
         </div>
 
+        <!-- Der Schleier vor dem Portal. Er sitzt bewusst INNERHALB des
+             .panthers-container und nicht in der fixierten Szene: so
+             scrollt er mit dem Portal mit und bleibt deckungsgleich,
+             waehrend er sich lichtet. Das Logo wird dadurch klarer,
+             ohne dass pro Frame ein Filter neu berechnet wird. -->
+        <div class="climb-portal-haze" aria-hidden="true"></div>
+
         <!-- Shadow/reflection below each panther -->
         <div class="panther-shadow shadow-left"></div>
         <div class="panther-shadow shadow-center"></div>
         <div class="panther-shadow shadow-right"></div>
       </div>
 
-      <!-- Was am Fuss der Treppe zurueckbleibt: verblasst beim Steigen. -->
+    <div class="climb-scene" aria-hidden="true">
+      <div class="climb-layer climb-cool"></div>
+      <div class="climb-layer climb-warmth"></div>
+      <div class="climb-layer climb-sky"></div>
+      <div class="climb-layer climb-leaves"></div>
+      <div class="climb-layer climb-fog"></div>
+
+      <!-- Die Angst. Kein Wesen, kein Gegner: eine ruhige, warme
+           Praesenz am Fuss der Treppe. Sie wird leiser, je weiter man
+           steigt - aber sie verschwindet nie ganz. -->
+      <div class="climb-presence" :class="{ 'is-acknowledged': isLookingBack }"></div>
+    </div>
+
+    <!-- Text und Bedienung des Aufstiegs. Eigene Ebene, weil die Szene
+         darueber aria-hidden ist - das Zitat soll vorgelesen werden.
+
+         Jedes Wort ist eine Stufe: --from sagt, ab welchem Punkt des
+         Aufstiegs es erscheint beziehungsweise zurueckbleibt. So kommt
+         mit jeder Scrollbewegung wirklich eine Stufe dazu, statt dass
+         eine Liste als Ganzes ein- oder ausblendet. --i staffelt sie
+         seitlich zur Treppendiagonale. -->
+    <div class="climb-ui">
       <ul class="climb-words climb-words--left" aria-hidden="true">
-        <li>Angst</li>
-        <li>Zweifel</li>
-        <li>Aufschieben</li>
-        <li>Meinung anderer</li>
-        <li>Komfort</li>
+        <li style="--i:0"><i class="climb-tread"></i><span>Angst</span></li>
+        <li style="--i:1"><i class="climb-tread"></i><span>Zweifel</span></li>
+        <li style="--i:2"><i class="climb-tread"></i><span>Aufschieben</span></li>
+        <li style="--i:3"><i class="climb-tread"></i><span>Meinung anderer</span></li>
+        <li style="--i:4"><i class="climb-tread"></i><span>Komfort</span></li>
       </ul>
 
-      <!-- Was der Aufstieg freilegt: tritt mit jeder Stufe klarer hervor. -->
       <ul class="climb-words climb-words--right" aria-hidden="true">
-        <li>Vertrauen</li>
-        <li>Klarheit</li>
-        <li>Eigenverantwortung</li>
-        <li>Wachstum</li>
+        <li style="--i:3"><i class="climb-tread"></i><span>Vertrauen</span></li>
+        <li style="--i:2"><i class="climb-tread"></i><span>Klarheit</span></li>
+        <li style="--i:1"><i class="climb-tread"></i><span>Eigenverantwortung</span></li>
+        <li style="--i:0"><i class="climb-tread"></i><span>Wachstum</span></li>
       </ul>
 
-      <!-- Die Zeile am Fuss der Treppe - sie steht, solange man unten steht. -->
+      <!-- Steht, solange man unten steht, und tritt beim Steigen zurueck. -->
       <p class="climb-line climb-line--foot">
         Die gr&ouml;&szlig;te Grenze ist selten der Weg.<br />
         Sie ist die Angst davor, ihn zu gehen.
       </p>
+
+      <!-- Der Rueckblick: freiwillig, leise, im Treppenbereich unter der
+           Praesenz - man wendet sich ihr zu, dankt und geht weiter. -->
+      <div class="climb-lookback" v-if="showLookBack && !isVideoOpen && !isHowItWorksOpen">
+        <transition name="fade">
+          <p v-if="isLookingBack" class="climb-line climb-line--thanks">
+            Danke deiner Angst.<br />
+            Und entscheide trotzdem: du selbst.
+          </p>
+        </transition>
+        <button
+          type="button"
+          class="climb-lookback-btn"
+          :aria-expanded="isLookingBack"
+          @click="isLookingBack = !isLookingBack"
+        >
+          {{ isLookingBack ? 'Weitergehen' : 'Zurückblicken' }}
+        </button>
+      </div>
+    </div>
+        </div>
+      </div>
 
             <div class="container hero-content">
         <!-- Trustbridge Logo / Title -->
@@ -247,30 +297,6 @@
       </div>
     </div>
 
-    <!-- Der Moment des Zurueckblickens. Bewusst freiwillig und leise:
-         kein Kampf, kein Sieg - ein Dank, dann geht es weiter.
-
-         Steht ausserhalb von .hero-section: dessen perspective erzeugt
-         einen Containing Block, an dem position: fixed nicht mehr am
-         Viewport haengt, sondern mitscrollen wuerde - der Knopf waere
-         genau dann weg, wenn man ihn braucht. -->
-    <div class="climb-lookback" v-if="showLookBack && !isVideoOpen && !isHowItWorksOpen">
-      <button
-        type="button"
-        class="climb-lookback-btn"
-        :aria-expanded="isLookingBack"
-        @click="isLookingBack = !isLookingBack"
-      >
-        {{ isLookingBack ? 'Weitergehen' : 'Zurückblicken' }}
-      </button>
-      <transition name="fade">
-        <p v-if="isLookingBack" class="climb-line climb-line--thanks">
-          Danke deiner Angst.<br />
-          Und entscheide trotzdem: du selbst.
-        </p>
-      </transition>
-    </div>
-
     <!-- ===== Modals ===== -->
     <!-- Video Modal -->
       <transition name="fade">
@@ -356,35 +382,40 @@ const isHowItWorksOpen = ref(false);
    Reaktiv ist nur, was sich selten aendert: ob der Rueckblick-Moment
    schon angeboten wird. Der schaltet genau einmal um.
    =================================================================== */
-const heroEl = ref(null);
 const showLookBack = ref(false);
 const isLookingBack = ref(false);
 
-/* Der Aufstieg ist nach 85 % der Hero-Hoehe vollendet - die letzten
-   Prozent gehoeren schon dem Text darunter. */
-const CLIMB_SPAN = 0.85;
+const trackEl = ref(null);
 /* Fenster, in dem sich der Rueckblick anbietet: weit genug oben, dass
    die Geste etwas bedeutet, und oben angekommen wieder vorbei - wer
    das Portal erreicht hat, schaut nicht mehr zurueck. */
 const LOOKBACK_FROM = 0.22;
-const LOOKBACK_UNTIL = 0.9;
+const LOOKBACK_UNTIL = 0.75;
 
 let climb = 0;
 let ticking = false;
 
 function applyClimb() {
   ticking = false;
-  const el = heroEl.value;
-  if (!el) return;
+  const track = trackEl.value;
+  if (!track) return;
 
-  const span = (el.offsetHeight || window.innerHeight) * CLIMB_SPAN;
-  const next = Math.min(1, Math.max(0, window.scrollY / span));
+  /* Der Fortschritt ergibt sich aus der Bahn selbst: sobald ihre
+     Oberkante den Viewport verlaesst, klebt die Buehne, und die
+     Strecke bis zum Ende der Bahn ist genau der Aufstieg. Damit
+     stimmt der Fortschritt zwangslaeufig mit dem ueberein, was zu
+     sehen ist - unabhaengig von Bildschirmhoehe und Inhalt darunter. */
+  const rect = track.getBoundingClientRect();
+  const span = track.offsetHeight - window.innerHeight;
+  const next = span <= 0 ? 1 : Math.min(1, Math.max(0, -rect.top / span));
 
   /* Unterhalb eines viertel Prozent ist nichts zu sehen - dann auch
      kein Style-Recalc. */
   if (Math.abs(next - climb) < 0.0025) return;
   climb = next;
-  el.style.setProperty('--climb', climb.toFixed(4));
+  /* Auf <html>, nicht auf der Hero-Sektion: die fixierte Szene liegt
+     ausserhalb von ihr und muss denselben Wert lesen koennen. */
+  document.documentElement.style.setProperty('--climb', climb.toFixed(4));
 
   const offer = climb > LOOKBACK_FROM && climb < LOOKBACK_UNTIL;
   if (showLookBack.value !== offer) {
@@ -409,6 +440,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', onClimbScroll);
   window.removeEventListener('resize', onClimbScroll);
+  /* Inertia tauscht nur die Seite aus, das <html> bleibt stehen -
+     ohne das hier truege jede Folgeseite den letzten Stand mit sich. */
+  document.documentElement.style.removeProperty('--climb');
 });
 </script>
 
@@ -420,7 +454,10 @@ onUnmounted(() => {
   background: linear-gradient(-45deg, #4a2685, #29155c, #1a0b36, #37176b); /* Brighter Royal Purple */
   background-size: 400% 400%;
   animation: bg-shift 20s ease infinite;
-  overflow-x: hidden;
+  /* clip statt hidden: hidden macht dieses Element zum Scroll-Container,
+     und daran wuerde .climb-stage kleben statt am Viewport - der
+     Aufstieg fand dann gar nicht statt. clip schneidet identisch ab. */
+  overflow-x: clip;
   max-width: 100vw;
   color: #1e0b3b;
 }
@@ -450,40 +487,74 @@ onUnmounted(() => {
   width: 100%;
   min-height: 100vh;
   display: flex;
+  /* Bahn oben, Text darunter - vorher zentrierte die Sektion ein
+     einziges Kind. */
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding-bottom: 60px;
-  overflow: hidden;
+  /* clip statt hidden - siehe .welcome-page: hidden haette die
+     klebende Buehne ausgehebelt. */
+  overflow: clip;
   background: transparent;
   /* 3D Bühne: Perspektive für alle Kinder */
   perspective: 1200px;
   perspective-origin: 50% 40%;
-
-  /* Scrollfortschritt des Aufstiegs, geschrieben aus onClimbScroll(). */
-  --climb: 0;
 }
 
 /* ===================================================================
    DER AUFSTIEG
    -------------------------------------------------------------------
-   Vier Lichtebenen im ersten Viewport, gesteuert allein ueber --climb.
-   Bewegt werden ausschliesslich opacity und transform - beides laeuft
-   auf dem Compositor und kostet kein Layout. Kein Filter und keine
-   Farbe wird pro Frame neu berechnet; der Farbwechsel von kuehl nach
-   warm entsteht durch Kreuzblende zweier fertiger Verlaeufe.
+   Szene und Bedienung liegen FIXIERT im Viewport. Der vorige Versuch
+   hatte sie in .hero-section gelegt - die ist mehrere Bildschirme
+   hoch, also scrollten Nebel, Licht und Wortlisten beim ersten Wisch
+   nach oben aus dem Bild. Rechnerisch lief der Aufstieg, zu sehen war
+   davon nichts.
 
-   z-index 2 legt die Ebenen ueber den .panthers-container (1), aber
-   unter .hero-content (2, spaeter im DOM) - Nebel darf das Portal
-   verhaengen, niemals den Text.
+   Gesteuert wird alles ueber --climb (0..1) auf dem <html>-Element.
+   Ueberall steht var(--climb, 0), damit die Szene auch vor dem ersten
+   Frame einen sinnvollen Zustand hat.
+
+   Bewegt werden ausschliesslich opacity und transform - beides laeuft
+   auf dem Compositor und kostet kein Layout.
    =================================================================== */
-.climb-layer {
-  position: absolute;
-  left: 0;
-  right: 0;
+/* Die Bahn gibt dem Aufstieg seinen eigenen Scrollweg. Ihre Hoehe
+   minus einer Bildschirmhoehe ist die Strecke, ueber die die Buehne
+   klebt - also genau die Laenge des Aufstiegs. */
+.climb-track {
+  position: relative;
+  width: 100%;
+  height: 175vh;
+}
+
+.climb-stage {
+  position: sticky;
   top: 0;
   height: 100vh;
-  z-index: 2;
+  width: 100%;
+  overflow: clip;
+}
+
+.climb-scene,
+.climb-ui {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
+  /* Ueber dem Portal (.panthers-container: 1), unter der Navbar. */
+  z-index: 3;
+  /* Oben angekommen uebergibt die Szene an die Headline und raeumt
+     das Feld - sonst laege sie ueber Kacheln und Text darunter.
+     Der Ausklang beginnt erst bei 0.92: die letzte Stufe "Wachstum"
+     ist ab 0.83 voll da und braucht ihren Moment, bevor abgeblendet
+     wird. Frueher gesetzt, ging genau das Zielwort unter. */
+  opacity: calc(1 - max(0, var(--climb, 0) - 0.92) * 12.5);
+}
+
+.climb-ui { z-index: 4; }
+
+.climb-layer {
+  position: absolute;
+  inset: 0;
 }
 
 /* Kuehles Bodenlicht am Fuss der Treppe - weicht beim Steigen. */
@@ -495,33 +566,56 @@ onUnmounted(() => {
     transparent 74%
   );
   mix-blend-mode: screen;
-  opacity: calc(1 - var(--climb) * 0.85);
+  opacity: calc(1 - var(--climb, 0) * 0.85);
 }
 
 /* Warmes Licht von oben - nimmt mit jeder Stufe zu. */
 .climb-warmth {
   background: radial-gradient(
     ellipse 96% 60% at 50% 12%,
-    rgba(240, 207, 90, 0.30) 0%,
-    rgba(201, 162, 39, 0.13) 40%,
+    rgba(240, 207, 90, 0.32) 0%,
+    rgba(201, 162, 39, 0.14) 40%,
     transparent 72%
   );
   mix-blend-mode: screen;
-  opacity: var(--climb);
+  opacity: var(--climb, 0);
 }
 
 /* Oben oeffnet sich der Blick: der Himmel wird hoeher und heller. */
 .climb-sky {
+  bottom: auto;
   height: 58vh;
   background: linear-gradient(
     to bottom,
-    rgba(255, 244, 214, 0.20) 0%,
-    rgba(255, 244, 214, 0.07) 38%,
+    rgba(255, 244, 214, 0.22) 0%,
+    rgba(255, 244, 214, 0.08) 38%,
     transparent 78%
   );
   mix-blend-mode: screen;
-  opacity: var(--climb);
-  transform: translate3d(0, calc((1 - var(--climb)) * -7vh), 0);
+  opacity: var(--climb, 0);
+  transform: translate3d(0, calc((1 - var(--climb, 0)) * -7vh), 0);
+}
+
+/* Die Natur wird lebendiger: weiches Blattwerk waechst aus den unteren
+   Ecken herein und wiegt sich leicht. Bewusst als Lichtform, nicht als
+   gezeichnetes Blatt - eine Illustration wuerde neben dem gemalten
+   Portalmotiv wie ein Fremdkoerper stehen. */
+.climb-leaves {
+  background:
+    radial-gradient(ellipse 34% 30% at 2% 104%, rgba(142, 245, 210, 0.30) 0%, transparent 68%),
+    radial-gradient(ellipse 30% 26% at 98% 106%, rgba(142, 245, 210, 0.26) 0%, transparent 68%),
+    radial-gradient(ellipse 22% 18% at 14% 100%, rgba(120, 210, 180, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 20% 16% at 88% 100%, rgba(120, 210, 180, 0.20) 0%, transparent 70%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  opacity: calc(var(--climb, 0) * 1.25 - 0.12);
+  animation: leaves-sway 13s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes leaves-sway {
+  0%, 100% { transform: scale(1) skewX(0deg); }
+  50%      { transform: scale(1.04) skewX(1.1deg); }
 }
 
 /* Der Nebel. Steht dicht am Fuss der Treppe und sinkt beim Steigen
@@ -529,40 +623,35 @@ onUnmounted(() => {
 .climb-fog {
   background: linear-gradient(
     to top,
-    rgba(198, 188, 234, 0.52) 0%,
-    rgba(150, 132, 200, 0.30) 17%,
-    rgba(120, 104, 170, 0.12) 32%,
+    rgba(198, 188, 234, 0.55) 0%,
+    rgba(150, 132, 200, 0.32) 17%,
+    rgba(120, 104, 170, 0.13) 32%,
     transparent 50%
   );
-  opacity: calc(1 - var(--climb) * 0.92);
-  transform: translate3d(0, calc(var(--climb) * 15vh), 0);
+  opacity: calc(1 - var(--climb, 0) * 0.95);
+  transform: translate3d(0, calc(var(--climb, 0) * 16vh), 0);
   will-change: opacity, transform;
 }
 
 /* --- Die Angst ---
-   Bewusst kein Umriss, keine Gestalt, nichts Dunkles: zwei weiche,
-   warme Lichtfelder, die zusammen als stehende Praesenz lesbar sind.
-   Sie steht am Fuss der Treppe, mittig, wo das Motiv die Stufen zeigt.
-   Beim Steigen wird sie leiser - aber sie bleibt bis zuletzt sichtbar.
-   Wer sie ausblendet, macht sie zum besiegten Gegner; genau das soll
-   sie nicht sein. */
+   Bewusst keine Gestalt, nichts Dunkles: zwei weiche, warme Lichtfelder,
+   die zusammen als stehende Praesenz lesbar sind. Sie steht am Fuss der
+   Treppe und wird leiser, je weiter man steigt - aber ihre Deckkraft
+   endet bei 0.35, nicht bei 0. Eine Angst, die verschwindet, waere ein
+   besiegter Gegner; genau das soll sie nicht sein. */
 .climb-presence {
   position: absolute;
-  /* Zentriert ueber auto-Margins statt ueber translateX: transform
-     gehoert hier der Atem-Animation, beides ginge nicht zusammen. */
   left: 0;
   right: 0;
   margin: 0 auto;
-  top: 66vh;
-  width: clamp(110px, 13vw, 200px);
-  height: clamp(140px, 19vh, 260px);
-  z-index: 2;
-  pointer-events: none;
+  bottom: 1.5vh;
+  width: clamp(100px, 11vw, 170px);
+  height: clamp(90px, 12vh, 150px);
   background:
-    radial-gradient(ellipse 42% 25% at 50% 15%, rgba(255, 238, 198, 0.34) 0%, transparent 70%),
-    radial-gradient(ellipse 56% 48% at 50% 65%, rgba(214, 196, 240, 0.26) 0%, transparent 74%);
+    radial-gradient(ellipse 42% 25% at 50% 15%, rgba(255, 238, 198, 0.36) 0%, transparent 70%),
+    radial-gradient(ellipse 56% 48% at 50% 65%, rgba(214, 196, 240, 0.28) 0%, transparent 74%);
   filter: blur(16px);
-  opacity: calc(0.9 - var(--climb) * 0.55);
+  opacity: calc(0.9 - var(--climb, 0) * 0.55);
   animation: presence-breathe 9s ease-in-out infinite;
   will-change: opacity, transform;
 }
@@ -572,9 +661,9 @@ onUnmounted(() => {
   50%      { transform: scale(1.045) translateY(-5px); }
 }
 
-/* Die Zuwendung beim Zurueckblicken: ein eigener Schein mit eigener
-   Blende. Getrennt von der scrollgesteuerten Deckkraft, damit die
-   Ueberblendung nicht am Scrollwert klebt und nachzieht. */
+/* Die Zuwendung beim Zurueckblicken: eigener Schein mit eigener Blende,
+   getrennt von der scrollgesteuerten Deckkraft - sonst wuerde die
+   Ueberblendung am Scrollwert kleben und nachziehen. */
 .climb-presence::after {
   content: '';
   position: absolute;
@@ -586,42 +675,106 @@ onUnmounted(() => {
 
 .climb-presence.is-acknowledged::after { opacity: 1; }
 
-/* --- Die beiden Wortgruppen --- */
+/* Der Schleier vor dem Portal: lichtet sich, das Logo wird klarer.
+   Liegt im .panthers-container, damit er mit dem Portal mitscrollt. */
+.climb-portal-haze {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64vh;
+  height: 64vh;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(150, 132, 200, 0.36) 0%,
+    rgba(120, 104, 170, 0.20) 52%,
+    transparent 74%
+  );
+  filter: blur(24px);
+  opacity: calc(1 - var(--climb, 0) * 1.15);
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* --- Die Wortgruppen als Stufen ---
+   Jedes Wort traegt ein --from: den Punkt des Aufstiegs, an dem es
+   erscheint beziehungsweise zurueckbleibt. Dadurch kommt mit jeder
+   Scrollbewegung wirklich eine Stufe dazu, statt dass eine ganze
+   Liste auf einmal umschaltet. --i staffelt sie zur Treppendiagonale. */
 .climb-words {
   position: absolute;
-  top: 21vh;
-  z-index: 3;
+  /* Nicht auf halber Hoehe: dort beginnen die seitlichen
+     Panther-Portale, und die Woerter lagen unlesbar auf den Bildern.
+     Oberhalb davon steht freier Grund. */
+  top: 34%;
+  transform: translateY(-50%);
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
-  pointer-events: none;
+  gap: clamp(0.75rem, 1.6vh, 1.3rem);
   font-family: 'Century Gothic', system-ui, sans-serif;
-  font-size: clamp(0.78rem, 1.1vw, 1rem);
-  letter-spacing: 0.16em;
+  font-size: clamp(0.75rem, 1.05vw, 0.98rem);
+  letter-spacing: 0.14em;
   line-height: 1;
 }
 
-/* Links bleibt zurueck: verblasst und sinkt ab. */
-.climb-words--left {
-  left: 4.5%;
-  text-align: left;
-  color: rgba(214, 196, 240, 0.72);
-  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.9);
-  opacity: calc(1 - var(--climb) * 1.3);
-  transform: translate3d(0, calc(var(--climb) * 9vh), 0);
+.climb-words li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  white-space: nowrap;
 }
 
-/* Rechts tritt hervor: klart auf und steigt mit. */
+/* Die Stufe selbst: eine kurze Trittkante neben dem Wort. */
+.climb-tread {
+  display: block;
+  width: clamp(1rem, 2.2vw, 2rem);
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+  flex: none;
+}
+
+/* Links: bleibt zurueck. Die Stufen verlieren sich nach unten aussen. */
+.climb-words--left {
+  left: 3.2vw;
+  color: rgba(214, 196, 240, 0.8);
+  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.95);
+}
+
+/* Die Zeitpunkte stehen im Stylesheet, nicht inline: inline gesetzte
+   Custom Properties schlagen jede Media Query, die Mobil-Staffelung
+   weiter unten koennte sie sonst gar nicht erreichen. */
+.climb-words--left  li:nth-child(1) { --from: 0.02; }
+.climb-words--left  li:nth-child(2) { --from: 0.10; }
+.climb-words--left  li:nth-child(3) { --from: 0.18; }
+.climb-words--left  li:nth-child(4) { --from: 0.26; }
+.climb-words--left  li:nth-child(5) { --from: 0.34; }
+
+.climb-words--right li:nth-child(1) { --from: 0.30; }
+.climb-words--right li:nth-child(2) { --from: 0.42; }
+.climb-words--right li:nth-child(3) { --from: 0.54; }
+.climb-words--right li:nth-child(4) { --from: 0.66; }
+
+.climb-words--left li {
+  opacity: calc(1 - (var(--climb, 0) - var(--from)) * 6);
+  transform: translate3d(calc(var(--i) * -0.5rem), calc(var(--climb, 0) * 5vh), 0);
+}
+
+/* Rechts: tritt hervor. Die Stufen steigen nach oben aussen. */
 .climb-words--right {
-  right: 4.5%;
-  text-align: right;
+  right: 3.2vw;
   color: #F0CF5A;
-  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.9), 0 0 24px rgba(201, 162, 39, 0.45);
-  opacity: calc(var(--climb) * 1.35 - 0.18);
-  transform: translate3d(0, calc((1 - var(--climb)) * 9vh), 0);
+  text-shadow: 0 2px 10px rgba(4, 2, 10, 0.95), 0 0 22px rgba(201, 162, 39, 0.45);
+}
+
+.climb-words--right li {
+  flex-direction: row-reverse;
+  opacity: calc((var(--climb, 0) - var(--from)) * 6);
+  transform: translate3d(calc(var(--i) * 0.5rem), calc((1 - var(--climb, 0)) * 5vh), 0);
 }
 
 /* --- Die Zeilen des Aufstiegs --- */
@@ -633,67 +786,52 @@ onUnmounted(() => {
   text-shadow: 0 2px 12px rgba(4, 2, 10, 0.95);
 }
 
-/* Am Fuss der Treppe. Steht, solange man unten steht, und tritt beim
-   ersten Schritt zurueck. */
+/* Die Eroeffnungszeile steht OBEN, im leeren Band zwischen Navbar und
+   Portalring. Unten war sie unlesbar: dort liegt der Ring mit der
+   Wortmarke, und darunter stehen bereits die Kreuz-Bildunterschriften.
+   Der eigene dunkle Grund bleibt - ueber dem gemalten Motiv reicht ein
+   Textschatten fuer den Kontrast nicht. */
 .climb-line--foot {
   position: absolute;
-  /* Ohne eigenen Stacking-Kontext faellt das ::before mit z-index: -1
-     hinter den Seitenhintergrund und die Abdunklung waere unsichtbar. */
-  isolation: isolate;
   left: 50%;
-  top: 85vh;
-  width: min(90vw, 620px);
-  z-index: 3;
-  pointer-events: none;
-  font-size: clamp(0.95rem, 1.45vw, 1.18rem);
-  color: rgba(232, 238, 250, 0.92);
-  opacity: calc(1 - var(--climb) * 2.4);
-  transform: translate3d(-50%, calc(var(--climb) * -4vh), 0);
-}
-
-/* Die Zeile liegt ueber der gemalten Treppe. Ohne lokale Abdunklung
-   verliert heller Text dort seinen Kontrast - gleiche Loesung wie
-   hinter der Tagline, weicher Radialverlauf statt Kasten. */
-.climb-line--foot::before {
-  content: '';
-  position: absolute;
-  inset: -90% -30%;
+  top: 13vh;
+  width: min(88vw, 600px);
+  padding: 1rem 2rem;
+  border-radius: 999px;
   background: radial-gradient(
     ellipse at center,
-    rgba(6, 3, 14, 0.55) 0%,
-    rgba(6, 3, 14, 0.30) 38%,
-    transparent 72%
+    rgba(6, 3, 14, 0.86) 0%,
+    rgba(6, 3, 14, 0.62) 48%,
+    rgba(6, 3, 14, 0) 78%
   );
-  z-index: -1;
-  pointer-events: none;
+  font-size: clamp(0.95rem, 1.45vw, 1.18rem);
+  color: #F2F6FF;
+  opacity: calc(1 - var(--climb, 0) * 2.6);
+  transform: translate3d(-50%, calc(var(--climb, 0) * -3vh), 0);
 }
 
 /* --- Der Rueckblick ---
-   Fixiert, weil der Moment waehrend des Steigens erreichbar bleiben
-   soll - ein absolut positioniertes Element waere laengst
-   vorbeigescrollt. Bewusst klein und ohne Signalfarbe: ein Angebot,
-   keine Aufforderung. */
+   Sitzt im Treppenbereich unter der Praesenz, nicht ueber fremdem
+   Inhalt: man wendet sich ihr zu, dankt und geht weiter. */
 .climb-lookback {
-  position: fixed;
-  left: 50%;
-  bottom: 3.2vh;
-  transform: translateX(-50%);
-  z-index: 60;
+  position: absolute;
+  left: 2.5vw;
+  bottom: 3vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.9rem;
-  pointer-events: none;
 }
 
 .climb-lookback-btn {
   pointer-events: auto;
-  background: rgba(20, 10, 40, 0.55);
+  background: rgba(20, 10, 40, 0.62);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 175, 55, 0.38);
   border-radius: 999px;
   padding: 0.55rem 1.5rem;
-  color: rgba(240, 207, 90, 0.9);
+  color: rgba(240, 207, 90, 0.92);
   font-family: 'Century Gothic', system-ui, sans-serif;
   font-size: 0.82rem;
   letter-spacing: 0.14em;
@@ -705,50 +843,105 @@ onUnmounted(() => {
 .climb-lookback-btn:focus-visible {
   color: #FFE9A3;
   border-color: rgba(212, 175, 55, 0.75);
-  background: rgba(30, 16, 55, 0.7);
+  background: rgba(30, 16, 55, 0.78);
 }
 
 .climb-line--thanks {
-  order: -1;                    /* die Zeile erscheint ueber dem Knopf */
-  max-width: min(88vw, 460px);
-  font-size: clamp(0.92rem, 1.35vw, 1.1rem);
-  color: rgba(240, 207, 90, 0.94);
-  text-shadow: 0 2px 12px rgba(4, 2, 10, 0.95), 0 0 30px rgba(201, 162, 39, 0.4);
+  max-width: min(88vw, 440px);
+  padding: 0.8rem 1.6rem;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(6, 3, 14, 0.84) 0%,
+    rgba(6, 3, 14, 0.55) 50%,
+    rgba(6, 3, 14, 0) 80%
+  );
+  font-size: clamp(0.92rem, 1.35vw, 1.08rem);
+  color: #FFE9A3;
+  text-shadow: 0 2px 12px rgba(4, 2, 10, 0.95), 0 0 28px rgba(201, 162, 39, 0.4);
 }
 
+/* ===== Schmale Viewports =====
+   Seitliche Spalten haben hier keinen Platz. Die Stufen ruecken
+   deshalb in zwei uebereinanderliegende Baender in die Bildmitte -
+   sichtbar bleiben sie, das war der Punkt. */
 @media (max-width: 1024px) {
-  /* Im gestapelten Mobil-Layout stehen die Wortgruppen sonst neben
-     dem Text und zerfasern die Seite. Nebel, Licht und Praesenz
-     bleiben - sie tragen die Stimmung, ohne Platz zu brauchen. */
-  .climb-words { display: none; }
+  .climb-words {
+    left: 50%;
+    right: auto;
+    top: auto;
+    transform: translateX(-50%);
+    align-items: center;
+    font-size: 0.82rem;
+    gap: 0.6rem;
+  }
+
+  /* Beide Baender in die obere Haelfte: die untere gehoert auf
+     schmalen Geraeten dem Cookie-Banner, das dort ueber die volle
+     Breite liegt. Unten waeren die Stufen beim ersten Besuch - also
+     genau bei Zulauf aus Social Media - schlicht verdeckt. */
+  .climb-words--left,
+  .climb-words--right { top: 22vh; }
+
+  /* Dasselbe Band fuer beide Gruppen - der Platz reicht hier nur
+     einmal. Damit sie sich nicht ueberlagern, ruecken die rechten
+     Stufen zeitlich nach hinten: sie treten erst auf, wenn die linken
+     zurueckgeblieben sind. Die Woerter loesen einander ab, statt
+     nebeneinander zu stehen. */
+  .climb-words--left li:nth-child(1) { --from: 0.02; }
+  .climb-words--left li:nth-child(2) { --from: 0.08; }
+  .climb-words--left li:nth-child(3) { --from: 0.14; }
+  .climb-words--left li:nth-child(4) { --from: 0.20; }
+  .climb-words--left li:nth-child(5) { --from: 0.26; }
+
+  .climb-words--right li:nth-child(1) { --from: 0.40; }
+  .climb-words--right li:nth-child(2) { --from: 0.48; }
+  .climb-words--right li:nth-child(3) { --from: 0.56; }
+  .climb-words--right li:nth-child(4) { --from: 0.64; }
+
+  /* Ohne die seitliche Staffelung, die nur im Spaltenlayout als
+     Treppe lesbar ist. */
+  .climb-words--left li,
+  .climb-words--right li {
+    transform: none;
+  }
 
   .climb-line--foot {
-    top: auto;
-    bottom: 4vh;
-    font-size: 0.95rem;
+    top: 12vh;
     width: min(92vw, 420px);
+    padding: 0.85rem 1.4rem;
+    font-size: 0.95rem;
   }
 
   .climb-presence {
-    top: auto;
-    bottom: 16vh;
+    bottom: auto;
+    top: 72vh;
+    width: 84px;
+    height: 96px;
   }
+
+  /* Der Rueckblick entfaellt hier. Er saesse zwangslaeufig hinter dem
+     Cookie-Banner und waere nicht bedienbar; ein Knopf, der sich mit
+     einem Banner um dieselbe Flaeche streitet, ist schlechter als
+     keiner. Die Botschaft tragen auf Mobile Zitat und Praesenz. */
+  .climb-lookback { display: none; }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* Die Lichtwechsel bleiben - sie sind der Inhalt. Was entfaellt,
-     ist die scrollgekoppelte Verschiebung und das Atmen. */
+     ist die scrollgekoppelte Verschiebung und das Eigenleben. */
   .climb-fog,
   .climb-sky,
-  .climb-words--left,
-  .climb-words--right,
-  .climb-line--foot {
+  .climb-words--left li,
+  .climb-words--right li {
     transform: none;
   }
 
   .climb-line--foot { transform: translateX(-50%); }
 
-  .climb-presence { animation: none; }
+  .climb-presence,
+  .climb-leaves { animation: none; }
 }
 
 /* ===== SPOTLIGHT BEAMS ===== */
@@ -1318,7 +1511,11 @@ onUnmounted(() => {
   z-index: 2;
   width: 100%;
   max-width: 1340px;
-  margin-top: 80vh; /* Erhöhter Abstand zum Panther */
+  /* Frueher 80vh, um dem absolut liegenden Portal auszuweichen. Das
+     Portal steht jetzt in .climb-track, die ihren Platz im Fluss
+     selbst beansprucht - ein zusaetzlicher Abstand wuerde hier nur
+     ein leeres Loch hinter dem Aufstieg aufreissen. */
+  margin-top: 0;
 }
 
 .hero-title-wrapper {
@@ -2031,18 +2228,25 @@ onUnmounted(() => {
     padding-top: clamp(96px, 18vw, 140px);
   }
 
-  /* Aus dem absoluten Layout in den Fluss holen, damit der Text darunter
-     echten Platz bekommt statt auf der Grafik zu liegen. */
+  /* Die Bahn ist auf schmalen Geraeten kuerzer: der Aufstieg soll sich
+     nicht wie eine Wegstrecke ohne Ende anfuehlen. */
+  .climb-track { height: 160vh; }
+
+  /* Das Portal bleibt jetzt absolut in der Buehne. Frueher wurde es
+     hier in den Fluss geholt, damit der Text darunter Platz bekam -
+     diesen Platz schafft nun die Bahn selbst. Es zurueckzuholen wuerde
+     die klebende Buehne aushebeln. */
   .panthers-container {
-    position: relative;
-    top: auto;
-    height: auto;
+    top: 6%;
+    height: 74vh;
     width: 100%;
   }
 
   /* Groesse ueber die Breite steuern statt ueber 80vh. */
+  /* Kein transform zur Zentrierung: die Breite kommt aus dem
+     flex-zentrierten Container, und transform gehoert hier der
+     float-3d-center-Animation. */
   .tb-loop.panther-center {
-    position: relative;
     height: auto;
     width: min(74vw, 44vh);
   }

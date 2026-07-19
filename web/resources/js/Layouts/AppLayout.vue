@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="navbar" :class="{ 'navbar-scrolled': isScrolled, 'navbar-dark': true }">
+    <nav class="navbar" :class="{ 'navbar-scrolled': isScrolled, 'navbar-dark': true, 'navbar-home': isHome }">
       <div class="container nav-container">
         <!-- Logo -->
         <Link href="/" class="logo-wrapper">
@@ -91,22 +91,18 @@ const isActive = (path) => {
 };
 
 /*
-  Die Navbar liegt fixiert und schaltet gescrollt auf einen fast
-  deckenden weissen Grund. Auf der Startseite lief das schon nach
-  10 Pixeln los: die Headline "Trust Yourself & Bridge your Gap"
-  schob sich beim Scrollen unter diesen hellen Balken und wurde
-  dort abgeschnitten.
+  Die Navbar liegt fixiert ueber dem Inhalt. Sobald gescrollt wird,
+  laeuft Text unter ihr durch und sie braucht einen eigenen Grund -
+  sonst ueberlagern sich Menuepunkte und Seiteninhalt unleserlich.
 
-  Ueber einem dunklen Hero bleibt die Navbar deshalb transparent und
-  wechselt erst, wenn der Hero durchgelaufen ist. Seiten ohne #hero
-  verhalten sich unveraendert wie bisher.
+  Sie schaltet deshalb wieder frueh zu (10 px). Was fehlte, war nicht
+  der Zeitpunkt, sondern die Farbe: der fast deckende weisse Grund
+  passt auf hellen Unterseiten, verschluckt auf dem dunklen Hero der
+  Startseite aber die Headline. Dort traegt die Navbar jetzt einen
+  dunklen, leicht durchscheinenden Grund - siehe .navbar-home.
 */
-const NAVBAR_HEIGHT = 90;
-
 const handleScroll = () => {
-  const hero = document.getElementById('hero');
-  const threshold = hero ? hero.offsetHeight - NAVBAR_HEIGHT : 10;
-  isScrolled.value = window.scrollY > threshold;
+  isScrolled.value = window.scrollY > 10;
 };
 
 onMounted(() => {
@@ -158,6 +154,41 @@ onUnmounted(() => {
 .navbar-scrolled {
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Startseite: der dunkle Hero laeuft unter der Navbar durch.
+   Ein weisser Balken wuerde die Headline "Trust Yourself & Bridge
+   your Gap" verschlucken, gar kein Balken laesst Menuepunkte und
+   Headline ineinanderlaufen. Beides loest ein dunkler, leicht
+   durchscheinender Grund: die Navbar bleibt als eigene Ebene lesbar,
+   der Hero scheint gedaempft hindurch. */
+.navbar-home.navbar-scrolled {
+  background: rgba(16, 8, 34, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+}
+
+/* Auf dem dunklen Grund bleiben Links und Konto-Aktionen hell.
+   .navbar-dark ist bewusst mitgeschrieben, obwohl es immer gesetzt
+   ist: .navbar-dark.navbar-scrolled .nav-links a faerbt weiter unten
+   dunkelviolett und haette bei gleicher Spezifitaet als spaetere
+   Regel gewonnen. Die vierte Klasse entscheidet das hier. */
+.navbar-home.navbar-dark.navbar-scrolled .nav-links a,
+.navbar-home.navbar-dark.navbar-scrolled .nav-auth-link,
+.navbar-home.navbar-dark.navbar-scrolled .nav-auth-btn {
+  color: rgba(255, 255, 255, 0.92);
+}
+.navbar-home.navbar-dark.navbar-scrolled .nav-links a:hover,
+.navbar-home.navbar-dark.navbar-scrolled .nav-auth-link:hover {
+  color: #D4AF37;
+}
+
+/* Gleiches Problem beim Menue-Icon: es faellt gescrollt auf
+   dunkelviolett zurueck und waere auf dem dunklen Grund unsichtbar. */
+.navbar-home.navbar-dark.navbar-scrolled .hamburger span {
+  background-color: white;
 }
 
 /* Auf Unterseiten (dunkler Hero): Links immer weiß */
