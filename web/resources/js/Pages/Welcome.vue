@@ -484,6 +484,33 @@ onMounted(() => {
     tl.to(climbState, { c1: 1, duration: 0.86, ease: 'power2.inOut' }, 0);
     tl.to(climbState, { c2: 1, duration: 0.86, ease: 'power2.inOut' }, 0.07);
     tl.to(climbState, { c3: 1, duration: 0.86, ease: 'power2.inOut' }, 0.14);
+
+    /* --- Eintritt des Inhalts unter dem Aufstieg ---
+       Schwelle, Kacheln und Garantie-Zeile treten gestaffelt ein,
+       wenn sie in den Viewport kommen - einmalig, keine Scrub-Bindung.
+       clearProps am Ende ist Pflicht: die Kacheln tragen CSS-Hover-
+       Transforms (translateY/scale), und ein liegengebliebener
+       Inline-Transform von GSAP wuerde jeden Hover ueberschreiben.
+       gsap.from erhaelt vorhandene Transform-Anteile (etwa das
+       scale(1.06) der Mittelkachel) waehrend des Tweens.
+       Bei reduzierter Bewegung entfallen die Eintritte komplett -
+       der Inhalt steht dann einfach da. */
+    if (!reduced) {
+      const reveal = (targets, trigger, extra = {}) =>
+        gsap.from(targets, {
+          scrollTrigger: { trigger, start: 'top 88%' },
+          y: 40,
+          autoAlpha: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity,visibility',
+          ...extra,
+        });
+
+      reveal('.climb-threshold', '.climb-threshold', { y: 24 });
+      reveal('.hero-shard', '.hero-shards-grid', { stagger: 0.12 });
+      reveal('.hero-guarantee-bar', '.hero-guarantee-bar', { y: 26, duration: 0.8 });
+    }
   });
 
   /* Erster Zustand sofort, auch mitten auf der Seite (Reload mit
