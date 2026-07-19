@@ -483,6 +483,8 @@ let climbWords = [];
 let climbWordsDirty = false;
 const markClimbWordsDirty = () => { climbWordsDirty = true; };
 
+let labelState = null;
+
 function collectClimbWords() {
   climbWords = [];
   document.querySelectorAll('.climb-words--left li').forEach((el) => {
@@ -491,6 +493,14 @@ function collectClimbWords() {
   document.querySelectorAll('.climb-words--right li').forEach((el) => {
     climbWords.push({ el, cls: 'w-in', from: parseFloat(getComputedStyle(el).getPropertyValue('--from')) || 0 });
   });
+
+  /* Die Ueberzeilen: links geht, wenn die Liste halb gegangen ist
+     (drittes Wort), rechts kommt mit dem ersten goldenen Wort. */
+  const leftUl = document.querySelector('.climb-words--left');
+  const rightUl = document.querySelector('.climb-words--right');
+  labelState = leftUl && rightUl && climbWords.length >= 6
+    ? { leftUl, rightUl, leftMid: climbWords[2].from, rightFirst: climbWords[5].from }
+    : null;
 }
 
 /* Breiter Viewport: steuert, ob die Seitenportale ueberhaupt im DOM
@@ -528,6 +538,10 @@ function writeClimb() {
   if (climbWordsDirty) { collectClimbWords(); climbWordsDirty = false; }
   for (const w of climbWords) {
     w.el.classList.toggle(w.cls, climbState.c2 >= w.from);
+  }
+  if (labelState) {
+    labelState.leftUl.classList.toggle('label-away', climbState.c2 >= labelState.leftMid);
+    labelState.rightUl.classList.toggle('label-here', climbState.c2 >= labelState.rightFirst);
   }
 }
 
@@ -990,6 +1004,48 @@ onUnmounted(() => {
   flex: none;
 }
 
+/* --- Leise Ueberzeilen ---
+   Der Rahmen fuer die Wortpaare, in den Worten des Users: links das,
+   was festhaelt, rechts das, was frei wird. Bewusst kein 'Angst ->
+   Vertrauen' - die Paare sollen entdeckt werden (gleiche Hoehe,
+   gleicher Rhythmus), die Ueberzeilen lenken nur den Blick.
+   Geschaltet per Klasse aus writeClimb, nicht per :has(). */
+.climb-words::before {
+  display: block;
+  font-size: 0.82em;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.55s ease, transform 0.55s ease;
+  pointer-events: none;
+}
+
+.climb-words--left::before {
+  content: 'Das, was dich festhält.';
+  color: rgba(79, 227, 212, 0.62);
+  text-shadow: 0 2px 8px rgba(4, 2, 10, 0.9);
+  align-self: flex-start;
+  opacity: 0.85;
+}
+
+.climb-words--left.label-away::before {
+  opacity: 0;
+  transform: translateY(1.5vh);
+}
+
+.climb-words--right::before {
+  content: 'Das, was in dir frei wird.';
+  color: rgba(240, 207, 90, 0.66);
+  text-shadow: 0 2px 8px rgba(4, 2, 10, 0.9);
+  align-self: flex-end;
+  transform: translateY(-1vh);
+}
+
+.climb-words--right.label-here::before {
+  opacity: 0.85;
+  transform: none;
+}
+
 /* Links: bleibt zurueck. Die Stufen verlieren sich nach unten aussen. */
 .climb-words--left {
   left: 3.2vw;
@@ -1264,6 +1320,8 @@ onUnmounted(() => {
     transform: none;
   }
 
+  .climb-words::before { align-self: center; }
+
   .climb-line--foot {
     top: 12vh;
     width: min(92vw, 420px);
@@ -1305,6 +1363,8 @@ onUnmounted(() => {
     transition: none;
     transition-delay: 0s;
   }
+
+  .climb-words::before { transition: none; }
 
   .climb-line--foot { transform: translateX(-50%); }
 
