@@ -74,11 +74,16 @@ const R = 85;
 const r = R * Math.sqrt(8) / 3;
 const deg2rad = Math.PI / 180;
 
-// EXAKT DIE GEFORDERTEN BEGRIFFE:
-// Männlich: Reichtum, Erfolg, Wohlstand
-const wordsA = ["Erfolg", "Reichtum", "Wohlstand", ""];
-// Weiblich: Fülle, Gesundheit, Glück, Selbstzufriedenheit
-const wordsB = ["Fülle", "Gesundheit", "Glück", "Selbstzufriedenheit"];
+// Trustbridge-Vokabular. Die alten Begriffe (Erfolg, Reichtum,
+// Wohlstand ...) stammten aus der TrustBox-Zeit und widersprachen
+// leise dem Aufstieg im selben Viewport, der Vertrauen, Klarheit,
+// Eigenverantwortung und Wachstum verspricht - Wohlstandssprache
+// neben Innensprache. Hier stehen bewusst Nachbarbegriffe derselben
+// Familie, keine Dubletten der Aufstiegs-Woerter.
+// Aufsteigender Tetraeder: das Aktive, der Schritt.
+const wordsA = ["Mut", "Wandel", "Entscheidung", ""];
+// Empfangender Tetraeder: das Ruhende, der Grund.
+const wordsB = ["Ruhe", "Verbundenheit", "Dankbarkeit", "Weite"];
 
 // Männlicher Tetraeder (Spitze nach oben)
 const verticesA = [
