@@ -50,33 +50,40 @@ const decline = () => {
   justify-content: center;
 }
 
+/* Das Banner erscheint im ersten Moment des Besuchs, mitten in der
+   dunklen Portalszene. Eine weisse Karte stand dort wie ein
+   Fremdkoerper und beanspruchte den staerksten Kontrast der ganzen
+   Seite fuer eine Formalie. Jetzt spricht es die Sprache der Szene:
+   dunkler Grund, Goldkante, helle Schrift - und deutlich kompakter. */
 .cookie-content {
-  background: white;
-  border-radius: 20px;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 15px 50px rgba(45,27,84,0.15);
-  border: 1px solid rgba(212,175,55,0.2);
+  background: rgba(16, 8, 34, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 1.1rem 1.6rem;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(212, 175, 55, 0.35);
   display: flex;
   align-items: center;
-  gap: 2rem;
-  max-width: 900px;
+  gap: 1.4rem;
+  max-width: 720px;
   width: 100%;
 }
 
-.cookie-icon { font-size: 2rem; }
+.cookie-icon { font-size: 1.5rem; }
 
 .cookie-text h3 {
   font-family: 'Century Gothic', system-ui, sans-serif;
-  font-size: 1.1rem;
-  color: #2D1B54;
+  font-size: 1rem;
+  color: #F8FAFC;
   margin: 0 0 0.25rem 0;
 }
 
 .cookie-text p {
-  font-size: 0.9rem;
-  color: #6b5b95;
+  font-size: 0.85rem;
+  color: #94A3B8;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .cookie-actions {
@@ -104,14 +111,14 @@ const decline = () => {
 .btn-text {
   background: transparent;
   border: none;
-  color: #6b5b95;
+  color: #94A3B8;
   font-size: 0.85rem;
   font-weight: bold;
   cursor: pointer;
   padding: 0.5rem;
 }
 
-.btn-text:hover { color: #2D1B54; }
+.btn-text:hover { color: #F4D068; }
 
 /* Animation */
 .slide-up-enter-active, .slide-up-leave-active {
