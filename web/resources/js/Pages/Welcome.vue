@@ -68,6 +68,45 @@
           <img src="/trustbridge-hero-portal-right.png" alt="Portal: Informationen" />
         </button>
 
+        <!-- ===== Kreuz-Bildunterschriften =====
+             Woertlich gelesen stehen links "Trust your Gap" und rechts
+             "Bridge yourself" - beides ergibt fuer sich wenig Sinn. Ueber
+             Kreuz gelesen loest es sich auf:
+               Trust (links)  -> yourself (rechts)
+               Bridge (rechts) -> your Gap (links)
+             Zwei Faeden zeichnen genau diese beiden Leselinien nach und
+             kreuzen sich unter dem Portal. Der Kreuzungspunkt liegt
+             bewusst unterhalb des Emblems, damit die Wortmarke frei bleibt.
+
+             Die Faeden spannen exakt von Portalmitte zu Portalmitte
+             (left/right: 20vh = halbe Portalbreite), deshalb treffen die
+             Pfadenden immer die Wortmitten - unabhaengig vom Viewport. -->
+        <div class="tb-cross">
+          <p class="tb-cross-sr">
+            Die beiden Bildunterschriften sind ueber Kreuz zu lesen:
+            Trust Yourself &ndash; Bridge your Gap.
+          </p>
+
+          <svg class="tb-threads" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <!-- A: Trust (links oben) -> yourself (rechts unten) -->
+            <path class="tb-thread tb-thread--a" pathLength="100" d="M 0 84 Q 50 34 100 96" />
+            <!-- B: Bridge (rechts oben) -> your Gap (links unten) -->
+            <path class="tb-thread tb-thread--b" pathLength="100" d="M 100 84 Q 50 34 0 96" />
+            <!-- Wanderndes Glanzlicht auf denselben Bahnen -->
+            <path class="tb-glint tb-glint--a" pathLength="100" d="M 0 84 Q 50 34 100 96" />
+            <path class="tb-glint tb-glint--b" pathLength="100" d="M 100 84 Q 50 34 0 96" />
+          </svg>
+
+          <div class="tb-caption tb-caption--left" aria-hidden="true">
+            <span class="tb-word tb-lead tb-key--trust">Trust</span>
+            <span class="tb-word tb-tail tb-key--gap">your Gap</span>
+          </div>
+          <div class="tb-caption tb-caption--right" aria-hidden="true">
+            <span class="tb-word tb-lead tb-key--bridge">Bridge</span>
+            <span class="tb-word tb-tail tb-key--yourself">yourself</span>
+          </div>
+        </div>
+
         <!-- Shadow/reflection below each panther -->
         <div class="panther-shadow shadow-left"></div>
         <div class="panther-shadow shadow-center"></div>
@@ -644,6 +683,205 @@ const isHowItWorksOpen = ref(false);
 .portal-circle-right {
   right: 0%; bottom: 5%;
   width: 40vh; height: 40vh;
+}
+
+/* ===================================================================
+   KREUZ-BILDUNTERSCHRIFTEN
+   -------------------------------------------------------------------
+   Geometrie haengt an denselben Massen wie .portal-circle-*:
+   Portalbreite 40vh, aussen buendig, bottom 5% von 80vh = 4vh.
+   Die halbe Portalbreite (20vh) ist damit die Portalmitte - Faeden und
+   Bildunterschriften rechnen beide damit und bleiben deckungsgleich.
+
+   Das sichtbare Bild endet 8,4vh ueber der Containerkante
+   (4vh + (40vh - 31,2vh) / 2), die Beschriftung beginnt bei 5vh.
+   =================================================================== */
+.tb-cross {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* kein z-index: die Kinder sollen sich im Stacking-Kontext des
+     .panthers-container einordnen, damit die Faeden hinter dem
+     Emblem (z-index 3) liegen koennen. */
+}
+
+/* Die Kreuzung erschliesst sich Screenreadern nicht - deshalb die
+   aufgeloeste Botschaft im Textfluss. */
+.tb-cross-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Die beiden Leselinien --- */
+.tb-threads {
+  position: absolute;
+  /* Exakt von Portalmitte zu Portalmitte */
+  left: 20vh;
+  right: 20vh;
+  bottom: 0;
+  height: 26vh;
+  z-index: 2;              /* hinter dem Emblem (.panther-center: 3) */
+  overflow: visible;
+  pointer-events: none;
+  /* Nur aufhellen, nie abdunkeln: die Faeden koennen Treppe und Ring
+     queren, ohne als Balken darueber zu liegen. */
+  mix-blend-mode: screen;
+}
+
+.tb-thread {
+  fill: none;
+  stroke: #F0CF5A;
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  opacity: 0.28;
+  /* Der viewBox wird stark verzerrt (preserveAspectRatio="none");
+     ohne das bliebe die Linie nicht gleichmaessig duenn. */
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(201, 162, 39, 0.55));
+  transition: opacity 0.6s ease, stroke-width 0.6s ease;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: tb-thread-draw 2.6s ease-out 0.9s forwards;
+}
+
+@keyframes tb-thread-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Wanderndes Glanzlicht - ein kurzes Segment laeuft die Bahn entlang. */
+.tb-glint {
+  fill: none;
+  stroke: #FFF3C4;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px rgba(240, 207, 90, 0.9));
+  stroke-dasharray: 5 95;
+  animation: tb-glint-travel 11s linear 3.4s infinite;
+}
+
+.tb-glint--b { animation-delay: 8.9s; }
+
+@keyframes tb-glint-travel {
+  0%   { stroke-dashoffset: 100; opacity: 0; }
+  8%   { opacity: 0.5; }
+  45%  { opacity: 0.5; }
+  55%  { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* --- Die Wortpaare --- */
+.tb-caption {
+  position: absolute;
+  bottom: 0.4vh;
+  width: 40vh;             /* deckungsgleich mit .portal-circle-* */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1vh;
+  z-index: 4;              /* vor Schatten und Ringen */
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: tb-caption-in 1.4s ease-out 0.5s forwards;
+}
+
+.tb-caption--left  { left: 0; }
+.tb-caption--right { right: 0; }
+
+@keyframes tb-caption-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tb-word {
+  display: block;
+  line-height: 1;
+  font-family: 'Century Gothic', system-ui, sans-serif;
+  transition: color 0.5s ease, text-shadow 0.5s ease, opacity 0.5s ease;
+}
+
+/* Das tragende Wort - Versalien und Sperrung greifen die goldene
+   Wortmarke TRUST BRIDGE im Emblem auf. */
+.tb-lead {
+  font-size: clamp(1.05rem, 2.15vh, 1.6rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;     /* gleicht die Sperrung am rechten Rand aus */
+  color: #F0CF5A;
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.9),
+    0 2px 8px rgba(4, 2, 10, 0.95),
+    0 0 22px rgba(201, 162, 39, 0.55);
+}
+
+/* Das leichtere Wort - Kleinschreibung, zurueckgenommen, minimal zur
+   Mitte geneigt, damit es auf der Bahn seines Fadens liegt. */
+.tb-tail {
+  font-size: clamp(0.72rem, 1.35vh, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: rgba(142, 245, 210, 0.72);
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.9),
+    0 2px 8px rgba(4, 2, 10, 0.9);
+}
+
+.tb-caption--left  .tb-tail { transform: rotate(-2.6deg); }
+.tb-caption--right .tb-tail { transform: rotate(2.6deg); }
+
+/* --- Hover: das zusammengehoerige Kreuzpaar leuchtet gemeinsam auf ---
+   Ueber :has() am Container, damit links und rechts ohne JS reagieren. */
+.panthers-container:has(.portal-circle-left:hover) .tb-key--trust,
+.panthers-container:has(.portal-circle-left:focus-visible) .tb-key--trust,
+.panthers-container:has(.portal-circle-right:hover) .tb-key--bridge,
+.panthers-container:has(.portal-circle-right:focus-visible) .tb-key--bridge {
+  color: #FFE9A3;
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.9),
+    0 2px 8px rgba(4, 2, 10, 0.95),
+    0 0 26px rgba(240, 207, 90, 0.95),
+    0 0 60px rgba(201, 162, 39, 0.55);
+}
+
+.panthers-container:has(.portal-circle-left:hover) .tb-key--yourself,
+.panthers-container:has(.portal-circle-left:focus-visible) .tb-key--yourself,
+.panthers-container:has(.portal-circle-right:hover) .tb-key--gap,
+.panthers-container:has(.portal-circle-right:focus-visible) .tb-key--gap {
+  color: rgba(190, 252, 230, 0.95);
+  text-shadow:
+    0 1px 0 rgba(4, 2, 10, 0.9),
+    0 2px 8px rgba(4, 2, 10, 0.9),
+    0 0 22px rgba(142, 245, 210, 0.6);
+}
+
+/* Der zugehoerige Faden zieht mit an. */
+.panthers-container:has(.portal-circle-left:hover) .tb-thread--a,
+.panthers-container:has(.portal-circle-left:focus-visible) .tb-thread--a,
+.panthers-container:has(.portal-circle-right:hover) .tb-thread--b,
+.panthers-container:has(.portal-circle-right:focus-visible) .tb-thread--b {
+  opacity: 0.7;
+  stroke-width: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-thread {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .tb-glint { display: none; }
+  .tb-caption {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .hero-content {
@@ -1395,6 +1633,11 @@ const isHowItWorksOpen = ref(false);
      Spezifitaet gewinnt. Deshalb hier erneut, an wirksamer Stelle. */
   .portal-circle-left,
   .portal-circle-right { display: none; }
+
+  /* Ohne die Seitenportale gibt es nichts zu beschriften und keine
+     Strecke, die sich kreuzen koennte. Die aufgeloeste Botschaft steht
+     ohnehin als Headline direkt darunter. */
+  .tb-cross { display: none; }
 }
 
 @media (max-width: 768px) {
