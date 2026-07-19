@@ -278,20 +278,26 @@ onUnmounted(() => {
     display: block;
   }
 
+  /* Das Menue in der Sprache der Szene: dunkler, durchscheinender
+     Grund statt weisser Vollbildflaeche - dieselbe Korrektur wie beim
+     Cookie-Banner. Ueber der dunklen Portalwelt war die weisse Wand
+     der haerteste Bruch der ganzen Mobilansicht. */
   .nav-links {
     position: fixed;
     top: 0;
     right: -100%;
     width: 100%;
     height: 100vh;
-    background: white;
+    background: rgba(16, 8, 34, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     flex-direction: column;
     justify-content: center;
     padding: 2rem;
     gap: 1rem;
     transition: right 0.4s cubic-bezier(0.77,0.2,0.05,1.0);
     z-index: 1000;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.4);
   }
 
   .nav-links.mobile-open {
@@ -300,7 +306,54 @@ onUnmounted(() => {
 
   .nav-links a {
     font-size: 1.5rem;
-    color: #1E0B3B !important;
+    color: #F8FAFC !important;
+    /* Choreografie: die Punkte treten nacheinander ein, sobald das
+       Menue steht - nicht als fertiger Block. */
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.35s ease, transform 0.35s ease, color 0.3s ease;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active-link {
+    color: #F4D068 !important;
+  }
+
+  .nav-links.mobile-open a {
+    opacity: 1;
+    transform: none;
+  }
+
+  .nav-links.mobile-open a:nth-child(1) { transition-delay: 0.08s; }
+  .nav-links.mobile-open a:nth-child(2) { transition-delay: 0.13s; }
+  .nav-links.mobile-open a:nth-child(3) { transition-delay: 0.18s; }
+  .nav-links.mobile-open a:nth-child(4) { transition-delay: 0.23s; }
+  .nav-links.mobile-open a:nth-child(5) { transition-delay: 0.28s; }
+  .nav-links.mobile-open a:nth-child(6) { transition-delay: 0.33s; }
+  .nav-links.mobile-open a:nth-child(7) { transition-delay: 0.38s; }
+
+  .nav-links .mobile-actions {
+    opacity: 0;
+    transition: opacity 0.4s ease 0.45s;
+  }
+
+  .nav-links.mobile-open .mobile-actions {
+    opacity: 1;
+  }
+
+  /* Das X liegt ueber dem dunklen Menue - es muss hell sein,
+     unabhaengig davon, wie die Navbar dahinter gerade aussieht. */
+  .hamburger.open span {
+    background-color: #F8FAFC;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-links a {
+      opacity: 1;
+      transform: none;
+      transition-delay: 0s !important;
+    }
+    .nav-links .mobile-actions { opacity: 1; }
   }
 
   .mobile-actions {
