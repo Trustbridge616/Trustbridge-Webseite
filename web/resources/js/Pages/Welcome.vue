@@ -1926,7 +1926,7 @@ onUnmounted(() => {
      am Zeilenende aus, sonst saesse der zentrierte Text leicht links. */
   .tresor-text {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 2.3rem;
+    font-size: 3.1rem;
     line-height: 1.45;
     text-transform: uppercase;
     letter-spacing: 0.30em;
@@ -1979,15 +1979,19 @@ onUnmounted(() => {
     pointer-events: none;
   }
 
+  /* Der volle Bloom aus der Schreibschrift-Zeit, fuer die Serife
+     nachgezogen: die duennen Striche emittieren weniger Flaeche,
+     deshalb eine dichte innere Lage (18px) unter den weiten Hoefen. */
   .tresor-mint {
     color: #8EF5D2;
     -webkit-text-fill-color: #8EF5D2;
     text-shadow:
       0 1px 0 rgba(4, 2, 10, 0.9),
       0 3px 10px rgba(4, 2, 10, 0.95),
+      0 0 18px rgba(142, 245, 210, 0.95),
       0 0 45px rgba(142, 245, 210, 0.85),
-      0 0 80px rgba(142, 245, 210, 0.5),
-      0 0 150px rgba(142, 245, 210, 0.3);
+      0 0 90px rgba(142, 245, 210, 0.55),
+      0 0 165px rgba(142, 245, 210, 0.35);
   }
 
   .tresor-gold {
@@ -2000,9 +2004,10 @@ onUnmounted(() => {
     text-shadow:
       0 1px 0 rgba(4, 2, 10, 0.9),
       0 3px 10px rgba(4, 2, 10, 0.95),
+      0 0 16px rgba(240, 207, 90, 0.95),
       0 0 35px rgba(201, 162, 39, 1),
-      0 0 60px rgba(201, 162, 39, 0.6),
-      0 0 120px rgba(201, 162, 39, 0.4);
+      0 0 70px rgba(201, 162, 39, 0.65),
+      0 0 135px rgba(201, 162, 39, 0.42);
   }
   
   .tresor-silver {
@@ -2618,7 +2623,7 @@ onUnmounted(() => {
   .tresor-text {
     margin-top: 2.6rem;
     margin-bottom: 0;
-    font-size: clamp(1.15rem, 4.6vw, 1.6rem);
+    font-size: clamp(1.35rem, 5.4vw, 1.9rem);
     letter-spacing: 0.22em;
     text-indent: 0.22em;
   }
@@ -2640,7 +2645,7 @@ onUnmounted(() => {
 @media (max-width: 600px) {
   .tresor-text {
     margin-top: 2.1rem;
-    font-size: clamp(1rem, 5vw, 1.3rem);
+    font-size: clamp(1.15rem, 5.8vw, 1.5rem);
   }
 
   .poetic-quote-wrapper {
