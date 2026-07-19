@@ -3,6 +3,22 @@
   src: url('/fonts/centurygothic.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  /* swap: Text erscheint sofort in der Ersatzschrift statt bis zu
+     3s unsichtbar zu bleiben (FOIT), waehrend die Datei laedt. */
+  font-display: swap;
+}
+
+/* Die Schreibschrift der Headline ("Trust Yourself & Bridge your
+   Gap"). Sie war im Code referenziert, aber nie geladen - Browser
+   fielen still auf die generische cursive-Vorgabe zurueck, unter
+   Windows-Chrome ist das Comic Sans. Selbst gehostet (Latin-Subset,
+   43 kB), damit zur Laufzeit kein externer Font-Host noetig ist. */
+@font-face {
+  font-family: 'Great Vibes';
+  src: url('/fonts/great-vibes-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -10,6 +26,7 @@
   src: url('/fonts/centurygothic_bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
+  font-display: swap;
 }
 
 :root {

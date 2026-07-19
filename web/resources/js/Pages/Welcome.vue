@@ -36,8 +36,12 @@
         <div class="climb-stage">
       <!-- ===== 3D STAGE SCENE ===== -->
       
-      <!-- Echte 3D SVG Merkaba (Dezent im Hintergrund) -->
-      <div class="merkaba-3d-container">
+      <!-- Echte 3D SVG Merkaba (Dezent im Hintergrund).
+           Auf Telefonen (unter 769px) steht sie per CSS auf Opacity
+           0.07 - praktisch unsichtbar, aber ihre Animationsschleife
+           rechnete voll mit. Dort wird sie gar nicht erst gemountet;
+           Tablets und Desktop bleiben unveraendert. -->
+      <div class="merkaba-3d-container" v-if="showMerkaba">
         <Merkaba3D :speed="0.003" :lineWidth="1.2" tetraAColor="#ffffff" tetraBColor="#D4AF37" />
       </div>
       <!-- Floating particle stars -->
@@ -83,12 +87,25 @@
           <div class="blurry-ring ring-right inner"></div>
         </div>
 
-        <button type="button" @click="isVideoOpen = true" class="portal-circle portal-circle-left" aria-label="Portal: Begleite mich beim Erklärvideo">
-          <img src="/trustbridge-hero-portal-left.png" alt="Portal: Begleite mich" />
+        <!-- v-if statt nur CSS: unterhalb 1025px blendet das Stylesheet
+             die Portale aus, aber ein <img> im DOM laedt trotzdem.
+             Vor der Optimierung waren das 10 MB unsichtbarer Download
+             auf jedem Handy. Die 2048er-Originale bleiben als letzter
+             Fallback; AVIF/WebP (1024px, ~80/119 kB) tragen die Last. -->
+        <button v-if="isWideView" type="button" @click="isVideoOpen = true" class="portal-circle portal-circle-left" aria-label="Portal: Begleite mich beim Erklärvideo">
+          <picture>
+            <source type="image/avif" srcset="/trustbridge-hero-portal-left-1024.avif" />
+            <source type="image/webp" srcset="/trustbridge-hero-portal-left-1024.webp" />
+            <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" decoding="async" alt="Portal: Begleite mich" />
+          </picture>
         </button>
         <PortalLoop class="panther panther-center" />
-        <button type="button" @click="isHowItWorksOpen = true" class="portal-circle portal-circle-right" aria-label="Portal: Informationen – So funktioniert's">
-          <img src="/trustbridge-hero-portal-right.png" alt="Portal: Informationen" />
+        <button v-if="isWideView" type="button" @click="isHowItWorksOpen = true" class="portal-circle portal-circle-right" aria-label="Portal: Informationen – So funktioniert's">
+          <picture>
+            <source type="image/avif" srcset="/trustbridge-hero-portal-right-1024.avif" />
+            <source type="image/webp" srcset="/trustbridge-hero-portal-right-1024.webp" />
+            <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" decoding="async" alt="Portal: Informationen" />
+          </picture>
         </button>
 
         <!-- ===== Kreuz-Bildunterschriften =====
@@ -448,6 +465,19 @@ const climbState = { c: 0, c1: 0, c2: 0, c3: 0 };
 let gsapCtx = null;
 let magnetDelegate = null;
 
+/* Breiter Viewport: steuert, ob die Seitenportale ueberhaupt im DOM
+   stehen. Gleicher Breakpoint wie im Stylesheet (1024px). */
+const isWideView = ref(true);
+let mqWide = null;
+const syncWide = () => { isWideView.value = mqWide.matches; };
+
+/* Merkaba-Grenze liegt bei 769px (dort schaltet das Stylesheet auf
+   Opacity 0.07) - bewusst getrennt von isWideView (1025px), damit
+   Tablets die Merkaba behalten. */
+const showMerkaba = ref(true);
+let mqMerkaba = null;
+const syncMerkaba = () => { showMerkaba.value = mqMerkaba.matches; };
+
 function writeClimb() {
   /* Auf <html>, nicht auf der Hero-Sektion: die Szene muss denselben
      Wert lesen koennen wie das Portal. */
@@ -466,6 +496,14 @@ function writeClimb() {
 }
 
 onMounted(() => {
+  mqWide = window.matchMedia('(min-width: 1025px)');
+  syncWide();
+  mqWide.addEventListener('change', syncWide);
+
+  mqMerkaba = window.matchMedia('(min-width: 769px)');
+  syncMerkaba();
+  mqMerkaba.addEventListener('change', syncMerkaba);
+
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   gsapCtx = gsap.context(() => {
@@ -579,6 +617,8 @@ onUnmounted(() => {
      Inertia nur die Seite tauscht und ein verwaister Trigger sonst
      auf der naechsten Seite weiterfeuerte. */
   gsapCtx?.revert();
+  mqWide?.removeEventListener('change', syncWide);
+  mqMerkaba?.removeEventListener('change', syncMerkaba);
   if (magnetDelegate) {
     document.removeEventListener('pointerover', magnetDelegate);
     magnetDelegate = null;
@@ -591,7 +631,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+/* Playfair-Import entfernt: die Schrift wurde nirgends verwendet,
+   der externe Abruf blockierte das erste Rendern um ~2s (mobil). */
 
 /* ===== PAGE WRAPPER WITH CONTINUOUS GRADIENT ===== */
 .welcome-page {
@@ -1520,6 +1561,10 @@ onUnmounted(() => {
   cursor: pointer;
   outline-offset: 8px;
 }
+
+/* Das <picture> soll im Flex-Layout unsichtbar sein - das img bleibt
+   direktes Flex-Kind wie zuvor, alle Masse gelten unveraendert. */
+.portal-circle picture { display: contents; }
 
 .portal-circle img {
   width: 78%;

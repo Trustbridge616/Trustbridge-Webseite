@@ -1,5 +1,5 @@
 <template>
-  <div class="merkaba-container">
+  <div class="merkaba-container" ref="rootEl">
     <svg class="merkaba-svg-3d" viewBox="-120 -120 240 240" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="merkaba-glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -106,10 +106,31 @@ const maleVertices = ref([]);
 const femaleEdges = ref([]);
 const femaleVertices = ref([]);
 
+const rootEl = ref(null);
+
 let angleY_A = 0;
 let angleY_B = 0;
 
 let animationFrameId;
+
+/* Die Schleife patcht pro Frame ~20 reaktive SVG-Knoten. Frueher lief
+   sie ab Mount endlos weiter - auch wenn die Merkaba laengst aus dem
+   Viewport gescrollt war. Unter Mobil-CPU-Drossel war genau das einer
+   der groessten Hauptthread-Posten der Startseite. Jetzt laeuft sie
+   nur, solange das Element wirklich zu sehen ist. */
+let running = false;
+let observer = null;
+
+function startLoop() {
+  if (running) return;
+  running = true;
+  animationFrameId = requestAnimationFrame(update);
+}
+
+function stopLoop() {
+  running = false;
+  cancelAnimationFrame(animationFrameId);
+}
 
 function project(x, y, z, angleY) {
   let cosY = Math.cos(angleY);
@@ -189,15 +210,31 @@ function update() {
   femaleEdges.value = fEdges;
   femaleVertices.value = fVerts;
 
-  animationFrameId = requestAnimationFrame(update);
+  if (running) animationFrameId = requestAnimationFrame(update);
 }
 
 onMounted(() => {
+  /* Einen Frame sofort rechnen, damit beim ersten Sichtbarwerden kein
+     leeres SVG steht - danach uebernimmt der Observer. */
+  const wasRunning = running;
+  running = false;
   update();
+  running = wasRunning;
+
+  if (typeof IntersectionObserver !== 'undefined' && rootEl.value) {
+    observer = new IntersectionObserver(
+      ([e]) => { e.isIntersecting ? startLoop() : stopLoop(); },
+      { rootMargin: '100px', threshold: 0 },
+    );
+    observer.observe(rootEl.value);
+  } else {
+    startLoop();
+  }
 });
 
 onUnmounted(() => {
-  cancelAnimationFrame(animationFrameId);
+  stopLoop();
+  observer?.disconnect();
 });
 </script>
 
