@@ -341,6 +341,13 @@
       </div>
     </div>
 
+    <!-- Uebergabe an den Footer: ein Band, das das Seitenlila in das
+         Tiefviolett des Footers ueberfuehrt, mit einem Rest Goldlicht
+         am unteren Rand. Die Deckkraft steuert das Scroll-Modul
+         (homeLowerSections) - hier steht der volle Endzustand, damit
+         das Band auch ohne JS und bei reduzierter Bewegung traegt. -->
+    <div class="footer-transition" aria-hidden="true"></div>
+
     <!-- ===== Modals ===== -->
     <!-- Video Modal -->
       <transition name="fade">
@@ -413,6 +420,7 @@ import PortalLoop from '../Components/Hero/PortalLoop.vue';
 import { onMounted, onUnmounted, ref } from 'vue';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { initHomeLowerSections } from '../animations/homeLowerSections';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -477,6 +485,7 @@ const LOOKBACK_UNTIL = 0.75;
 const climbState = { c: 0, c1: 0, c2: 0, c3: 0 };
 let gsapCtx = null;
 let magnetDelegate = null;
+let lowerSectionsCleanup = null;
 
 /* Die Wortstufen fuer die Kaskade: Element, Richtung und Schwelle.
    Die Schwellen stehen als --from im Stylesheet (inklusive der
@@ -590,38 +599,15 @@ onMounted(() => {
     tl.to(climbState, { c2: 1, duration: 0.86, ease: 'power2.inOut' }, 0.07);
     tl.to(climbState, { c3: 1, duration: 0.86, ease: 'power2.inOut' }, 0.14);
 
-    /* --- Eintritt des Inhalts unter dem Aufstieg ---
-       Schwelle, Kacheln und Garantie-Zeile treten gestaffelt ein,
-       wenn sie in den Viewport kommen - einmalig, keine Scrub-Bindung.
-       clearProps am Ende ist Pflicht: die Kacheln tragen CSS-Hover-
-       Transforms (translateY/scale), und ein liegengebliebener
-       Inline-Transform von GSAP wuerde jeden Hover ueberschreiben.
-       gsap.from erhaelt vorhandene Transform-Anteile (etwa das
-       scale(1.06) der Mittelkachel) waehrend des Tweens.
-       Bei reduzierter Bewegung entfallen die Eintritte komplett -
-       der Inhalt steht dann einfach da. */
-    if (!reduced) {
-      const reveal = (targets, trigger, extra = {}) =>
-        gsap.from(targets, {
-          scrollTrigger: { trigger, start: 'top 88%' },
-          y: 40,
-          autoAlpha: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          clearProps: 'transform,opacity,visibility',
-          ...extra,
-        });
-
-      reveal('.climb-threshold', '.climb-threshold', { y: 24 });
-      reveal('.hero-shard', '.hero-shards-grid', { stagger: 0.12 });
-      reveal('.hero-guarantee-bar', '.hero-guarantee-bar', { y: 26, duration: 0.8 });
-
-      /* Der Footer tritt leise ein. Bewusst von HIER angesteuert statt
-         in SiteFooter.vue - die Komponente ist geteilt, und die
-         Unterseiten sind handdesignt und bleiben unangetastet. */
-      reveal('.site-footer .footer-inner', '.site-footer', { y: 24, duration: 0.8 });
-    }
   });
+
+  /* Alles unterhalb des Aufstiegs (Schwelle, Kacheln, Garantie-Zeile,
+     Footer-Uebergang und Footer-Spalten) lebt als eigenes Buendel in
+     animations/homeLowerSections.js - inklusive der reduced-motion-
+     Weiche. Der Footer wird bewusst von dort angesteuert statt in
+     SiteFooter.vue: die Komponente ist geteilt, die Unterseiten sind
+     handdesignt und bleiben unangetastet. */
+  lowerSectionsCleanup = initHomeLowerSections();
 
   collectClimbWords();
   window.addEventListener('resize', markClimbWordsDirty, { passive: true });
@@ -674,6 +660,8 @@ onUnmounted(() => {
      Inertia nur die Seite tauscht und ein verwaister Trigger sonst
      auf der naechsten Seite weiterfeuerte. */
   gsapCtx?.revert();
+  lowerSectionsCleanup?.();
+  lowerSectionsCleanup = null;
   window.removeEventListener('resize', markClimbWordsDirty);
   climbWords = [];
   mqWide?.removeEventListener('change', syncWide);
@@ -2301,32 +2289,91 @@ onUnmounted(() => {
   .hero-shard {
     flex: 1;
     position: relative; border-radius: 24px; padding: 2.5rem 1.8rem;
-    text-align: center; cursor: pointer; transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* Der Lift folgt der Hand des Heros: kurz und entschieden
+       (power2.out als Bezier), kein langes Nachfedern. Bewusst als
+       CSS-Hover statt GSAP - ein Inline-Transform wuerde sich mit
+       den Eintritts-Reveals in die Quere kommen. */
+    text-align: center; cursor: pointer; transition: transform 0.3s cubic-bezier(0.5, 1, 0.89, 1);
     transform-style: preserve-3d; min-width: 300px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-decoration: none; color: #fff;
     /* Reset button styles */
     background: transparent; border: none; outline: none; appearance: none;
   }
-  
+
+  /* --- Goldschimmer-Rahmen ---
+     Die Kacheln nehmen das Licht der Ringe aus dem Hero auf: eine
+     1px-Kante, auf der ein warmes Gold mit einem Hauch Petrol
+     entlanglaeuft. Die Maske stanzt die Flaeche aus, uebrig bleibt
+     nur der Rahmen - Glas und Verlaeufe darunter bleiben unberuehrt.
+     Versetzte Takte wie beim Sheen, damit die drei nicht blinken. */
+  .hero-shard::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 24px;
+    padding: 1px;
+    background: linear-gradient(115deg,
+      rgba(212, 175, 55, 0) 0%,
+      rgba(212, 175, 55, 0.85) 22%,
+      rgba(255, 232, 160, 0.95) 32%,
+      rgba(79, 227, 212, 0.45) 52%,
+      rgba(212, 175, 55, 0) 68%,
+      rgba(212, 175, 55, 0.6) 86%,
+      rgba(212, 175, 55, 0) 100%);
+    background-size: 220% 100%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: shard-rim-shimmer 7s ease-in-out infinite;
+    opacity: 0.75;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .shard-left::after   { animation-delay: 0s; }
+  .shard-center::after { animation-delay: -2.3s; opacity: 0.95; }
+  .shard-right::after  { animation-delay: -4.6s; }
+
+  @keyframes shard-rim-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   @media (max-width: 900px) {
     .hero-shard { min-width: 100%; max-width: 400px; padding: 2.5rem 2rem; }
     .shard-center { order: -1; } /* On mobile, Center (Box auswählen) goes first! */
   }
-  
-  .hero-shard:hover { transform: translateY(-12px) scale(1.03); z-index: 10; }
-  .hero-shard:active { transform: translateY(-4px) scale(0.98); transition: all 0.1s ease; }
-  
+
+  .hero-shard:hover { transform: translateY(-6px); z-index: 10; }
+  .hero-shard:active { transform: translateY(-2px) scale(0.99); transition: transform 0.1s ease; }
+
   /* Shard Center (Box auswählen) is slightly larger and more prominent */
   .shard-center {
     transform: scale(1.06);
     z-index: 5;
   }
   .shard-center:hover {
-    transform: translateY(-15px) scale(1.09);
+    transform: translateY(-6px) scale(1.06);
   }
   .shard-center:active {
-    transform: translateY(-5px) scale(1.03);
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  /* Der Schatten waechst mit dem Lift - die Kachel hebt vom Grund ab,
+     statt zu springen. */
+  .hero-shard:hover .shard-glass {
+    box-shadow:
+      0 40px 70px rgba(0, 0, 0, 0.7),
+      0 0 30px rgba(212, 175, 55, 0.14),
+      inset 0 0 45px rgba(255, 255, 255, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  .shard-center:hover .shard-glass {
+    box-shadow:
+      0 50px 90px rgba(0, 0, 0, 0.85),
+      0 0 36px rgba(212, 175, 55, 0.2),
+      inset 0 0 50px rgba(142, 245, 210, 0.3),
+      inset 0 2px 15px rgba(212, 175, 55, 0.55);
   }
   
   /* Base Glass */
@@ -2433,13 +2480,26 @@ onUnmounted(() => {
     filter: drop-shadow(0 0 15px rgba(212,175,55,0.6)); /* Subtle Gold Note */
   }
   
+  /* Beim Hover pulst nur das Licht um das Icon - keine Skalierung,
+     keine Rotation: die Zeichnung der Shards bleibt, wie sie ist.
+     Der Puls liegt auf .shard-icon (filter), das Schweben des Moduls
+     auf dem SVG (transform) - beides kommt sich nicht in die Quere. */
   .hero-shard:hover .shard-icon {
-    transform: scale(1.15) translateY(-5px);
     color: #FFFFFF;
+    animation: shard-icon-glow-pulse 1.8s ease-in-out infinite;
   }
   .shard-center:hover .shard-icon {
     color: #FFF;
-    filter: drop-shadow(0 10px 20px rgba(142,245,210,0.8));
+    animation-name: shard-icon-glow-pulse-mint;
+  }
+
+  @keyframes shard-icon-glow-pulse {
+    0%, 100% { filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(212, 175, 55, 0.35)); }
+    50%      { filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 14px rgba(212, 175, 55, 0.75)); }
+  }
+  @keyframes shard-icon-glow-pulse-mint {
+    0%, 100% { filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(142, 245, 210, 0.4)); }
+    50%      { filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 18px rgba(142, 245, 210, 0.85)); }
   }
   
   .shard-content {
@@ -2524,6 +2584,39 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .hero-guarantee-bar { flex-direction: column; text-align: center; border-radius: 20px; padding: 20px; }
   .guarantee-link { margin-left: 0; margin-top: 8px; }
+}
+
+/* --- Uebergabe an den Footer ---
+   Das Band uebersetzt das wandernde Seitenlila in das Tiefviolett des
+   Footers (#0b021d) und laesst unten einen Rest Goldlicht stehen -
+   dieselbe Lichtsprache wie die Warmlicht-Ebene des Aufstiegs. Hier
+   steht der volle Endzustand; das Scroll-Modul blendet ihn nur ein. */
+.footer-transition {
+  height: clamp(140px, 24vh, 240px);
+  background:
+    radial-gradient(ellipse 62% 85% at 50% 100%, rgba(212, 175, 55, 0.07) 0%, transparent 62%),
+    linear-gradient(to bottom, rgba(11, 2, 29, 0) 0%, rgba(11, 2, 29, 0.55) 55%, #0b021d 100%);
+  pointer-events: none;
+}
+
+/* --- Reduzierte Bewegung ---
+   Die GSAP-Seite regelt das Modul selbst (homeLowerSections steigt
+   komplett aus). Hier stehen die CSS-Gegenstuecke: der Goldschimmer
+   wird zur ruhigen Goldkante, der Glow-Puls zum stehenden Glow. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-shard::after {
+    animation: none;
+    background: linear-gradient(115deg, rgba(212, 175, 55, 0.55), rgba(79, 227, 212, 0.3), rgba(212, 175, 55, 0.55));
+    background-size: 100% 100%;
+  }
+  .hero-shard:hover .shard-icon,
+  .shard-center:hover .shard-icon {
+    animation: none;
+    filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(212, 175, 55, 0.55));
+  }
+  /* Kein Lift: die Kacheln antworten nur noch ueber Licht und Farbe. */
+  .hero-shard:hover, .hero-shard:active { transform: none; }
+  .shard-center:hover, .shard-center:active { transform: scale(1.06); }
 }
 
 /* --- Modals --- */

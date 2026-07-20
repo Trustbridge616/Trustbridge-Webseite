@@ -66,6 +66,12 @@
         <path d="M2 19H22V21H2V19ZM3.5 17L5.5 8L12 12L18.5 8L20.5 17H3.5Z"/>
       </svg>
     </div>
+
+    <!-- Ring-Ornament: nimmt die Ringe des Hero-Portals klein und
+         transparent wieder auf. Nur auf der Startseite sichtbar -
+         Welcome setzt dafuer .footer--home; auf allen anderen Seiten
+         bleibt dieses Element display:none und der Footer unveraendert. -->
+    <div class="footer-ring" aria-hidden="true"></div>
   </footer>
 </template>
 
@@ -231,6 +237,84 @@ import { Link } from '@inertiajs/vue3';
 .footer-disclaimer {
   font-size: 0.75rem !important;
   color: rgba(255,255,255,0.25) !important;
+}
+
+/* ===================================================================
+   STARTSEITEN-ERWEITERUNGEN (.footer--home)
+   -------------------------------------------------------------------
+   Die Klasse setzt und entfernt animations/homeLowerSections.js -
+   sie existiert also nur, solange die Startseite steht. Alle Regeln
+   hier MUESSEN an .footer--home haengen: der Footer ist geteilt, und
+   die handdesignten Unterseiten duerfen sich nicht veraendern.
+   =================================================================== */
+
+/* Die Goldkante oben wird etwas waermer - sie nimmt den Faden des
+   Uebergangs-Bands auf, das direkt darueber endet. */
+.site-footer.footer--home {
+  border-top-color: rgba(212, 175, 55, 0.35);
+}
+
+/* Inhalt ueber das Ornament heben: absolut positionierte Elemente
+   malen sonst ueber den statischen Spalten - der Ring liefe quer
+   durchs Logo. Nur auf der Startseite, visuell sonst folgenlos. */
+.footer--home .footer-inner,
+.footer--home .footer-bottom {
+  position: relative;
+  z-index: 1;
+}
+
+/* Das Ring-Ornament: ein Echo der verschwommenen Hero-Ringe, klein
+   und leise im linken oberen Grund. Zwei Kreise (aussen Gold, innen
+   ein Hauch Petrol), weichgezeichnet, mit demselben ruhigen Atmen
+   wie die Kronen-Wasserzeichen-Bewegung daneben. */
+.footer-ring { display: none; }
+
+.footer--home .footer-ring {
+  display: block;
+  position: absolute;
+  left: -130px;
+  top: -150px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow:
+    0 0 40px rgba(212, 175, 55, 0.18),
+    inset 0 0 40px rgba(212, 175, 55, 0.12),
+    0 0 90px rgba(79, 227, 212, 0.10);
+  filter: blur(2px);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: footer-ring-breathe 12s ease-in-out infinite;
+}
+
+.footer--home .footer-ring::after {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 227, 212, 0.22);
+  box-shadow: 0 0 30px rgba(79, 227, 212, 0.14), inset 0 0 24px rgba(79, 227, 212, 0.08);
+}
+
+@keyframes footer-ring-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* Social-Icons im Gold-Glow der Header-Buttons: gleicher Lift
+   (-2px) und derselbe goldene Schatten wie .btn-login:hover. */
+.footer--home .social-icon:hover {
+  background: rgba(212, 175, 55, 0.25);
+  color: #D4AF37;
+  border-color: #D4AF37;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer--home .footer-ring { animation: none; }
+  .footer--home .social-icon:hover { transform: none; }
 }
 
 @media (max-width: 900px) {
