@@ -176,11 +176,9 @@
     <!-- Text und Bedienung des Aufstiegs. Eigene Ebene, weil die Szene
          darueber aria-hidden ist - das Zitat soll vorgelesen werden.
 
-         Jedes Wort ist eine Stufe: --from sagt, ab welchem Punkt des
-         Aufstiegs es erscheint beziehungsweise zurueckbleibt. So kommt
-         mit jeder Scrollbewegung wirklich eine Stufe dazu, statt dass
-         eine Liste als Ganzes ein- oder ausblendet. --i staffelt sie
-         seitlich zur Treppendiagonale. -->
+         Die Wortlisten treten mit den Scroll-Beats auf (GSAP, links
+         Beat 1, rechts Beat 2 - gestaffelt ueber stagger). --i
+         staffelt sie seitlich zur Treppendiagonale. -->
     <div class="climb-ui">
       <ul class="climb-words climb-words--left" aria-hidden="true">
         <li style="--i:0"><i class="climb-tread"></i><span>Angst</span></li>
@@ -417,7 +415,7 @@ import AppLayout from '../Layouts/AppLayout.vue';
 import SeoHead from '../Components/SeoHead.vue';
 import Merkaba3D from '../Components/Merkaba3D.vue';
 import PortalLoop from '../Components/Hero/PortalLoop.vue';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initHomeLowerSections } from '../animations/homeLowerSections';
@@ -461,6 +459,145 @@ const LOOKBACK_FROM = 0.22;
 const LOOKBACK_UNTIL = 0.75;
 
 /* ===================================================================
+   DIE DREI BEATS - Scroll-Auftritt der Seiten-Sets ueber GSAP
+   -------------------------------------------------------------------
+   Beat 0 (t=0): nur Portal und Eroeffnungszeile.
+   Beat 1: das linke Set laeuft von links ein (Medaillon-Button, Ringe,
+           Glow, Caption, Wortliste mit gestaffelten Stufen).
+   Beat 2: das rechte Set spiegelbildlich, dazu die Kreuz-Faeden.
+
+   Die Beats liegen als gestauchte Sub-Timelines auf der bestehenden
+   Master-Timeline (scrub) - gleiche Zeitachse wie Nebel, Licht und
+   Portal-Klaerung, dieselbe Pin-Strecke (.climb-track haelt die
+   Buehne per position: sticky). Ein zweiter, GSAP-gepinnter Trigger
+   auf der Hero haette mit dem Sticky kollidiert und die Kacheln
+   unterhalb mit eingefroren.
+
+   Justieren:
+     BEATS.at/span     Anteile der Bahn (0..1): wann und wie lang.
+     BEAT_DIST         Einlaufweg in px (breit/schmal).
+     WORD_STAGGER      Versatz der Wortstufen (relative Einheit).
+     Die inneren Dauern in buildSideBeat sind relative Einheiten und
+     werden auf span gestaucht - ihr Verhaeltnis bleibt erhalten.
+   =================================================================== */
+const BEATS = {
+  left:  { at: 0.08, span: 0.30 },
+  right: { at: 0.50, span: 0.30 },
+};
+const BEAT_EASE = 'power3.out';
+const BEAT_DIST = { wide: 60, narrow: 28 };
+const WORD_STAGGER = 0.08;
+const PORTAL_PARALLAX = { y: -14, scale: 1.025 };
+
+let masterTl = null;
+let heroMM = null;
+
+function buildSideBeat(side, dist) {
+  const q = (s) => document.querySelector(s);
+  const dir = side === 'left' ? -1 : 1;
+  const sub = gsap.timeline({ defaults: { ease: BEAT_EASE } });
+
+  /* autoAlpha (opacity + visibility) nimmt die unsichtbaren
+     <button>-Portale zugleich aus Tab-Reihenfolge und A11y-Baum. */
+  const medallion = [q(`.wrapper-${side}`), q(`.portal-circle-${side}`)].filter(Boolean);
+  if (medallion.length) {
+    sub.fromTo(medallion,
+      { autoAlpha: 0, x: dir * dist, scale: 0.9 },
+      { autoAlpha: 1, x: 0, scale: 1, duration: 0.9 }, 0);
+  }
+
+  /* Der Glow pulsiert per CSS-Keyframes auf opacity - eine Inline-
+     Opacity wuerde von der Animation ueberstimmt. filter: opacity()
+     umgeht das und laesst blur und Puls unangetastet. */
+  const glow = q(`.glow-${side}`);
+  if (glow) {
+    sub.fromTo(glow,
+      { filter: 'blur(80px) opacity(0)' },
+      { filter: 'blur(80px) opacity(1)', duration: 0.9, ease: 'none' }, 0.05);
+  }
+
+  const shadow = q(`.shadow-${side}`);
+  if (shadow) sub.fromTo(shadow, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 }, 0.1);
+
+  /* Erst Bild, dann Wort: Caption und Liste setzen kurz nach dem
+     Medaillon ein. */
+  const caption = q(`.tb-caption--${side}`);
+  if (caption) {
+    sub.fromTo(caption,
+      { autoAlpha: 0, y: 14 },
+      { autoAlpha: 1, y: 0, duration: 0.6 }, 0.35);
+  }
+
+  /* y bleibt das einzige getweente Transform-Glied der Stufen - die
+     Treppendiagonale (translate3d ueber --i) liegt im x-Anteil und
+     wird von GSAP unangetastet uebernommen. */
+  const list = q(`.climb-words--${side}`);
+  if (list) {
+    sub.fromTo(list,
+      { autoAlpha: 0, x: dir * 24 },
+      { autoAlpha: 1, x: 0, duration: 0.5 }, 0.3);
+    const words = list.querySelectorAll('li');
+    if (words.length) {
+      sub.fromTo(words,
+        { autoAlpha: 0, y: 16 },
+        { autoAlpha: 1, y: 0, duration: 0.5, stagger: WORD_STAGGER }, 0.4);
+    }
+  }
+
+  /* Die Kreuz-Faeden verbinden beide Captions - sie gehoeren erst ins
+     Bild, wenn mit dem rechten Set beide Seiten stehen. */
+  if (side === 'right') {
+    const threads = q('.tb-threads');
+    if (threads) sub.fromTo(threads, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 }, 0.5);
+  }
+
+  return sub;
+}
+
+/* matchMedia-Aufbau der Beats. Wird beim Wechsel der isWideView-
+   Grenze (1025px, v-if der Portal-Buttons) neu aufgerufen, damit
+   frisch gemountete Buttons mit eingefangen werden - revert() raeumt
+   dabei alle vorher gesetzten Inline-Styles ab. */
+function setupBeats() {
+  heroMM?.revert();
+  heroMM = gsap.matchMedia();
+  heroMM.add({
+    wide:   '(min-width: 1025px) and (prefers-reduced-motion: no-preference)',
+    tablet: '(min-width: 769px) and (max-width: 1024px) and (prefers-reduced-motion: no-preference)',
+    narrow: '(max-width: 768px) and (prefers-reduced-motion: no-preference)',
+    still:  '(prefers-reduced-motion: reduce)',
+  }, (ctx) => {
+    /* Reduzierte Bewegung: keine Beats. Das Basis-CSS zeigt alle
+       Elemente im symmetrischen Endzustand, der Hero steht ruhig. */
+    if (ctx.conditions.still || !masterTl) return;
+
+    const dist = ctx.conditions.narrow ? BEAT_DIST.narrow : BEAT_DIST.wide;
+    masterTl.add(buildSideBeat('left', dist).duration(BEATS.left.span), BEATS.left.at);
+    masterTl.add(buildSideBeat('right', dist).duration(BEATS.right.span), BEATS.right.at);
+
+    /* Unterhalb 1025px teilen sich beide Listen dasselbe Band in der
+       Bildmitte - die linke macht der rechten Platz, sobald Beat 2
+       ansetzt: Abloesung statt Ueberlagerung. */
+    if (ctx.conditions.tablet || ctx.conditions.narrow) {
+      const leftList = document.querySelector('.climb-words--left');
+      if (leftList) {
+        masterTl.to(leftList,
+          { autoAlpha: 0, y: -12, ease: 'power2.inOut', duration: 0.1 },
+          BEATS.right.at - 0.02);
+      }
+    }
+
+    /* Mikro-Parallaxe: das Portal bewegt sich minimal anders als die
+       einlaufenden Seiten - raeumliche Tiefe statt flacher Flaeche.
+       Nur der statische wrapper-center; panther-center und Glows
+       tragen eigene CSS-Transform-Animationen. */
+    masterTl.fromTo('.wrapper-center',
+      { y: 0, scale: 1 },
+      { y: PORTAL_PARALLAX.y, scale: PORTAL_PARALLAX.scale, ease: 'power2.inOut', duration: 1 }, 0);
+  });
+}
+
+/* ===================================================================
    CHOREOGRAFIE UEBER GSAP SCROLLTRIGGER
    -------------------------------------------------------------------
    Die Architektur bleibt: das Stylesheet liest vier Variablen vom
@@ -487,40 +624,17 @@ let gsapCtx = null;
 let magnetDelegate = null;
 let lowerSectionsCleanup = null;
 
-/* Die Wortstufen fuer die Kaskade: Element, Richtung und Schwelle.
-   Die Schwellen stehen als --from im Stylesheet (inklusive der
-   Mobil-Overrides in den Media Queries) und werden hier als
-   berechneter Wert ausgelesen - nach einem Resize neu, weil dann
-   andere Media-Query-Werte gelten koennen. */
-let climbWords = [];
-let climbWordsDirty = false;
-const markClimbWordsDirty = () => { climbWordsDirty = true; };
-
-let labelState = null;
-
-function collectClimbWords() {
-  climbWords = [];
-  document.querySelectorAll('.climb-words--left li').forEach((el) => {
-    climbWords.push({ el, cls: 'w-out', from: parseFloat(getComputedStyle(el).getPropertyValue('--from')) || 0 });
-  });
-  document.querySelectorAll('.climb-words--right li').forEach((el) => {
-    climbWords.push({ el, cls: 'w-in', from: parseFloat(getComputedStyle(el).getPropertyValue('--from')) || 0 });
-  });
-
-  /* Die Ueberzeilen: links geht, wenn die Liste halb gegangen ist
-     (drittes Wort), rechts kommt mit dem ersten goldenen Wort. */
-  const leftUl = document.querySelector('.climb-words--left');
-  const rightUl = document.querySelector('.climb-words--right');
-  labelState = leftUl && rightUl && climbWords.length >= 6
-    ? { leftUl, rightUl, leftMid: climbWords[2].from, rightFirst: climbWords[5].from }
-    : null;
-}
-
 /* Breiter Viewport: steuert, ob die Seitenportale ueberhaupt im DOM
-   stehen. Gleicher Breakpoint wie im Stylesheet (1024px). */
+   stehen. Gleicher Breakpoint wie im Stylesheet (1024px). Nach einem
+   Flip haengt der Portal-Button neu im DOM - die Beats werden nach
+   dem Rerender neu aufgebaut, damit er mitspielt. */
 const isWideView = ref(true);
 let mqWide = null;
-const syncWide = () => { isWideView.value = mqWide.matches; };
+const syncWide = () => {
+  if (isWideView.value === mqWide.matches) return;
+  isWideView.value = mqWide.matches;
+  nextTick(setupBeats);
+};
 
 /* Merkaba-Grenze liegt bei 769px (dort schaltet das Stylesheet auf
    Opacity 0.07) - bewusst getrennt von isWideView (1025px), damit
@@ -543,18 +657,6 @@ function writeClimb() {
     showLookBack.value = offer;
     /* Verlaesst man das Fenster, klappt auch die Zeile wieder zu. */
     if (!offer) isLookingBack.value = false;
-  }
-
-  /* Kaskade der Wortstufen: der Scroll schaltet nur die Klasse, das
-     Faden laeuft als Zeit-Transition im Stylesheet aus. toggle mit
-     unveraendertem Zustand ist praktisch kostenlos. */
-  if (climbWordsDirty) { collectClimbWords(); climbWordsDirty = false; }
-  for (const w of climbWords) {
-    w.el.classList.toggle(w.cls, climbState.c2 >= w.from);
-  }
-  if (labelState) {
-    labelState.leftUl.classList.toggle('label-away', climbState.c2 >= labelState.leftMid);
-    labelState.rightUl.classList.toggle('label-here', climbState.c2 >= labelState.rightFirst);
   }
 }
 
@@ -599,7 +701,14 @@ onMounted(() => {
     tl.to(climbState, { c2: 1, duration: 0.86, ease: 'power2.inOut' }, 0.07);
     tl.to(climbState, { c3: 1, duration: 0.86, ease: 'power2.inOut' }, 0.14);
 
+    /* Die Beat-Sub-Timelines docken von aussen an (setupBeats). */
+    masterTl = tl;
+
   });
+
+  /* Die drei Beats der Seiten-Sets - nach der Master-Timeline, weil
+     sie sich auf deren Zeitachse setzen. */
+  setupBeats();
 
   /* Alles unterhalb des Aufstiegs (Schwelle, Kacheln, Garantie-Zeile,
      Footer-Uebergang und Footer-Spalten) lebt als eigenes Buendel in
@@ -608,9 +717,6 @@ onMounted(() => {
      SiteFooter.vue: die Komponente ist geteilt, die Unterseiten sind
      handdesignt und bleiben unangetastet. */
   lowerSectionsCleanup = initHomeLowerSections();
-
-  collectClimbWords();
-  window.addEventListener('resize', markClimbWordsDirty, { passive: true });
 
   /* Erster Zustand sofort, auch mitten auf der Seite (Reload mit
      erhaltener Scrollposition): ScrollTrigger setzt die Timeline beim
@@ -659,11 +765,14 @@ onUnmounted(() => {
   /* revert() raeumt Timeline UND ScrollTrigger ab - noetig, weil
      Inertia nur die Seite tauscht und ein verwaister Trigger sonst
      auf der naechsten Seite weiterfeuerte. */
+  /* Beats zuerst: ihr revert() loest die Sub-Timelines samt Inline-
+     Styles aus der Master-Timeline, bevor der Kontext faellt. */
+  heroMM?.revert();
+  heroMM = null;
+  masterTl = null;
   gsapCtx?.revert();
   lowerSectionsCleanup?.();
   lowerSectionsCleanup = null;
-  window.removeEventListener('resize', markClimbWordsDirty);
-  climbWords = [];
   mqWide?.removeEventListener('change', syncWide);
   mqMerkaba?.removeEventListener('change', syncMerkaba);
   if (magnetDelegate) {
@@ -953,10 +1062,9 @@ onUnmounted(() => {
 }
 
 /* --- Die Wortgruppen als Stufen ---
-   Jedes Wort traegt ein --from: den Punkt des Aufstiegs, an dem es
-   erscheint beziehungsweise zurueckbleibt. Dadurch kommt mit jeder
-   Scrollbewegung wirklich eine Stufe dazu, statt dass eine ganze
-   Liste auf einmal umschaltet. --i staffelt sie zur Treppendiagonale. */
+   Der Auftritt gehoert den Scroll-Beats (GSAP): die linke Liste
+   kommt mit Beat 1, die rechte mit Beat 2, die Stufen jeweils
+   gestaffelt. --i staffelt sie raeumlich zur Treppendiagonale. */
 .climb-words {
   position: absolute;
   /* Nicht auf halber Hoehe: dort beginnen die seitlichen
@@ -997,18 +1105,17 @@ onUnmounted(() => {
 }
 
 /* --- Leise Ueberzeilen ---
-   Der Rahmen fuer die Wortpaare, in den Worten des Users: links das,
-   was festhaelt, rechts das, was frei wird. Bewusst kein 'Angst ->
-   Vertrauen' - die Paare sollen entdeckt werden (gleiche Hoehe,
-   gleicher Rhythmus), die Ueberzeilen lenken nur den Blick.
-   Geschaltet per Klasse aus writeClimb, nicht per :has(). */
+   Der Rahmen fuer die Wortpaare: links das, was festhaelt, rechts
+   das, was frei wird. Bewusst kein 'Angst -> Vertrauen' - die Paare
+   sollen entdeckt werden (gleiche Hoehe, gleicher Rhythmus). Die
+   Ueberzeilen reiten auf dem Beat-Fade ihrer Liste (GSAP tweent das
+   <ul>, das ::before faehrt mit). */
 .climb-words::before {
   display: block;
   font-size: 0.82em;
   letter-spacing: 0.18em;
   line-height: 1.4;
-  opacity: 0;
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  opacity: 0.85;
   pointer-events: none;
 }
 
@@ -1017,12 +1124,6 @@ onUnmounted(() => {
   color: rgba(79, 227, 212, 0.62);
   text-shadow: 0 2px 8px rgba(4, 2, 10, 0.9);
   align-self: flex-start;
-  opacity: 0.85;
-}
-
-.climb-words--left.label-away::before {
-  opacity: 0;
-  transform: translateY(1.5vh);
 }
 
 .climb-words--right::before {
@@ -1030,12 +1131,6 @@ onUnmounted(() => {
   color: rgba(240, 207, 90, 0.66);
   text-shadow: 0 2px 8px rgba(4, 2, 10, 0.9);
   align-self: flex-end;
-  transform: translateY(-1vh);
-}
-
-.climb-words--right.label-here::before {
-  opacity: 0.85;
-  transform: none;
 }
 
 /* Links: bleibt zurueck. Die Stufen verlieren sich nach unten aussen. */
@@ -1054,41 +1149,13 @@ onUnmounted(() => {
     0 0 64px rgba(45, 212, 191, 0.3);
 }
 
-/* Die Zeitpunkte stehen im Stylesheet, nicht inline: inline gesetzte
-   Custom Properties schlagen jede Media Query, die Mobil-Staffelung
-   weiter unten koennte sie sonst gar nicht erreichen. */
-.climb-words--left  li:nth-child(1) { --from: 0.02; }
-.climb-words--left  li:nth-child(2) { --from: 0.10; }
-.climb-words--left  li:nth-child(3) { --from: 0.18; }
-.climb-words--left  li:nth-child(4) { --from: 0.26; }
-.climb-words--left  li:nth-child(5) { --from: 0.34; }
-
-/* Jede rechte Schwelle = linker Partner + 0.28: dieselbe
-   Reihenfolge, derselbe Rhythmus - erst geht Angst, spaeter kommt an
-   ihrer Hoehe Vertrauen. */
-.climb-words--right li:nth-child(1) { --from: 0.30; }
-.climb-words--right li:nth-child(2) { --from: 0.38; }
-.climb-words--right li:nth-child(3) { --from: 0.46; }
-.climb-words--right li:nth-child(4) { --from: 0.54; }
-.climb-words--right li:nth-child(5) { --from: 0.62; }
-
-/* Kaskade: die Schwelle (--from) haengt am gescrubbten Scroll-Wert,
-   das Faden selbst ist eine ZEIT-Transition. Frueher war die
-   Deckkraft eine reine Funktion des Scrollwerts - bei normalem
-   Tempo rauschten alle Fenster in einem Wimpernschlag vorbei und
-   die Liste wirkte wie ein Block. Jetzt stoesst der Scroll nur den
-   Wechsel an; die ~0.4s pro Wort laufen in Echtzeit aus, auch wenn
-   der Nutzer schneller ist. Kein Snapping, kein Anhalten: der
-   Scrollfluss wird nie beruehrt. */
+/* Die Stufen selbst gehoeren den Beats: GSAP staffelt die <li> beim
+   Einlaufen (autoAlpha + y). Das Stylesheet traegt nur die ruhende
+   Treppendiagonale ueber --i - GSAP tweent ausschliesslich y und
+   uebernimmt den x-Anteil unangetastet. Keine transition hier:
+   sie wuerde gegen die gescrubbten Inline-Werte arbeiten. */
 .climb-words--left li {
-  opacity: 1;
   transform: translate3d(calc(var(--i) * -0.5rem), 0, 0);
-  transition: opacity 0.38s ease, transform 0.45s cubic-bezier(0.22, 0.68, 0, 1);
-}
-
-.climb-words--left li.w-out {
-  opacity: 0;
-  transform: translate3d(calc(var(--i) * -0.5rem - 0.4rem), 3vh, 0);
 }
 
 /* Rechts: tritt hervor. Die Stufen steigen nach oben aussen. */
@@ -1154,31 +1221,8 @@ onUnmounted(() => {
 
 .climb-words--right li {
   flex-direction: row-reverse;
-  opacity: 0;
-  transform: translate3d(calc(var(--i) * 0.5rem + 0.4rem), 3vh, 0);
-  transition: opacity 0.38s ease, transform 0.45s cubic-bezier(0.22, 0.68, 0, 1);
-}
-
-.climb-words--right li.w-in {
-  opacity: 1;
   transform: translate3d(calc(var(--i) * 0.5rem), 0, 0);
 }
-
-/* Der Feinschliff fuer schnelles Scrollen: bei einem Mausrad-Wurf
-   kollabieren alle Schwellen in denselben Frame, und ohne Versatz
-   faedeln die Woerter als Block. Kleine Delays in Erscheinungs-
-   richtung halten die Welle - beim langsamen Scrollen sind sie
-   unmerklich, weil die Schwellen ohnehin nacheinander fallen. */
-.climb-words--left  li:nth-child(1),
-.climb-words--right li:nth-child(1) { transition-delay: 0s; }
-.climb-words--left  li:nth-child(2),
-.climb-words--right li:nth-child(2) { transition-delay: 0.07s; }
-.climb-words--left  li:nth-child(3),
-.climb-words--right li:nth-child(3) { transition-delay: 0.14s; }
-.climb-words--left  li:nth-child(4),
-.climb-words--right li:nth-child(4) { transition-delay: 0.21s; }
-.climb-words--left  li:nth-child(5),
-.climb-words--right li:nth-child(5) { transition-delay: 0.28s; }
 
 /* --- Die Zeilen des Aufstiegs --- */
 .climb-line {
@@ -1209,7 +1253,9 @@ onUnmounted(() => {
   );
   font-size: clamp(0.95rem, 1.45vw, 1.18rem);
   color: #F2F6FF;
-  opacity: calc(1 - var(--climb-1, 0) * 2.6);
+  /* Der Ausgangs-Anker der drei Beats: bleibt den ganzen Aufstieg
+     ueber praesent und geht erst mit dem Ausklang der climb-ui
+     (Deckkraft-Calc ab 0.92) - nur der leichte Auftrieb bleibt. */
   transform: translate3d(-50%, calc(var(--climb-1, 0) * -3vh), 0);
 }
 
@@ -1286,29 +1332,10 @@ onUnmounted(() => {
   .climb-words--left,
   .climb-words--right { top: 22vh; }
 
-  /* Dasselbe Band fuer beide Gruppen - der Platz reicht hier nur
-     einmal. Damit sie sich nicht ueberlagern, ruecken die rechten
-     Stufen zeitlich nach hinten: sie treten erst auf, wenn die linken
-     zurueckgeblieben sind. Die Woerter loesen einander ab, statt
-     nebeneinander zu stehen. */
-  .climb-words--left li:nth-child(1) { --from: 0.02; }
-  .climb-words--left li:nth-child(2) { --from: 0.08; }
-  .climb-words--left li:nth-child(3) { --from: 0.14; }
-  .climb-words--left li:nth-child(4) { --from: 0.20; }
-  .climb-words--left li:nth-child(5) { --from: 0.26; }
-
-  .climb-words--right li:nth-child(1) { --from: 0.40; }
-  .climb-words--right li:nth-child(2) { --from: 0.46; }
-  .climb-words--right li:nth-child(3) { --from: 0.52; }
-  .climb-words--right li:nth-child(4) { --from: 0.58; }
-  .climb-words--right li:nth-child(5) { --from: 0.64; }
-
   /* Ohne die seitliche Staffelung, die nur im Spaltenlayout als
      Treppe lesbar ist. */
   .climb-words--left li,
-  .climb-words--right li,
-  .climb-words--left li.w-out,
-  .climb-words--right li.w-in {
+  .climb-words--right li {
     transform: none;
   }
 
@@ -1338,25 +1365,15 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   /* Die Lichtwechsel bleiben - sie sind der Inhalt. Was entfaellt,
-     ist die scrollgekoppelte Verschiebung und das Eigenleben. */
+     ist die scrollgekoppelte Verschiebung und das Eigenleben. Die
+     Beats entfallen komplett (siehe setupBeats): alle Seiten-Sets
+     stehen statisch im Endzustand. */
   .climb-fog,
   .climb-sky,
   .climb-words--left li,
-  .climb-words--right li,
-  .climb-words--left li.w-out,
-  .climb-words--right li.w-in {
+  .climb-words--right li {
     transform: none;
   }
-
-  /* Keine Kaskade: die Woerter springen an der Schwelle direkt in
-     ihren Endzustand. */
-  .climb-words--left li,
-  .climb-words--right li {
-    transition: none;
-    transition-delay: 0s;
-  }
-
-  .climb-words::before { transition: none; }
 
   .climb-line--foot { transform: translateX(-50%); }
 
@@ -1369,6 +1386,13 @@ onUnmounted(() => {
     animation: none;
     opacity: 0.7;
   }
+}
+
+/* Reduzierte Bewegung auf schmalen Viewports: beide Listen teilen
+   sich dasselbe Band - statisch steht nur die rechte, der Endzustand
+   der Abloesung. */
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .climb-words--left { display: none; }
 }
 
 /* ===== SPOTLIGHT BEAMS ===== */
@@ -1844,17 +1868,13 @@ onUnmounted(() => {
   z-index: 4;              /* vor Schatten und Ringen */
   text-align: center;
   pointer-events: none;
-  opacity: 0;
-  animation: tb-caption-in 1.4s ease-out 0.5s forwards;
+  /* Kein Lade-Fade mehr: den Auftritt fuehren die Scroll-Beats
+     (GSAP, autoAlpha). Sichtbar als Basiszustand traegt zugleich
+     den Reduced-Motion-Fall. */
 }
 
 .tb-caption--left  { left: 0; }
 .tb-caption--right { right: 0; }
-
-@keyframes tb-caption-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 .tb-word {
   display: block;
@@ -1933,10 +1953,6 @@ onUnmounted(() => {
     stroke-dashoffset: 0;
   }
   .tb-glint { display: none; }
-  .tb-caption {
-    animation: none;
-    opacity: 1;
-  }
 }
 
 .hero-content {
