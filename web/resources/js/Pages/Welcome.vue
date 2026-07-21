@@ -422,6 +422,15 @@ import { initHomeLowerSections } from '../animations/homeLowerSections';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* Nur im Dev-Modus: GSAP fuer die manuelle Verifikation in der
+   Browser-Konsole erreichbar machen. Als ES-Modul gebuendelt liegt
+   es sonst in keinem globalen Namensraum - window.gsap === undefined
+   heisst also nicht, dass GSAP fehlt. */
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.gsap = gsap;
+  window.ScrollTrigger = ScrollTrigger;
+}
+
 const isVideoOpen = ref(false);
 const isHowItWorksOpen = ref(false);
 
