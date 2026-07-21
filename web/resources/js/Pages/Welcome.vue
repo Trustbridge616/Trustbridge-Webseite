@@ -8,6 +8,26 @@
       :jsonLd="homeLd"
     />
     <div class="welcome-page">
+      <!-- ===== Sternenhimmel (nur Home) =====
+           Liegt als erstes Kind hinter allem Inhalt: die Sektionen
+           danach sind positioniert und malen darueber. Drei getilte
+           Gradient-Ebenen tragen die Masse der Sterne (eine einzige
+           Compositor-Ebene je Layer, kein DOM-Knoten pro Stern),
+           dazu acht einzelne Drifter fuer die langsame Bewegung -
+           ueberwiegend silbrig, vereinzelt gold wie das Logo. -->
+      <div class="starfield" aria-hidden="true">
+        <div class="starfield-layer starfield-layer--a"></div>
+        <div class="starfield-layer starfield-layer--b"></div>
+        <div class="starfield-layer starfield-layer--gold"></div>
+        <span class="starfield-drifter" style="--sx:8%;  --sy:22%; --sd:44s; --dx:5vw;  --dy:-4vh"></span>
+        <span class="starfield-drifter" style="--sx:78%; --sy:12%; --sd:52s; --dx:-6vw; --dy:3vh"></span>
+        <span class="starfield-drifter" style="--sx:30%; --sy:55%; --sd:48s; --dx:4vw;  --dy:5vh"></span>
+        <span class="starfield-drifter" style="--sx:88%; --sy:64%; --sd:56s; --dx:-5vw; --dy:-3vh"></span>
+        <span class="starfield-drifter" style="--sx:15%; --sy:80%; --sd:60s; --dx:6vw;  --dy:-5vh"></span>
+        <span class="starfield-drifter" style="--sx:55%; --sy:35%; --sd:50s; --dx:-4vw; --dy:4vh"></span>
+        <span class="starfield-drifter starfield-drifter--gold" style="--sx:65%; --sy:75%; --sd:64s; --dx:-5vw; --dy:-4vh"></span>
+        <span class="starfield-drifter starfield-drifter--gold" style="--sx:22%; --sy:8%;  --sd:58s; --dx:5vw;  --dy:5vh"></span>
+      </div>
       <!-- Preview Merkaba entfernt, jetzt im Hero-Hintergrund -->
 
     <!-- ===== DER AUFSTIEG =====
@@ -810,6 +830,128 @@ onUnmounted(() => {
   overflow-x: clip;
   max-width: 100vw;
   color: #1e0b3b;
+  /* Bezugsrahmen fuer den absoluten Sternenhimmel darunter. */
+  position: relative;
+}
+
+/* ===== STERNENHIMMEL (nur Home) =====
+   Absolut ueber die volle Seitenhoehe, nicht fixed: ein fixed-Layer
+   wuerde an transformierten Vorfahren haengen bleiben, und mit-
+   scrollende Sterne lesen sich ohnehin als Himmel hinter der Szene.
+   Die Ebenen tilen kleine radial-gradient-Punkte; animiert werden
+   ausschliesslich opacity und transform (Compositor, kein Repaint). */
+.starfield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.starfield-layer {
+  position: absolute;
+  /* Ueberstand, damit die driftende Ebene keine leeren Raender zieht. */
+  inset: -80px;
+  background-repeat: repeat;
+}
+
+/* Ebene A: die dichte, feine Silberschicht. */
+.starfield-layer--a {
+  background-image:
+    radial-gradient(1px 1px at 25px 35px,  rgba(255, 255, 255, 0.85), transparent 100%),
+    radial-gradient(1px 1px at 110px 190px, rgba(226, 232, 240, 0.7),  transparent 100%),
+    radial-gradient(1px 1px at 200px 90px,  rgba(255, 255, 255, 0.6),  transparent 100%),
+    radial-gradient(1px 1px at 285px 250px, rgba(226, 232, 240, 0.75), transparent 100%),
+    radial-gradient(1px 1px at 350px 140px, rgba(255, 255, 255, 0.55), transparent 100%),
+    radial-gradient(1px 1px at 65px 300px,  rgba(255, 255, 255, 0.7),  transparent 100%),
+    radial-gradient(1px 1px at 240px 370px, rgba(226, 232, 240, 0.6),  transparent 100%),
+    radial-gradient(1px 1px at 390px 320px, rgba(255, 255, 255, 0.65), transparent 100%);
+  background-size: 420px 420px;
+  animation: starfield-twinkle 7s ease-in-out infinite;
+}
+
+/* Ebene B: groessere, seltenere Sterne mit eigenem Takt und ganz
+   langsamer Drift - die Bewegung im Himmel, ohne einzelne Ausreisser. */
+.starfield-layer--b {
+  background-image:
+    radial-gradient(1.5px 1.5px at 80px 60px,   rgba(255, 255, 255, 0.9),  transparent 100%),
+    radial-gradient(1.5px 1.5px at 310px 220px, rgba(226, 232, 240, 0.75), transparent 100%),
+    radial-gradient(2px 2px at 470px 120px,     rgba(255, 255, 255, 0.8),  transparent 100%),
+    radial-gradient(1.5px 1.5px at 180px 420px, rgba(255, 255, 255, 0.65), transparent 100%),
+    radial-gradient(2px 2px at 420px 480px,     rgba(226, 232, 240, 0.7),  transparent 100%);
+  background-size: 560px 560px;
+  animation:
+    starfield-twinkle 9s ease-in-out -4s infinite,
+    starfield-drift 90s ease-in-out infinite alternate;
+}
+
+/* Ebene C: die goldenen Akzente - bewusst sparsam, im Ton des Logos. */
+.starfield-layer--gold {
+  background-image:
+    radial-gradient(1.5px 1.5px at 140px 100px, rgba(240, 207, 90, 0.8),  transparent 100%),
+    radial-gradient(2px 2px at 520px 340px,     rgba(212, 175, 55, 0.65), transparent 100%),
+    radial-gradient(1.5px 1.5px at 340px 560px, rgba(240, 207, 90, 0.55), transparent 100%);
+  background-size: 720px 720px;
+  animation: starfield-twinkle 11s ease-in-out -7s infinite;
+}
+
+@keyframes starfield-twinkle {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.8; }
+}
+
+@keyframes starfield-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(46px, -30px, 0); }
+}
+
+/* Die Drifter: wenige einzelne Sterne, die spuerbar (aber sehr
+   langsam) wandern. Position, Dauer und Weg kommen als Variablen
+   aus dem Markup; die Twinkle-Phase haengt an der Dauer und laeuft
+   dadurch je Stern versetzt. */
+.starfield-drifter {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(226, 232, 240, 0.5) 60%, transparent 100%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.55), 0 0 14px rgba(226, 232, 240, 0.25);
+  animation:
+    starfield-drifter-move var(--sd) ease-in-out infinite alternate,
+    starfield-drifter-twinkle calc(var(--sd) / 5) ease-in-out calc(var(--sd) / -7) infinite;
+}
+
+.starfield-drifter--gold {
+  background: radial-gradient(circle, rgba(255, 232, 160, 0.95) 0%, rgba(240, 207, 90, 0.5) 60%, transparent 100%);
+  box-shadow: 0 0 6px rgba(240, 207, 90, 0.6), 0 0 14px rgba(201, 162, 39, 0.3);
+}
+
+@keyframes starfield-drifter-move {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--dx), var(--dy), 0); }
+}
+
+@keyframes starfield-drifter-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 0.85; }
+}
+
+/* Schmale Viewports: eine Silberebene weniger und nur die halbe
+   Drifter-Schar - gleiche Stimmung, weniger Arbeit fuers Geraet. */
+@media (max-width: 768px) {
+  .starfield-layer--b { display: none; }
+  .starfield-drifter:nth-child(odd) { display: none; }
+}
+
+/* Reduzierte Bewegung: der Himmel steht still, die Sterne bleiben. */
+@media (prefers-reduced-motion: reduce) {
+  .starfield-layer,
+  .starfield-drifter {
+    animation: none;
+    opacity: 0.55;
+  }
 }
 
 .merkaba-3d-container {
