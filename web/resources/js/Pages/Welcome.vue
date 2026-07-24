@@ -16,9 +16,16 @@
            dazu acht einzelne Drifter fuer die langsame Bewegung -
            ueberwiegend silbrig, vereinzelt gold wie das Logo. -->
       <div class="starfield" aria-hidden="true">
-        <div class="starfield-layer starfield-layer--a"></div>
-        <div class="starfield-layer starfield-layer--b"></div>
-        <div class="starfield-layer starfield-layer--gold"></div>
+        <!-- Die getilten Ebenen leben in einem sticky-Fenster in
+             Viewport-Hoehe: als animierte Ebenen ueber die volle
+             Seitenhoehe waren das drei riesige GPU-Texturen, die beim
+             Scrollen jede Frame neu zusammengesetzt wurden - genau
+             das Ruckeln. Muster, Dichte und Funkeln sind identisch. -->
+        <div class="starfield-sky">
+          <div class="starfield-layer starfield-layer--a"></div>
+          <div class="starfield-layer starfield-layer--b"></div>
+          <div class="starfield-layer starfield-layer--gold"></div>
+        </div>
         <span class="starfield-drifter" style="--sx:8%;  --sy:22%; --sd:44s; --dx:5vw;  --dy:-4vh"></span>
         <span class="starfield-drifter" style="--sx:78%; --sy:12%; --sd:52s; --dx:-6vw; --dy:3vh"></span>
         <span class="starfield-drifter" style="--sx:30%; --sy:55%; --sd:48s; --dx:4vw;  --dy:5vh"></span>
@@ -844,8 +851,23 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
+  /* clip statt hidden: hidden macht dieses Element zum Scroll-
+     Container, und daran wuerde das sticky-Fenster darunter kleben
+     statt am Viewport. clip schneidet identisch ab. */
+  overflow: clip;
   pointer-events: none;
+}
+
+/* Das Fenster fuer die getilten Ebenen: klebt in Viewport-Hoehe am
+   Bildrand, waehrend .starfield ueber die volle Seite laeuft. Die
+   drei animierten Ebenen sind dadurch nur noch bildschirmgross
+   (vorher: Seitenhoehe mal drei - der Grund fuer das Scroll-Ruckeln).
+   Der Himmel steht dabei still hinter der Szene, wie ein echter. */
+.starfield-sky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: clip;
 }
 
 .starfield-layer {

@@ -34,6 +34,7 @@
           <Link href="/partner" :class="{ 'active-link': isActive('/partner') }" class="nav-partner-link" @click="isMenuOpen = false">Partner</Link>
           <a href="/prizes#writer" :class="{ 'active-link': isActive('/writer') }" @click="isMenuOpen = false">Writer</a>
           <Link href="/faq" :class="{ 'active-link': isActive('/faq') }" @click="isMenuOpen = false">FAQ</Link>
+          <Link href="/builder/instagram" :class="{ 'active-link': isActive('/builder/instagram') }" @click="isMenuOpen = false">Instagram Builder</Link>
 
           <!-- Mobile Only Actions -->
           <div class="mobile-actions">
@@ -375,6 +376,7 @@ onUnmounted(() => {
   .nav-links.mobile-open a:nth-child(5) { transition-delay: 0.28s; }
   .nav-links.mobile-open a:nth-child(6) { transition-delay: 0.33s; }
   .nav-links.mobile-open a:nth-child(7) { transition-delay: 0.38s; }
+  .nav-links.mobile-open a:nth-child(8) { transition-delay: 0.43s; }
 
   .nav-links .mobile-actions {
     opacity: 0;

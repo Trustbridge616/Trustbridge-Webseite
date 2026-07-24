@@ -35,6 +35,10 @@ return [
         ],
     ],
 
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
     'stripe' => [
         'model'   => App\Models\User::class,
         'key'     => env('STRIPE_PUBLIC_KEY'),

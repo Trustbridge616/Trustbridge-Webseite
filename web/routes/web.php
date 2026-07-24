@@ -20,6 +20,25 @@ Route::get('/faq', fn() => Inertia::render('Faq'))->name('faq');
 Route::get('/partner', fn() => Inertia::render('Partner'))->name('partner');
 Route::get('/kontakt', fn() => Inertia::render('Kontakt'))->name('kontakt');
 
+// Interner Builder (noindex)
+Route::get('/builder/instagram', fn() => Inertia::render('Builder/InstagramGrundfoto'))->name('builder.instagram');
+Route::post('/builder/ai', [\App\Http\Controllers\BuilderAiController::class, 'generate'])->name('builder.ai');
+Route::get('/builder/backgrounds', function () {
+    $dir = public_path('assets/trustbridge/builder/backgrounds');
+    if (!is_dir($dir)) {
+        return response()->json([]);
+    }
+    $files = collect(scandir($dir))
+        ->filter(fn($f) => preg_match('/\.(jpe?g|png|webp)$/i', $f))
+        ->sort()
+        ->values()
+        ->map(fn($f) => [
+            'src'  => '/assets/trustbridge/builder/backgrounds/' . $f,
+            'name' => ucwords(str_replace(['-', '_'], ' ', pathinfo($f, PATHINFO_FILENAME))),
+        ]);
+    return response()->json($files);
+})->name('builder.backgrounds');
+
 // Legal
 Route::get('/impressum', fn() => Inertia::render('Legal/Impressum'))->name('impressum');
 Route::get('/datenschutz', fn() => Inertia::render('Legal/Datenschutz'))->name('datenschutz');
