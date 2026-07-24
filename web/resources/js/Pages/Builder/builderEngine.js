@@ -36,7 +36,8 @@ export const FILTERS = {
 
 // Das Original-Logo ist hochkant (2:3) — Stufen entsprechend großzügiger
 // (24.07.2026: zweimal auf Wunsch vergrößert — insgesamt ca. +35 %)
-export const LOGO_SIZES = { klein: 0.12, mittel: 0.162, gross: 0.216 }
+// (25.07.2026: erneut vergrößert, ca. +20 % je Stufe)
+export const LOGO_SIZES = { klein: 0.145, mittel: 0.195, gross: 0.26 }
 
 // CTA-Farben: je nach Hintergrund umschaltbar; Türkis und Gold leuchten
 export const CTA_COLORS = {
@@ -155,18 +156,30 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
+// Cover-Einpassung wie CSS `object-fit: cover`: skaliert das Bild auf den
+// Zielbereich (scale = max aus Breiten- und Höhenverhältnis), horizontal
+// zentriert. focusY (0..1, Default 0.5) richtet den vertikalen Ausschnitt
+// aus: 0 = Oberkante bleibt (z. B. Baumkronen), 1 = Unterkante bleibt.
+// Nie verzerrt, füllt den Bereich immer vollständig.
+function drawImageCover(ctx, img, dx, dy, dw, dh, focusY = 0.5) {
+  const scale = Math.max(dw / img.width, dh / img.height)
+  const w = img.width * scale
+  const h = img.height * scale
+  ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) * focusY, w, h)
+}
+
 function drawBackground(ctx, o) {
   const { W, H } = o
   ctx.clearRect(0, 0, W, H)
   ctx.save()
-  if (o.bgMode === 'image' && o.bgImage) {
+  // Im Shard-Stil sitzt das Bild IN der Karte (siehe drawCard) — die
+  // Fläche dahinter trägt den ruhigen Marken-Verlauf statt des Fotos.
+  const imageInShard = o.variant === 'shard' && o.bgMode === 'image' && o.bgImage
+  if (o.bgMode === 'image' && o.bgImage && !imageInShard) {
     ctx.filter = (FILTERS[o.filter] || FILTERS.keiner).css
-    const s = Math.max(W / o.bgImage.width, H / o.bgImage.height)
-    const dw = o.bgImage.width * s
-    const dh = o.bgImage.height * s
-    ctx.drawImage(o.bgImage, (W - dw) / 2, (H - dh) / 2, dw, dh)
+    drawImageCover(ctx, o.bgImage, 0, 0, W, H, o.bgFocus ?? 0.5)
     ctx.filter = 'none'
-  } else if (o.bgMode === 'verlauf') {
+  } else if (o.bgMode === 'verlauf' || imageInShard) {
     const g = ctx.createLinearGradient(0, 0, W * 0.3, H)
     g.addColorStop(0, '#1a1033')
     g.addColorStop(0.45, '#0e1b2e')
@@ -280,6 +293,60 @@ function drawIdentityLine(ctx, o, baselineY, unit) {
   return lineGap + size * 1.5
 }
 
+// Autoren-Foto (Ben) — runder Ausschnitt unten links. Quelle liegt in der
+// Vue-Seite (FOTO_SRC). Hochkant-Selfies: Gesicht sitzt im oberen Bereich,
+// deshalb der nach oben verschobene quadratische Ausschnitt.
+function drawAuthorPhoto(ctx, o) {
+  if (!o.fotoShow || !o.fotoImg) return
+  const { W, H } = o
+  const logoH = H * (LOGO_SIZES[o.logoSize] || 0.09)
+  // (25.07.2026: von 1.25 auf 0.9 — das Foto steht jetzt etwas kleiner
+  // als das zugleich vergrößerte Logo)
+  const d = Math.round(logoH * 0.9)
+  const margin = 54
+  const x = margin
+  let y = H - d - margin
+  // Sitzt der QR-Code unten links (Logo unten rechts), rückt das Foto darüber
+  if (o.qrShow && o.qrImg && o.logoPos === 'unten-rechts') {
+    const qrTotal = Math.round(H * 0.13 * 1.14)
+    y = H - qrTotal - 48 - d - 24
+  }
+  const r = d / 2
+
+  // weicher Schatten, damit die Scheibe auf jedem Hintergrund steht
+  ctx.save()
+  ctx.shadowColor = 'rgba(0,0,0,0.55)'
+  ctx.shadowBlur = 24
+  ctx.shadowOffsetY = 4
+  ctx.beginPath()
+  ctx.arc(x + r, y + r, r, 0, Math.PI * 2)
+  ctx.fillStyle = '#0b0618'
+  ctx.fill()
+  ctx.restore()
+
+  // Foto rund beschnitten, quadratischer Ausschnitt mit Fokus oben (Gesicht)
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(x + r, y + r, r, 0, Math.PI * 2)
+  ctx.clip()
+  const s = Math.min(o.fotoImg.width, o.fotoImg.height)
+  const sx = (o.fotoImg.width - s) / 2
+  const sy = (o.fotoImg.height - s) * 0.25
+  ctx.drawImage(o.fotoImg, sx, sy, s, s, x, y, d, d)
+  ctx.restore()
+
+  // feiner Goldring im Ton des Logos
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(x + r, y + r, r - 1.5, 0, Math.PI * 2)
+  ctx.strokeStyle = 'rgba(240,207,90,0.85)'
+  ctx.lineWidth = 3
+  ctx.shadowColor = 'rgba(240,207,90,0.35)'
+  ctx.shadowBlur = 12
+  ctx.stroke()
+  ctx.restore()
+}
+
 // QR-Code (optional) — auf weißer Kachel, unten in der freien Ecke
 function drawQr(ctx, o) {
   if (!o.qrShow || !o.qrImg) return
@@ -373,6 +440,19 @@ export function drawCard(ctx, o) {
     ctx.fillStyle = 'rgba(12,10,26,0.58)'
     ctx.fill()
     ctx.restore()
+
+    // Hintergrundbild randlos IN der Karte: an die abgerundete Form
+    // geklippt, Cover-Einpassung dynamisch aus der aktuellen Kartengröße
+    // (jede Shard-Variante, jedes Format), Fokuspunkt wie im Vollbild.
+    if (o.bgMode === 'image' && o.bgImage) {
+      ctx.save()
+      roundRect(ctx, cx, cy, cardW, cardH, 36)
+      ctx.clip()
+      ctx.filter = (FILTERS[o.filter] || FILTERS.keiner).css
+      drawImageCover(ctx, o.bgImage, cx, cy, cardW, cardH, o.bgFocus ?? 0.5)
+      ctx.filter = 'none'
+      ctx.restore()
+    }
 
     ctx.save()
     roundRect(ctx, cx, cy, cardW, cardH, 36)
@@ -516,6 +596,7 @@ export function drawCard(ctx, o) {
 
   drawLogo(ctx, o)
   drawQr(ctx, o)
+  drawAuthorPhoto(ctx, o)
 }
 
 // ── Caption-Heuristik (ohne KI, sofort) ──

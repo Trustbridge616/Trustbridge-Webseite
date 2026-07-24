@@ -200,6 +200,13 @@
                 </div>
               </div>
               <div>
+                <label class="ce-label">Mein Foto <span class="ce-hint">(unten links, rund mit Goldring)</span></label>
+                <div class="ce-toggle">
+                  <button :class="{ active: branding.fotoShow }" @click="branding.fotoShow = true">An</button>
+                  <button :class="{ active: !branding.fotoShow }" @click="branding.fotoShow = false">Aus</button>
+                </div>
+              </div>
+              <div>
                 <label class="ce-label">„Trust Yourself"-Zeile <span class="ce-hint">(Identität, immer gleich)</span></label>
                 <div class="ce-toggle">
                   <button :class="{ active: branding.identShow }" @click="branding.identShow = true">An</button>
@@ -319,6 +326,9 @@ import {
 
 // LOGO-REGEL: immer das Original-Portal-Logo, unverändert (siehe .agents/rules/style_and_notes.md)
 const LOGO_SRC = '/Trustbridge Portal.png'
+// Autoren-Foto (Ben) — landet als runder Ausschnitt unten links im Bild
+// (25.07.2026: von IMG_4977 auf das Sonnenuntergang-Selfie gewechselt)
+const FOTO_SRC = '/facesonne2.jpeg'
 const QR_SRC = '/assets/trustbridge/builder/qr-instagram.png'
 const ARCHIV_KEY = 'trustbridge-content-archiv'
 
@@ -342,9 +352,10 @@ const KI_MODE_API = { verbessern: 'verbessern', emotionaler: 'emotionaler', kuer
 
 // ── State ──
 const content = reactive({
-  spruch: 'Die größte Grenze ist selten der Weg.\nSie ist die Geschichte, die dir deine Angst darüber erzählt.',
+  spruch: 'Die größte Grenze ist selten der Weg.\nSie ist die Geschichte, die dir deine Angst darüber erzählt.\n\nWer hat dir diese Geschichte erzählt?',
   ueberschrift: '',
-  untertitel: '',
+  // Immer vorausgefüllt — steht damit standardmäßig in jedem Post im Bild
+  untertitel: 'Folge & Caption für Mehr',
   autor: '',
   cta: 'Jeder Gedanke kann eine neue Brücke sein.',
 })
@@ -361,6 +372,8 @@ const branding = reactive({
   logoShow: true, logoSize: 'mittel', logoPos: 'unten-mitte', logoOpacity: 100,
   followShow: false, followText: '@ben.trustbridge', qrShow: false,
   identShow: true,
+  // Foto standardmäßig immer drin — die Serien-Presets fassen es nicht an
+  fotoShow: true,
 })
 const qrAvailable = ref(false)
 let qrImg = null
@@ -382,6 +395,7 @@ const spruchUndo = ref(null)
 const backgrounds = ref([])
 const bgCache = new Map()
 let logoImg = null
+let fotoImg = null
 
 const archiv = ref([])
 const archivSuche = ref('')
@@ -438,10 +452,17 @@ function selectBg(bg) {
   design.bgName = bg.name
 }
 
+// Vertikaler Fokus des aktiven Hintergrunds (aus dem Dateinamen, s. Route)
+function currentBgFocus() {
+  if (design.bgMode !== 'image') return 0.5
+  const bg = backgrounds.value.find((b) => b.name === design.bgName) || backgrounds.value[0]
+  return bg && typeof bg.focus === 'number' ? bg.focus : 0.5
+}
+
 // ── Rendering ──
 function renderOptions(w, h, bgImage, contentOverride) {
   return {
-    W: w, H: h, bgImage,
+    W: w, H: h, bgImage, bgFocus: currentBgFocus(),
     bgMode: design.bgMode, filter: design.filter, darken: design.darken,
     variant: design.variant, accent: design.accent, textColor: design.textColor,
     font: design.font, layoutH: design.layoutH, layoutV: design.layoutV,
@@ -453,6 +474,7 @@ function renderOptions(w, h, bgImage, contentOverride) {
     logoPos: branding.logoPos, logoOpacity: branding.logoOpacity,
     followShow: branding.followShow, followText: branding.followText,
     qrShow: branding.qrShow, qrImg, identShow: branding.identShow,
+    fotoImg, fotoShow: branding.fotoShow,
   }
 }
 
@@ -474,6 +496,7 @@ watch([content, design, branding], () => { aktiveSerie.value = '' }, { deep: tru
 onMounted(async () => {
   await Promise.all([loadFonts(), loadBackgrounds()])
   logoImg = await loadImage(LOGO_SRC)
+  fotoImg = await loadImage(FOTO_SRC)
   qrImg = await loadImage(QR_SRC)
   qrAvailable.value = !!qrImg
   try { archiv.value = JSON.parse(localStorage.getItem(ARCHIV_KEY) || '[]') } catch (e) { archiv.value = [] }
@@ -551,7 +574,10 @@ async function generateCaptionKi() {
   try {
     const data = await callAi({ action: 'caption', text: content.spruch })
     const c = data.caption
-    caption.value = `${c.hook}\n\n${c.zeilen.join('\n')}\n\n${c.cta}`
+    let text = `${c.hook}\n\n${c.zeilen.join('\n')}\n\n${c.cta}`
+    // Die Folge-Zeile steht IMMER in der Caption — auch wenn die KI sie weglässt
+    if (!/folge/i.test(text)) text += `\n\n➤ Folge ${branding.followText || '@ben.trustbridge'} für mehr.`
+    caption.value = text
     hashtags.value = c.hashtags.join(' ')
   } catch (e) {
     kiError.value = e.message

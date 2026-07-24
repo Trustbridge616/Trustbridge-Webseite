@@ -32,10 +32,22 @@ Route::get('/builder/backgrounds', function () {
         ->filter(fn($f) => preg_match('/\.(jpe?g|png|webp)$/i', $f))
         ->sort()
         ->values()
-        ->map(fn($f) => [
-            'src'  => '/assets/trustbridge/builder/backgrounds/' . $f,
-            'name' => ucwords(str_replace(['-', '_'], ' ', pathinfo($f, PATHINFO_FILENAME))),
-        ]);
+        ->map(function ($f) {
+            $base = pathinfo($f, PATHINFO_FILENAME);
+            // Optionaler vertikaler Fokus im Dateinamen: "wald-1~20.jpg" => 0.20
+            // (0 = Oberkante des Motivs bleibt erhalten, 100 = Unterkante,
+            //  ohne Angabe 0.5 = mittiger Cover-Zuschnitt)
+            $focus = 0.5;
+            if (preg_match('/^(.*)~(\d{1,3})$/', $base, $m)) {
+                $base = $m[1];
+                $focus = min(100, max(0, (int) $m[2])) / 100;
+            }
+            return [
+                'src'   => '/assets/trustbridge/builder/backgrounds/' . $f,
+                'name'  => ucwords(str_replace(['-', '_'], ' ', $base)),
+                'focus' => $focus,
+            ];
+        });
     return response()->json($files);
 })->name('builder.backgrounds');
 
