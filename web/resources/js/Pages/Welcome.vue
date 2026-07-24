@@ -1286,7 +1286,7 @@ onUnmounted(() => {
 
 /* Links: bleibt zurueck. Die Stufen verlieren sich nach unten aussen. */
 .climb-words--left {
-  left: 3.2vw;
+  left: 8vw;
   color: #4FE3D4;
   /* Fuenf Lagen mit einer Aufgabe je Lage: die beiden dunklen zuerst
      setzen die Kante gegen den Hintergrund und halten die Lesbarkeit,
@@ -1311,7 +1311,7 @@ onUnmounted(() => {
 
 /* Rechts: tritt hervor. Die Stufen steigen nach oben aussen. */
 .climb-words--right {
-  right: 3.2vw;
+  right: 8vw;
   /* Der Kern bleibt hell. Die Buchstaben selbst zu vertiefen haette
      den Kontrast gegen den dunklen Grund gekostet - vertieft wird
      stattdessen der Hof nach aussen, von hellem Gold ueber Messing
