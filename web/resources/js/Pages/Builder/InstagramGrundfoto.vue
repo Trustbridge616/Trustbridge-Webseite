@@ -13,6 +13,7 @@
         <span class="ce-tag">Trustbridge Content Engine</span>
         <h1 class="ce-title">Instagram – Grundfoto Builder</h1>
         <p class="ce-sub">Text rein, fertiger Post raus — Bild, Caption, Hashtags, Serien &amp; Batch</p>
+        <a href="/social" class="ce-studio-link">🌐 Multi-Plattform-Studio öffnen (TikTok, Reels, Stories, Facebook)</a>
       </header>
 
       <!-- ══════════ SERIEN ══════════ -->
@@ -152,6 +153,7 @@
                   <button :class="{ active: design.upper }" @click="design.upper = !design.upper">GROSS</button>
                   <button :class="{ active: design.letterSpread }" @click="design.letterSpread = !design.letterSpread">Weit</button>
                   <button :class="{ active: design.divider }" @click="design.divider = !design.divider"><span class="dot" style="background:#E53935"></span>Rote Linie</button>
+                  <button :class="{ active: design.ctaKlein }" @click="design.ctaKlein = !design.ctaKlein" title="CTA 15 % kleiner — Hauptbotschaft dominiert stärker">CTA klein</button>
                 </div>
               </div>
             </div>
@@ -188,6 +190,7 @@
               <div>
                 <label class="ce-label">Position</label>
                 <div class="ce-toggle">
+                  <button :class="{ active: branding.logoPos === 'unten-links' }" @click="branding.logoPos = 'unten-links'">Unten links</button>
                   <button :class="{ active: branding.logoPos === 'unten-mitte' }" @click="branding.logoPos = 'unten-mitte'">Unten Mitte</button>
                   <button :class="{ active: branding.logoPos === 'unten-rechts' }" @click="branding.logoPos = 'unten-rechts'">Unten rechts</button>
                   <button :class="{ active: branding.logoPos === 'oben-mitte' }" @click="branding.logoPos = 'oben-mitte'">Oben Mitte</button>
@@ -200,7 +203,7 @@
                 </div>
               </div>
               <div>
-                <label class="ce-label">Mein Foto <span class="ce-hint">(unten links, rund mit Goldring)</span></label>
+                <label class="ce-label">Mein Foto <span class="ce-hint">(unten rechts, rund mit Goldring)</span></label>
                 <div class="ce-toggle">
                   <button :class="{ active: branding.fotoShow }" @click="branding.fotoShow = true">An</button>
                   <button :class="{ active: !branding.fotoShow }" @click="branding.fotoShow = false">Aus</button>
@@ -244,7 +247,11 @@
             </div>
             <label class="ce-label" style="margin-top:1rem">Caption <span class="ce-hint">(frei editierbar)</span></label>
             <textarea v-model="caption" class="ce-input" rows="6"></textarea>
-            <label class="ce-label">Hashtags</label>
+            <label class="ce-label">Kommentar-Anreiz <span class="ce-hint">(konkrete Frage senkt die Antwort-Hürde — ein Klick hängt sie an)</span></label>
+            <div class="ce-chips">
+              <button v-for="p in KOMMENTAR_ANREIZE" :key="p" class="ce-chip" @click="addKommentarAnreiz(p)">{{ p }}</button>
+            </div>
+            <label class="ce-label" style="margin-top:0.8rem">Hashtags</label>
             <textarea v-model="hashtags" class="ce-input" rows="2"></textarea>
             <button class="ce-btn ghost" @click="copyCaption">{{ copied ? 'Kopiert ✓' : 'Caption + Hashtags kopieren' }}</button>
           </section>
@@ -266,6 +273,56 @@
               </li>
             </ul>
             <p v-else class="ce-hint">Noch keine gespeicherten Posts{{ archivSuche ? ' für diese Suche' : '' }}.</p>
+          </section>
+
+          <!-- 10 · A/B-TEST -->
+          <section class="ce-panel" v-show="aktivTab === 'abtest'">
+            <h2 class="ce-panel-title"><span class="ce-num">🧪</span> A/B-Varianten-Test</h2>
+            <p class="ce-hint" style="margin-bottom:0.8rem">
+              Jeder Beitrag ist eine Hypothese: Der aktuelle Spruch ist die <strong>Kernaussage</strong>.
+              Hier erzeugst du daraus mit einem Klick mehrere Varianten (verschiedene Hooks × Layouts)
+              als ZIP — im gewählten Format oben rechts (<strong>9:16 = Test-Reels</strong>).
+              Veröffentliche die Varianten zeitversetzt und trage die Zahlen ins mitgelieferte
+              <code>test-log.json</code> ein — so lernst du, worauf deine Community wirklich reagiert.
+            </p>
+
+            <label class="ce-label">Hook-Varianten <span class="ce-hint">(eine pro Zeile, max. 4 — jede wird eine eigene Version)</span></label>
+            <textarea v-model="abHooks" class="ce-input" rows="4"></textarea>
+
+            <label class="ce-label" style="margin-top:0.8rem">Layout-Varianten</label>
+            <div class="ce-chips">
+              <button v-for="(v, key) in AB_VARIANTS" :key="key" class="ce-chip" :class="{ active: abSelected.includes(key) }" @click="toggleAbVariant(key)">{{ v.label }}</button>
+            </div>
+
+            <div class="ce-row-between" style="margin-top:1rem">
+              <button class="ce-btn gold" :disabled="abBusy || !abCount" @click="runAbTest">
+                {{ abBusy ? `Rendere ${abProgress}…` : `${abCount} Varianten erzeugen (ZIP)` }}
+              </button>
+              <span class="ce-hint">{{ abHookList.length }} Hooks × {{ abSelected.length }} Layouts · Format {{ format }}</span>
+            </div>
+            <p class="ce-hint" style="margin-top:0.6rem">
+              Bei „Weniger Text" wandert die Kernaussage automatisch an den Anfang der Caption —
+              auf dem Bild bleiben nur Hook + „↓ Lies die Caption".
+            </p>
+          </section>
+
+          <!-- 9 · VIRAL-RECHERCHE -->
+          <section class="ce-panel" v-show="aktivTab === 'viral'">
+            <h2 class="ce-panel-title"><span class="ce-num">🔥</span> Viral-Recherche</h2>
+            <p class="ce-hint" style="margin-bottom:0.9rem">
+              Links werden live aus deinem Spruch, den Hashtags und Kategorien gebaut. Ein Klick öffnet die
+              Hashtag-/Trend-Seite der Plattform im neuen Tab — dort siehst du sofort, was zu deinem Thema
+              gerade läuft (YouTube sogar nach Aufrufen sortiert). Eine echte „Viral-Rangliste" geben die
+              Plattformen ohne API nicht her — das hier ist der schnellste ehrliche Weg dorthin.
+            </p>
+            <div class="ce-viral-grid">
+              <div v-for="group in viralLinks" :key="group.platform" class="ce-viral-card">
+                <strong>{{ group.icon }} {{ group.platform }}</strong>
+                <a v-for="link in group.links" :key="link.url" :href="link.url" target="_blank" rel="noopener" class="ce-viral-link">
+                  {{ link.label }} ↗
+                </a>
+              </div>
+            </div>
           </section>
 
           <!-- 8 · BATCH -->
@@ -299,9 +356,21 @@
                   <button v-for="t in ['png', 'jpeg', 'webp']" :key="t" :class="{ active: fileType === t }" @click="fileType = t">{{ t.toUpperCase() }}</button>
                 </div>
               </div>
+              <div>
+                <label class="ce-label">Safe-Zone <span class="ce-hint">(nur Vorschau, nie im Export)</span></label>
+                <div class="ce-toggle">
+                  <button :class="{ active: safeZone }" @click="safeZone = true">An</button>
+                  <button :class="{ active: !safeZone }" @click="safeZone = false">Aus</button>
+                </div>
+              </div>
             </div>
 
             <canvas ref="canvasEl" class="ce-canvas" :width="dims.w" :height="dims.h"></canvas>
+            <p v-if="safeZone && format !== '1:1'" class="ce-hint center">
+              Gestrichelter Rahmen = überall sicher sichtbar. Rote Ränder können abgeschnitten werden:
+              beim 4:5-Format durch den 1:1-Crop im Anzeigen-Manager (oben/unten je 135 px) und das
+              3:4-Profilgrid (seitlich), bei 9:16 durch die Story-Bedienelemente.
+            </p>
 
             <div class="ce-export-row">
               <button class="ce-btn mint" :disabled="!ready" @click="downloadImage">Bild herunterladen</button>
@@ -323,10 +392,11 @@ import {
   FORMATS, TEXT_COLORS, ACCENTS, FONTS, FILTERS, KATEGORIEN, SERIEN, CTA_COLORS,
   drawCard, heuristicCaption, suggestHashtags, loadImage, canvasToBlob,
 } from './builderEngine'
+import { buildViralLinks } from './viralResearch'
 
 // LOGO-REGEL: immer das Original-Portal-Logo, unverändert (siehe .agents/rules/style_and_notes.md)
 const LOGO_SRC = '/Trustbridge Portal.png'
-// Autoren-Foto (Ben) — landet als runder Ausschnitt unten links im Bild
+// Autoren-Foto (Ben) — landet als runder Ausschnitt unten rechts im Bild
 // (25.07.2026: von IMG_4977 auf das Sonnenuntergang-Selfie gewechselt)
 const FOTO_SRC = '/facesonne2.jpeg'
 const QR_SRC = '/assets/trustbridge/builder/qr-instagram.png'
@@ -339,6 +409,8 @@ const TABS = {
   caption: '💬 Caption',
   archiv: '🗂 Archiv',
   batch: '🚀 Batch',
+  abtest: '🧪 A/B-Test',
+  viral: '🔥 Viral',
 }
 
 const KI_MODES = {
@@ -355,7 +427,7 @@ const content = reactive({
   spruch: 'Die größte Grenze ist selten der Weg.\nSie ist die Geschichte, die dir deine Angst darüber erzählt.\n\nWer hat dir diese Geschichte erzählt?',
   ueberschrift: '',
   // Immer vorausgefüllt — steht damit standardmäßig in jedem Post im Bild
-  untertitel: 'Folge & Caption für Mehr',
+  untertitel: '↓ Lies die Caption',
   autor: '',
   cta: 'Jeder Gedanke kann eine neue Brücke sein.',
 })
@@ -366,10 +438,12 @@ const design = reactive({
   layoutH: 'zentriert', layoutV: 'unten',
   glow: true, upper: false, letterSpread: false, divider: false,
   darken: 60, sizeAdjust: 1, lineHeight: 1.1, ctaColor: 'tuerkis',
+  ctaKlein: false,
 })
 
 const branding = reactive({
-  logoShow: true, logoSize: 'mittel', logoPos: 'unten-mitte', logoOpacity: 100,
+  // 'unten-links' = Reihen-Layout: Logo links · Claim mittig · Foto rechts
+  logoShow: true, logoSize: 'mittel', logoPos: 'unten-links', logoOpacity: 100,
   followShow: false, followText: '@ben.trustbridge', qrShow: false,
   identShow: true,
   // Foto standardmäßig immer drin — die Serien-Presets fassen es nicht an
@@ -381,6 +455,7 @@ let qrImg = null
 const aktivTab = ref('content')
 const format = ref('4:5')
 const fileType = ref('png')
+const safeZone = ref(true)
 const kategorien = ref([])
 const caption = ref('')
 const hashtags = ref('')
@@ -404,10 +479,50 @@ const batchText = ref('')
 const batchBusy = ref(false)
 const batchProgress = ref('')
 
+// ── A/B-Test ──
+const AB_VARIANTS = {
+  komplett: { label: 'Komplett (aktuelles Layout)' },
+  minimal: { label: 'Weniger Text (Rest → Caption)' },
+  nurLogo: { label: 'Nur Logo (ohne Portrait)' },
+  nurPortrait: { label: 'Nur Portrait (ohne Logo)' },
+  ctaKlein: { label: 'CTA 15 % kleiner' },
+}
+const abHooks = ref([
+  'Diese Einsicht hat mein Leben verändert.',
+  'Die meisten Menschen scheitern an derselben Illusion.',
+  'Die größte Lüge erzählt dir oft deine eigene Angst.',
+].join('\n'))
+const abSelected = ref(['komplett', 'minimal'])
+const abBusy = ref(false)
+const abProgress = ref('')
+const abHookList = computed(() => abHooks.value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 4))
+const abCount = computed(() => abHookList.value.length * abSelected.value.length)
+function toggleAbVariant(key) {
+  const i = abSelected.value.indexOf(key)
+  if (i >= 0) abSelected.value.splice(i, 1)
+  else abSelected.value.push(key)
+}
+
+const KOMMENTAR_ANREIZE = [
+  'Schreib nur ein Wort: Welcher Schritt hält dich gerade zurück?',
+  'Welchen ersten Schritt schiebst du schon viel zu lange vor dir her?',
+  'Welche Geschichte erzählt dir deine Angst am häufigsten?',
+]
+function addKommentarAnreiz(text) {
+  caption.value = `${caption.value.trim()}\n\n${text}`
+}
+
 const canvasEl = ref(null)
 
 const dims = computed(() => FORMATS[format.value])
 const batchCount = computed(() => batchText.value.split(/\n---\n?/).map((s) => s.trim()).filter(Boolean).length || 0)
+
+// Viral-Recherche: Links live aus Spruch + Hashtags + Kategorien
+const viralLinks = computed(() => buildViralLinks({
+  text: content.spruch,
+  hashtags: hashtags.value,
+  kategorien: kategorien.value,
+}))
 
 const gefiltertesArchiv = computed(() => {
   const q = archivSuche.value.trim().toLowerCase()
@@ -460,14 +575,17 @@ function currentBgFocus() {
 }
 
 // ── Rendering ──
-function renderOptions(w, h, bgImage, contentOverride) {
+// showSafe nur für die Vorschau — Export und Batch rendern immer ohne Overlay
+function renderOptions(w, h, bgImage, contentOverride, showSafe = false) {
   return {
+    safeZone: showSafe,
     W: w, H: h, bgImage, bgFocus: currentBgFocus(),
     bgMode: design.bgMode, filter: design.filter, darken: design.darken,
     variant: design.variant, accent: design.accent, textColor: design.textColor,
     font: design.font, layoutH: design.layoutH, layoutV: design.layoutV,
     glow: design.glow, upper: design.upper, letterSpread: design.letterSpread, divider: design.divider,
     ctaColor: design.ctaColor,
+    ctaScale: design.ctaKlein ? 0.85 : 1,
     sizeAdjust: design.sizeAdjust, lineHeight: design.lineHeight,
     content: contentOverride || { ...content },
     logoImg, logoShow: branding.logoShow, logoSize: branding.logoSize,
@@ -487,10 +605,18 @@ async function render() {
   const canvas = canvasEl.value
   if (!canvas) return
   const bgImage = await getBgImage()
+  drawCard(canvas.getContext('2d'), renderOptions(dims.value.w, dims.value.h, bgImage, null, safeZone.value))
+}
+
+// Export-Rendering: identisch, aber ohne Safe-Zone-Overlay
+async function renderExport() {
+  const canvas = canvasEl.value
+  if (!canvas) return
+  const bgImage = await getBgImage()
   drawCard(canvas.getContext('2d'), renderOptions(dims.value.w, dims.value.h, bgImage))
 }
 
-watch([content, design, branding, format], render, { deep: true })
+watch([content, design, branding, format, safeZone], render, { deep: true })
 watch([content, design, branding], () => { aktiveSerie.value = '' }, { deep: true })
 
 onMounted(async () => {
@@ -619,9 +745,10 @@ function triggerDownload(blob, name) {
 }
 
 async function downloadImage() {
-  await render()
+  await renderExport()
   const blob = await canvasToBlob(canvasEl.value, mime(), 0.92)
   triggerDownload(blob, `trustbridge-post-${stamp()}.${fileType.value}`)
+  render()
 }
 
 function postJson(extra = {}) {
@@ -640,7 +767,7 @@ function postJson(extra = {}) {
 }
 
 async function downloadPaket() {
-  await render()
+  await renderExport()
   const zip = new JSZip()
   const blob = await canvasToBlob(canvasEl.value, mime(), 0.92)
   zip.file(`post.${fileType.value}`, blob)
@@ -650,6 +777,7 @@ async function downloadPaket() {
   const out = await zip.generateAsync({ type: 'blob' })
   triggerDownload(out, `trustbridge-post-${stamp()}.zip`)
   saveToArchiv()
+  render()
 }
 
 // ── Batch ──
@@ -690,6 +818,82 @@ async function runBatch() {
   } finally {
     batchBusy.value = false
     batchProgress.value = ''
+    render()
+  }
+}
+
+// ── A/B-Test: Hooks × Layout-Varianten als ZIP ──
+async function runAbTest() {
+  if (!abCount.value) return
+  abBusy.value = true
+  try {
+    const zip = new JSZip()
+    const root = zip.folder(`trustbridge-abtest-${stamp()}`)
+    const bgImage = await getBgImage()
+    const off = document.createElement('canvas')
+    off.width = dims.value.w
+    off.height = dims.value.h
+    const ctx = off.getContext('2d')
+    const kern = content.spruch.trim()
+    const testLog = []
+    let n = 0
+
+    for (const hook of abHookList.value) {
+      for (const vKey of abSelected.value) {
+        n++
+        abProgress.value = `${n}/${abCount.value}`
+        const opts = renderOptions(dims.value.w, dims.value.h, bgImage, { ...content })
+        // Layout-Variante anwenden
+        if (vKey === 'minimal') {
+          opts.content = { ...content, spruch: hook, cta: '' }
+        } else {
+          opts.content = { ...content, spruch: `${hook}\n\n${kern}` }
+        }
+        if (vKey === 'nurLogo') opts.fotoShow = false
+        if (vKey === 'nurPortrait') opts.logoShow = false
+        if (vKey === 'ctaKlein') opts.ctaScale = 0.85
+        drawCard(ctx, opts)
+        const blob = await canvasToBlob(off, mime(), 0.92)
+
+        const slug = `v${String(n).padStart(2, '0')}-${vKey}`
+        const folder = root.folder(slug)
+        folder.file(`post.${fileType.value}`, blob)
+        // Bei „Weniger Text" gehört die Kernaussage an den Caption-Anfang
+        const cap = vKey === 'minimal' ? `${kern}\n\n${caption.value}` : caption.value
+        folder.file('caption.txt', `${cap}\n\n${hashtags.value}`)
+        folder.file('meta.json', JSON.stringify({ hook, variante: AB_VARIANTS[vKey].label, format: format.value, erzeugt: new Date().toISOString() }, null, 2))
+        testLog.push({
+          datei: `${slug}/post.${fileType.value}`, hook, variante: AB_VARIANTS[vKey].label,
+          veroeffentlicht: null, reichweite: null, likes: null, kommentare: null,
+          gespeichert: null, geteilt: null, profilbesuche: null, follows: null,
+        })
+      }
+    }
+
+    root.file('test-log.json', JSON.stringify(testLog, null, 2))
+    root.file('hypothesen.md', [
+      '# Trustbridge A/B-Test',
+      '',
+      `Kernaussage: ${kern.split('\n')[0]}`,
+      `Format: ${format.value} · ${dims.value.w}×${dims.value.h}`,
+      '',
+      '## Vorgehen',
+      '1. Varianten zeitversetzt veröffentlichen (gleiche Uhrzeit, verschiedene Tage — nie zwei am selben Tag).',
+      '2. Nach 48 h die Zahlen aus Instagram-Insights in test-log.json eintragen.',
+      '3. Gewinner-Merkmale (Hook-Typ, Textmenge, Branding) in künftige Posts übernehmen.',
+      '',
+      '## Was jede Variante testet',
+      '- Komplett: die bisherige Struktur als Referenz (Baseline).',
+      '- Weniger Text: Scroll-Stopp-These — weniger Text auf dem Bild, Tiefe in der Caption.',
+      '- Nur Logo / Nur Portrait: was zieht mehr — Marke oder Gesicht?',
+      '- CTA klein: dominiert die Hauptbotschaft stärker, ohne den Caption-Hinweis zu verlieren.',
+    ].join('\n'))
+
+    const out = await zip.generateAsync({ type: 'blob' })
+    triggerDownload(out, `trustbridge-abtest-${stamp()}-${abCount.value}-varianten.zip`)
+  } finally {
+    abBusy.value = false
+    abProgress.value = ''
     render()
   }
 }
@@ -741,6 +945,29 @@ function deleteFromArchiv(id) {
 .ce-container { max-width: 1340px; margin: 0 auto; }
 
 .ce-header { text-align: center; margin-bottom: 2rem; }
+.ce-studio-link {
+  display: inline-block; margin-top: 0.8rem; padding: 0.5rem 1.1rem; border-radius: 50px;
+  background: rgba(124,58,237,0.2); border: 1px solid rgba(167,139,250,0.45);
+  color: #d8c9f8; font-size: 0.85rem; font-weight: 700; text-decoration: none;
+  transition: all 0.25s ease;
+}
+.ce-studio-link:hover { background: rgba(124,58,237,0.4); transform: translateY(-2px); }
+
+/* Viral-Recherche */
+.ce-viral-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+.ce-viral-card {
+  background: rgba(10,8,22,0.7); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 0.8rem 0.95rem;
+  display: flex; flex-direction: column; gap: 0.45rem;
+}
+.ce-viral-card strong { font-size: 0.92rem; margin-bottom: 0.15rem; }
+.ce-viral-link {
+  display: block; padding: 0.45rem 0.75rem; border-radius: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  color: #D9CFE8; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+  transition: all 0.2s ease; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ce-viral-link:hover { border-color: rgba(142,245,210,0.55); color: #8EF5D2; }
 .ce-tag {
   display: inline-block; font-size: 0.8rem; font-weight: 700; letter-spacing: 4px;
   text-transform: uppercase; color: #8EF5D2; margin-bottom: 1rem;

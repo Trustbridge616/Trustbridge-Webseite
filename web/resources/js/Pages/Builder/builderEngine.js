@@ -6,6 +6,22 @@ export const FORMATS = {
   '1:1':  { w: 1080, h: 1080, label: 'Quadrat 1:1' },
 }
 
+// ── Safe-Zone: was Instagram je nach Ansicht sicher anzeigt ──
+// 4:5 → der 1:1-Crop (Anzeigen-Manager, alte Grid-Ansicht) nimmt oben/unten
+// je 135 px weg, das 3:4-Profilgrid seitlich je ~35 px. 9:16 → die Story-UI
+// verdeckt oben (Profilname) und unten (Antworten-Leiste). 1:1 ist überall
+// voll sichtbar. Wird nur in der Vorschau gezeichnet, nie im Export.
+export const SAFE_ZONES = {
+  '4:5':  { top: 135, bottom: 135, side: 35 },
+  '9:16': { top: 250, bottom: 310, side: 60 },
+  '1:1':  { top: 0, bottom: 0, side: 0 },
+}
+
+function safeZoneFor(W, H) {
+  const key = Object.keys(FORMATS).find((k) => FORMATS[k].w === W && FORMATS[k].h === H)
+  return SAFE_ZONES[key] || { top: 0, bottom: 0, side: 0 }
+}
+
 export const TEXT_COLORS = {
   weiss:    { label: 'Weiß',     value: '#FFFFFF' },
   gold:     { label: 'Gold',     value: '#F0CF5A' },
@@ -56,22 +72,22 @@ export const SERIEN = {
   wald: {
     label: 'Serie 01 · Wald',
     design: { variant: 'frei', bgName: 'Wald 1', bgMode: 'image', textColor: 'weiss', font: 'sans', accent: 'mint', filter: 'keiner', layoutH: 'zentriert', layoutV: 'unten', glow: true, upper: false, letterSpread: false, darken: 60, divider: false },
-    branding: { logoShow: true, logoSize: 'mittel', logoPos: 'unten-mitte', logoOpacity: 100 },
+    branding: { logoShow: true, logoSize: 'mittel', logoPos: 'unten-links', logoOpacity: 100 },
   },
   shard: {
     label: 'Serie 02 · Shard',
     design: { variant: 'shard', bgName: 'Wald 2', bgMode: 'image', textColor: 'weiss', font: 'serif', accent: 'mint', filter: 'keiner', layoutH: 'zentriert', layoutV: 'mitte', glow: true, upper: false, letterSpread: false, darken: 55, divider: false },
-    branding: { logoShow: true, logoSize: 'mittel', logoPos: 'unten-mitte', logoOpacity: 100 },
+    branding: { logoShow: true, logoSize: 'mittel', logoPos: 'unten-links', logoOpacity: 100 },
   },
   gold: {
     label: 'Serie 03 · Gold',
     design: { variant: 'shard', bgName: 'Sonnenuntergang', bgMode: 'image', textColor: 'gold', font: 'bold', accent: 'gold', filter: 'warm', layoutH: 'zentriert', layoutV: 'mitte', glow: true, upper: false, letterSpread: false, darken: 60, divider: false },
-    branding: { logoShow: true, logoSize: 'gross', logoPos: 'unten-mitte', logoOpacity: 100 },
+    branding: { logoShow: true, logoSize: 'gross', logoPos: 'unten-links', logoOpacity: 100 },
   },
   mystisch: {
     label: 'Serie 04 · Mystisch',
     design: { variant: 'frei', bgName: 'Nebel', bgMode: 'image', textColor: 'weiss', font: 'elegant', accent: 'violett', filter: 'mystisch', layoutH: 'zentriert', layoutV: 'mitte', glow: true, upper: false, letterSpread: true, darken: 65, divider: false },
-    branding: { logoShow: true, logoSize: 'klein', logoPos: 'unten-mitte', logoOpacity: 40 },
+    branding: { logoShow: true, logoSize: 'klein', logoPos: 'unten-links', logoOpacity: 40 },
   },
   minimal: {
     label: 'Serie 05 · Minimal',
@@ -85,7 +101,7 @@ export const SERIEN = {
   },
 }
 
-function fontString(fontKey, size, weightOverride) {
+export function fontString(fontKey, size, weightOverride) {
   const f = FONTS[fontKey] || FONTS.serif
   const style = f.italic ? 'italic ' : ''
   return `${style}${weightOverride || f.weight} ${size}px ${f.family}`
@@ -146,7 +162,7 @@ function layoutText(ctx, rawText, fontKey, maxWidth, maxHeight, baseSize, lineHe
   return { ...measure(34), fontSize: 34 }
 }
 
-function roundRect(ctx, x, y, w, h, r) {
+export function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
   ctx.arcTo(x + w, y, x + w, y + h, r)
@@ -161,14 +177,14 @@ function roundRect(ctx, x, y, w, h, r) {
 // zentriert. focusY (0..1, Default 0.5) richtet den vertikalen Ausschnitt
 // aus: 0 = Oberkante bleibt (z. B. Baumkronen), 1 = Unterkante bleibt.
 // Nie verzerrt, füllt den Bereich immer vollständig.
-function drawImageCover(ctx, img, dx, dy, dw, dh, focusY = 0.5) {
+export function drawImageCover(ctx, img, dx, dy, dw, dh, focusY = 0.5) {
   const scale = Math.max(dw / img.width, dh / img.height)
   const w = img.width * scale
   const h = img.height * scale
   ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) * focusY, w, h)
 }
 
-function drawBackground(ctx, o) {
+export function drawBackground(ctx, o) {
   const { W, H } = o
   ctx.clearRect(0, 0, W, H)
   ctx.save()
@@ -213,12 +229,17 @@ function drawBackground(ctx, o) {
 function drawLogo(ctx, o) {
   if (!o.logoShow || !o.logoImg) return
   const { W, H } = o
+  // Ränder so, dass das Logo komplett in der Safe-Zone sitzt
+  const sz = safeZoneFor(W, H)
+  const bottomPad = sz.bottom ? sz.bottom + 16 : 54
+  const sidePad = sz.side ? sz.side + 24 : 60
   const h = Math.round(H * (LOGO_SIZES[o.logoSize] || 0.09))
   const w = Math.round(h * (o.logoImg.width / o.logoImg.height))
   let x, y
-  if (o.logoPos === 'oben-mitte') { x = (W - w) / 2; y = 54 }
-  else if (o.logoPos === 'unten-rechts') { x = W - w - 60; y = H - h - 54 }
-  else { x = (W - w) / 2; y = H - h - 54 }
+  if (o.logoPos === 'oben-mitte') { x = (W - w) / 2; y = sz.top ? sz.top + 12 : 54 }
+  else if (o.logoPos === 'unten-rechts') { x = W - w - sidePad; y = H - h - bottomPad }
+  else if (o.logoPos === 'unten-links') { x = sidePad; y = H - h - bottomPad }
+  else { x = (W - w) / 2; y = H - h - bottomPad }
 
   ctx.save()
   ctx.globalAlpha = Math.max(0.05, Math.min(1, o.logoOpacity / 100))
@@ -293,23 +314,28 @@ function drawIdentityLine(ctx, o, baselineY, unit) {
   return lineGap + size * 1.5
 }
 
-// Autoren-Foto (Ben) — runder Ausschnitt unten links. Quelle liegt in der
+// Autoren-Foto (Ben) — runder Ausschnitt unten rechts: Ben schaut auf dem
+// Foto nach links, so zeigt der Blick ins Bild hinein. Quelle liegt in der
 // Vue-Seite (FOTO_SRC). Hochkant-Selfies: Gesicht sitzt im oberen Bereich,
 // deshalb der nach oben verschobene quadratische Ausschnitt.
 function drawAuthorPhoto(ctx, o) {
   if (!o.fotoShow || !o.fotoImg) return
   const { W, H } = o
   const logoH = H * (LOGO_SIZES[o.logoSize] || 0.09)
-  // (25.07.2026: von 1.25 auf 0.9 — das Foto steht jetzt etwas kleiner
-  // als das zugleich vergrößerte Logo)
-  const d = Math.round(logoH * 0.9)
-  const margin = 54
-  const x = margin
-  let y = H - d - margin
-  // Sitzt der QR-Code unten links (Logo unten rechts), rückt das Foto darüber
-  if (o.qrShow && o.qrImg && o.logoPos === 'unten-rechts') {
+  // (25.07.2026: von 0.9 auf 0.8 — 10 % kleiner, sitzt komplett in der Safe-Zone)
+  const d = Math.round(logoH * 0.8)
+  const sz = safeZoneFor(W, H)
+  const bottomPad = sz.bottom ? sz.bottom + 16 : 54
+  const sidePad = sz.side ? sz.side + 24 : 54
+  const x = W - d - sidePad
+  // vertikal am Logo-Band zentriert (Reihe: Logo links · Claim Mitte · Foto rechts)
+  let y = H - bottomPad - Math.round((logoH + d) / 2)
+  // Unten rechts kann schon etwas sitzen — dann rückt das Foto darüber
+  if (o.qrShow && o.qrImg && o.logoPos !== 'unten-rechts') {
     const qrTotal = Math.round(H * 0.13 * 1.14)
-    y = H - qrTotal - 48 - d - 24
+    y = H - bottomPad - qrTotal - d - 24
+  } else if (o.logoShow && o.logoImg && o.logoPos === 'unten-rechts') {
+    y = H - bottomPad - Math.round(logoH) - d - 24
   }
   const r = d / 2
 
@@ -351,11 +377,14 @@ function drawAuthorPhoto(ctx, o) {
 function drawQr(ctx, o) {
   if (!o.qrShow || !o.qrImg) return
   const { W, H } = o
+  const sz = safeZoneFor(W, H)
+  const bottomPad = sz.bottom ? sz.bottom + 16 : 48
+  const sidePad = sz.side ? sz.side + 24 : 48
   const size = Math.round(H * 0.13)
   const pad = Math.round(size * 0.07)
   const total = size + pad * 2
-  const x = o.logoPos === 'unten-rechts' ? 48 : W - total - 48
-  const y = H - total - 48
+  const x = o.logoPos === 'unten-rechts' ? sidePad : W - total - sidePad
+  const y = H - total - bottomPad
   ctx.save()
   ctx.shadowColor = 'rgba(0,0,0,0.5)'
   ctx.shadowBlur = 20
@@ -384,16 +413,42 @@ export function drawCard(ctx, o) {
   // Größen mit Format und Textgröße-Regler (100 % = Basiswerte bei 1080×1350).
   const unit = (o.sizeAdjust || 1) * (H / 1350)
   const baseSize = Math.round(80 * unit) // Headline-Basis ≈ 72–88 px
-  const layout = layoutText(ctx, spruch || ' ', o.font, maxW, H * 0.5, baseSize, o.lineHeight || 1.1)
-  const fs = layout.fontSize
 
   // Feste Element-Größen (unabhängig davon, ob die Headline schrumpfen musste)
+  // ctaScale: 1 = normal, 0.85 = „CTA klein" (Hauptbotschaft dominiert stärker)
   const SZ = {
     ueberschrift: Math.round(34 * unit),
     untertitel: Math.round(44 * unit),
     autor: Math.round(36 * unit),
-    cta: Math.round(30 * unit),
+    cta: Math.round(30 * unit * (o.ctaScale || 1)),
   }
+
+  // ── Safe-Zone-Reserven VOR dem Textlayout: der Spruch bekommt exakt den
+  // Raum dazwischen und kann nie mehr oben oder unten hinauslaufen ──
+  const sz = safeZoneFor(W, H)
+  const logoTop = o.logoShow && o.logoPos === 'oben-mitte'
+  const logoHpx = H * (LOGO_SIZES[o.logoSize] || 0.09)
+  const bottomPad = sz.bottom ? sz.bottom + 16 : 54
+  // Reihen-Modus: Logo unten links · Claim mittig · Foto unten rechts
+  const rowMode = o.logoShow && !logoTop && o.logoPos === 'unten-links' && o.identShow
+  const bottomReserve = (o.logoShow && !logoTop ? logoHpx + bottomPad + 46 : bottomPad + 36)
+    + (o.content.cta ? baseSize * 0.9 : 0)
+    + (o.followShow ? H * 0.06 : 0)
+    + (o.identShow && !rowMode ? 84 * unit : 0)
+  const topReserve = logoTop
+    ? (sz.top ? sz.top + 12 : 54) + logoHpx + 56
+    : Math.max(H * 0.1, sz.top + 30)
+
+  // Höhe der Nicht-Spruch-Teile grob vorab, damit der Spruch passend schrumpft
+  let extraH = 0
+  if (o.content.ueberschrift) extraH += 34 * unit + SZ.ueberschrift * 1.3
+  if (o.divider) extraH += 40 * unit
+  if (o.content.untertitel) extraH += 26 * unit + SZ.untertitel * 1.3
+  if (o.content.autor) extraH += 22 * unit + SZ.autor * 1.3
+  const slack = o.variant === 'shard' ? 200 : 80
+  const maxTextH = Math.max(H * 0.22, H - topReserve - bottomReserve - extraH - slack)
+  const layout = layoutText(ctx, spruch || ' ', o.font, maxW, maxTextH, baseSize, o.lineHeight || 1.1)
+  const fs = layout.fontSize
 
   const parts = []
   if (o.content.ueberschrift) parts.push({ key: 'ueberschrift', size: SZ.ueberschrift, gapAfter: 34 * unit })
@@ -409,17 +464,12 @@ export function drawCard(ctx, o) {
     else blockH += (p.gapBefore || 0) + (p.gapAfter || 0) + p.size * 1.3
   }
 
-  // Vertikale Position des Blocks
-  const logoTop = o.logoShow && o.logoPos === 'oben-mitte'
-  const bottomReserve = (o.logoShow && !logoTop ? H * (LOGO_SIZES[o.logoSize] || 0.09) + 100 : 90)
-    + (o.content.cta ? fs * 0.9 : 0)
-    + (o.followShow ? H * 0.06 : 0)
-    + (o.identShow ? 84 * unit : 0)
-  const topReserve = logoTop ? H * (LOGO_SIZES[o.logoSize] || 0.09) + 110 : H * 0.1
+  // Vertikale Position des Blocks — nie oberhalb der Safe-Zone
   let blockTop
   if (o.layoutV === 'oben') blockTop = topReserve + 30
   else if (o.layoutV === 'unten') blockTop = H - bottomReserve - blockH - 40
   else blockTop = topReserve + (H - topReserve - bottomReserve - blockH) / 2
+  blockTop = Math.max(blockTop, topReserve + (o.variant === 'shard' ? 86 : 10))
 
   // Shard-Karte hinter dem Block
   if (o.variant === 'shard') {
@@ -558,10 +608,13 @@ export function drawCard(ctx, o) {
 
   // Unterer Bereich (von unten nach oben): Identitäts-Zeile, Follow-Pill, CTA — dann Logo
   let bottomY = (o.logoShow && !logoTop)
-    ? H - H * (LOGO_SIZES[o.logoSize] || 0.09) - 84
-    : H - 64
+    ? H - logoHpx - bottomPad - 30
+    : H - Math.max(64, bottomPad + 10)
 
-  if (o.identShow) {
+  if (o.identShow && rowMode) {
+    // Reihe: Logo links · Claim mittig · Foto rechts — Claim vertikal am Logo zentriert
+    drawIdentityLine(ctx, o, H - bottomPad - logoHpx / 2 + 17 * unit, unit)
+  } else if (o.identShow) {
     const lineH = drawIdentityLine(ctx, o, bottomY, unit)
     bottomY -= lineH + 14 * unit
   }
@@ -597,6 +650,36 @@ export function drawCard(ctx, o) {
   drawLogo(ctx, o)
   drawQr(ctx, o)
   drawAuthorPhoto(ctx, o)
+  if (o.safeZone) drawSafeZone(ctx, o)
+}
+
+// Safe-Zone-Overlay (nur Vorschau): rote Ränder = kann abgeschnitten werden,
+// gestrichelter Rahmen = überall sicher sichtbar.
+function drawSafeZone(ctx, o) {
+  const { W, H } = o
+  const key = Object.keys(FORMATS).find((k) => FORMATS[k].w === W && FORMATS[k].h === H)
+  const z = SAFE_ZONES[key]
+  if (!z || (!z.top && !z.bottom && !z.side)) return
+  ctx.save()
+  ctx.fillStyle = 'rgba(229,57,53,0.16)'
+  if (z.top) ctx.fillRect(0, 0, W, z.top)
+  if (z.bottom) ctx.fillRect(0, H - z.bottom, W, z.bottom)
+  if (z.side) {
+    ctx.fillRect(0, z.top, z.side, H - z.top - z.bottom)
+    ctx.fillRect(W - z.side, z.top, z.side, H - z.top - z.bottom)
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)'
+  ctx.lineWidth = 3
+  ctx.setLineDash([16, 12])
+  ctx.strokeRect(z.side + 1.5, z.top + 1.5, W - z.side * 2 - 3, H - z.top - z.bottom - 3)
+  ctx.setLineDash([])
+  ctx.font = '700 26px "Montserrat", "Century Gothic", sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'
+  ctx.shadowColor = 'rgba(0,0,0,0.85)'
+  ctx.shadowBlur = 8
+  if (z.top) ctx.fillText('▲ kann abgeschnitten werden (Crop / Story-UI)', W / 2, z.top - 16)
+  ctx.restore()
 }
 
 // ── Caption-Heuristik (ohne KI, sofort) ──

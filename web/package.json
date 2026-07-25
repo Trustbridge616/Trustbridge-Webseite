@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "concurrently -c \"cyan,magenta\" \"C:\\php\\php.exe artisan serve --port=8001\" \"vite\""
+        "dev": "concurrently -c \"cyan,magenta\" \"C:\\php\\php.exe artisan serve --port=8001\" \"vite\"",
+        "test:social": "node tests/js/social.test.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

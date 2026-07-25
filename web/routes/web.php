@@ -22,6 +22,31 @@ Route::get('/kontakt', fn() => Inertia::render('Kontakt'))->name('kontakt');
 
 // Interner Builder (noindex)
 Route::get('/builder/instagram', fn() => Inertia::render('Builder/InstagramGrundfoto'))->name('builder.instagram');
+
+// Social Media Studio — Master-Content → alle Plattformen
+Route::get('/social', fn() => Inertia::render('Builder/Social', ['tab' => 'master']))->name('social');
+Route::get('/social/{tab}', function (string $tab) {
+    $allowed = ['master', 'instagram', 'tiktok', 'facebook', 'alle', 'publishing'];
+    abort_unless(in_array($tab, $allowed, true), 404);
+    return Inertia::render('Builder/Social', ['tab' => $tab]);
+})->where('tab', '[a-z]+')->name('social.tab');
+// Bestehende Links nicht brechen
+Route::redirect('/instagram', '/social/instagram');
+Route::redirect('/social/export', '/social/alle');
+Route::redirect('/builder/social', '/social');
+
+// Social-API: Dokumente + Publishing-Vorbereitung (CSRF über Web-Session)
+Route::prefix('api/social')->name('social.api.')->group(function () {
+    Route::post('/documents', [\App\Http\Controllers\SocialDocumentController::class, 'store'])->name('documents.store');
+    Route::get('/documents/{id}', [\App\Http\Controllers\SocialDocumentController::class, 'show'])->name('documents.show');
+    Route::patch('/documents/{id}', [\App\Http\Controllers\SocialDocumentController::class, 'update'])->name('documents.update');
+    Route::post('/documents/{id}/render', [\App\Http\Controllers\SocialDocumentController::class, 'render'])->name('documents.render');
+    Route::get('/documents/{id}/render-status', [\App\Http\Controllers\SocialDocumentController::class, 'renderStatus'])->name('documents.render-status');
+    Route::post('/documents/{id}/publish', [\App\Http\Controllers\SocialDocumentController::class, 'publish'])->name('documents.publish');
+    Route::post('/documents/{id}/schedule', [\App\Http\Controllers\SocialDocumentController::class, 'schedule'])->name('documents.schedule');
+    Route::get('/documents/{id}/publish-status', [\App\Http\Controllers\SocialDocumentController::class, 'publishStatus'])->name('documents.publish-status');
+    Route::get('/connections', [\App\Http\Controllers\SocialDocumentController::class, 'connections'])->name('connections');
+});
 Route::post('/builder/ai', [\App\Http\Controllers\BuilderAiController::class, 'generate'])->name('builder.ai');
 Route::get('/builder/backgrounds', function () {
     $dir = public_path('assets/trustbridge/builder/backgrounds');

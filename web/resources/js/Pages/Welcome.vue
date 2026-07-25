@@ -283,6 +283,31 @@
             </p>
           </div>
 
+          <!-- Mobile: die beiden Seitenportale als gestapelte, klickbare
+               Kacheln. Auf Desktop flankieren sie das Portal absolut in
+               .panthers-container; unterhalb 1025px sind sie dort per
+               v-if aus dem DOM (Bild-Downloads sparen). Hier stehen sie
+               im Fluss unter der Wortmarke — mit Label, damit klar ist,
+               was ein Tap auslöst. (25.07.2026) -->
+          <div v-if="!isWideView" class="mobile-portals">
+            <button type="button" class="mobile-portal" @click="isVideoOpen = true" aria-label="Portal: Begleite mich beim Erklärvideo">
+              <picture>
+                <source type="image/avif" srcset="/trustbridge-hero-portal-left-1024.avif" />
+                <source type="image/webp" srcset="/trustbridge-hero-portal-left-1024.webp" />
+                <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" loading="lazy" decoding="async" alt="" />
+              </picture>
+              <span class="mobile-portal-label">Begleite mich — das Erklärvideo</span>
+            </button>
+            <button type="button" class="mobile-portal" @click="isHowItWorksOpen = true" aria-label="Portal: Informationen – So funktioniert's">
+              <picture>
+                <source type="image/avif" srcset="/trustbridge-hero-portal-right-1024.avif" />
+                <source type="image/webp" srcset="/trustbridge-hero-portal-right-1024.webp" />
+                <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" loading="lazy" decoding="async" alt="" />
+              </picture>
+              <span class="mobile-portal-label">So funktioniert's</span>
+            </button>
+          </div>
+
           <!-- Die Schwelle. Oben endet der Aufstieg ("Danke deiner
                Angst"), direkt darunter begann bisher die Kasse
                ("Gebuendelter Einkauf") - ein Tonbruch. Diese zwei
@@ -313,8 +338,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>Orientierung</h3>
-                <p>Ich weiß nicht, wohin.</p>
+                <h3>Dich selbst erkennen</h3>
+                <p>Verstehe, wer du bist und was dich wirklich ausmacht.</p>
               </div>
             </button>
   
@@ -329,8 +354,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>Veränderung</h3>
-                <p>Ich weiß, wohin – aber ich traue mich noch nicht.</p>
+                <h3>Deinen Weg ausrichten</h3>
+                <p>Erkenne, wohin du wirklich willst.</p>
               </div>
             </Link>
   
@@ -347,8 +372,8 @@
                 </svg>
               </div>
               <div class="shard-content">
-                <h3>Persönliche Begleitung</h3>
-                <p>Ich möchte meinen Weg nicht allein gehen.</p>
+                <h3>Deinen Weg verkörpern</h3>
+                <p>Bringe deinen eigenen Weg Schritt für Schritt ins Leben.</p>
               </div>
             </button>
           </div>
@@ -360,8 +385,8 @@
           <svg class="guarantee-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
-          <span class="guarantee-text">Wenn du nicht weißt, wohin — genau dort stand ich auch, als dieser Weg begann.</span>
-          <Link href="/how-it-works" class="guarantee-link">Mehr erfahren &rarr;</Link>
+          <span class="guarantee-text">Wenn du nicht weißt, wohin — genau dort stand ich auch, als dieser Weg begann.<br />Du möchtest deinen Weg nicht allein gehen?</span>
+          <Link href="/how-it-works" class="guarantee-link">Persönliche Begleitung entdecken &rarr;</Link>
         </div>
       </div>
     </div>
@@ -3005,6 +3030,45 @@ onUnmounted(() => {
   box-shadow: 0 15px 40px rgba(212,175,55,0.6);
 }
 
+/* Mobile-Seitenportale: gestapelt unter der Wortmarke. Nur unterhalb
+   1025px im DOM (v-if in der Vorlage) — Desktop rendert sie nie, daher
+   braucht es hier keinen Media-Query. */
+.mobile-portals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  margin: 2.4rem auto 0.4rem;
+}
+.mobile-portal {
+  width: min(68vw, 300px);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  transition: transform 0.25s ease;
+}
+.mobile-portal:active { transform: scale(0.97); }
+.mobile-portal picture,
+.mobile-portal img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 50%;
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55));
+}
+.mobile-portal-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #efe6c9;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
 /* ===================================================================
    MOBILE: Portal und Text entzerren
    -------------------------------------------------------------------
@@ -3051,8 +3115,10 @@ onUnmounted(() => {
 
   .hero-content { margin-top: 0; }
 
-  /* Die Seitenportale bleiben ausgeblendet - bewusste Entscheidung,
-     siehe Components/Hero/README.md.
+  /* Die absoluten Seitenportale der Buehne bleiben mobil ausgeblendet
+     (sie waeren 124vw breit und laegen ueber dem Text). Seit 25.07.2026
+     stehen sie stattdessen als .mobile-portals gestapelt im Textfluss
+     unter der Wortmarke — klickbar und beschriftet.
      Die Regel weiter oben in diesem Stylesheet greift nicht, weil
      .portal-circle danach display: flex setzt und bei gleicher
      Spezifitaet gewinnt. Deshalb hier erneut, an wirksamer Stelle. */
