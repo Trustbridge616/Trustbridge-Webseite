@@ -79,6 +79,55 @@ Desktop ab 1025px pixelidentisch. Interaktionssuite 18/18, Hamburger ok.
 Build neu erzeugt; Dev-Umgebung (1× artisan, 1× Vite, hot auf
 [::1]:5174) wiederhergestellt.
 
+## [x] Mobile Feinschliff: Portal-Karten unter das Hauptportal (04.08.2026)
+Gründerentscheidung zur Hierarchie umgesetzt: Auf Telefonen (≤768px)
+erscheint zuerst das große Hauptportal als Haupteingang, **direkt
+darunter** die beiden kompakten Karten als ergänzende Wege (links
+„Unsere Ware" → /unsere-ware, rechts „Wie es funktioniert" →
+/how-it-works), danach Wortmarke und Shards.
+
+Technik: `.mobile-portal-row` steht im normalen Fluss nach der
+Aufstiegsbahn und wird per `margin-top: calc(-20vh + 30px)` unter die
+sichtbare Portalkante gezogen (Portal-Container endet bei 6% + 74vh =
+80vh der Bühne; darunter liegen exakt 20vh — reine vh-Rechnung, keine
+displayhöhen-fragile Absolutposition). Gemessene Abstände: 414px → 26px,
+390px → 26px, 768px → 19px; Abstand zur Wortmarke ≥34px.
+
+Karten: clamp(120px, 39vw, 152px) breit, 114px hoch (exakt gleich hoch,
+auch bei 2-zeiligem Label), Bild 54px rund mit engem, leisem Goldglow,
+Glas dunkler/violetter (rgba(14,8,32,.42)), Goldrand feiner (0.2),
+Label clamp(0.68–0.78rem) in Warmcreme #e9dcb8. Fokus: 1px Goldoutline
+(offset 3px); Active: translateY(1px) + leichte Aufhellung, keine
+Skalierung; prefers-reduced-motion respektiert.
+
+Wortlisten/Overlay-Texte bleiben ≤768px aus. Tablet (900: alte Kacheln,
+keine Zeile) und Desktop (1440: Grid x=120/w=1200, Zeile nicht im DOM)
+verifiziert unverändert. Prod-Build erneuert und gegengeprüft (gap 23px,
+2 Karten, kein Overflow); Dev-Umgebung wiederhergestellt (1×/1×).
+
+## [x] Mobile Hero-Komposition: kompakte Portal-Karten oben (04.08.2026, ersetzt durch Feinschliff oben)
+Auf Telefonen (≤768px) wirken die Seitenportale nicht mehr tief unten im
+Hero, sondern als zwei kompakte Portal-Karten (`.mobile-portal-topbar`,
+`.mp-top-card`) direkt unter dem Header — nebeneinander, zentriert,
+62px-Portalmotive mit Label, Glas-/Gold-Optik der bestehenden Portalwelt.
+Ziele unverändert: links → /unsere-ware, rechts → /how-it-works.
+
+- Keine Doppel-Darstellung: die alten gestapelten `.mobile-portals`-
+  Kacheln sind ≤768px ausgeblendet; Tablets (769–1024px) behalten sie
+  unverändert, Desktop (≥1025px) komplett unangetastet (Grid 1440:
+  x=120/w=1200 verifiziert).
+- Seitliche Overlay-Texte des Aufstiegs („Das, was dich festhält." /
+  „Das, was in dir frei wird." samt Wortlisten, `.climb-words`) sind
+  ≤768px komplett ausgeblendet — Desktop-Choreografie verifiziert intakt
+  (erscheinen dort weiter beim Scrollen).
+- Hauptportal bleibt alleiniger Fokus: Topbar endet bei y≈226, Portal
+  beginnt bei y≈445, exakt zentriert (Mitte 206/207), keine Überlappung.
+- Hero-Höhe mobil dadurch 3937 → 3373px (alte Kacheln ~660px entfallen).
+- Getestet: 360/414/768 (Topbar, Klicks auf beide Karten, kein
+  Overflow), 900 (Tablet unverändert), 1440 (Desktop unverändert);
+  Produktions-Build neu erzeugt und gegengeprüft, Dev-Umgebung
+  wiederhergestellt. Nur `Welcome.vue` geändert.
+
 ## [x] Hero-Portale und Navigation umsetzen (Gründerentscheidung vom 04.08.2026)
 Umgesetzt am 04.08.2026 im freigegebenen UI-Arbeitsblock:
 

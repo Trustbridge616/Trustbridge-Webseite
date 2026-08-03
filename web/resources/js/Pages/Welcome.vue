@@ -269,6 +269,35 @@
         </div>
       </div>
 
+      <!-- Mobil (nur <=768px, per CSS): die beiden Seitenportale als
+           kompakte sekundaere Wege DIREKT unter dem grossen Hauptportal.
+           Die Zeile steht im normalen Fluss nach der Aufstiegsbahn und
+           wird per margin-top: calc(-20vh + 24px) unter die sichtbare
+           Portalkante gezogen - der Portal-Container endet bei 6% + 74vh
+           = 80vh der Buehne, darunter liegen exakt 20vh. Reine
+           vh-Rechnung, keine displayhoehen-fragile Absolutposition.
+           Ziele wie auf Desktop: links Unsere Ware, rechts Wie es
+           funktioniert. Tablets (769-1024px) behalten die gestapelten
+           Kacheln unten, Desktop bleibt komplett unveraendert. -->
+      <nav v-if="!isWideView" class="mobile-portal-row" aria-label="Portal-Schnellzugriff">
+        <Link href="/unsere-ware" class="mp-top-card" aria-label="Portal: Unsere Ware">
+          <picture>
+            <source type="image/avif" srcset="/trustbridge-hero-portal-left-1024.avif" />
+            <source type="image/webp" srcset="/trustbridge-hero-portal-left-1024.webp" />
+            <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" decoding="async" alt="" />
+          </picture>
+          <span class="mp-top-label">Unsere Ware</span>
+        </Link>
+        <Link href="/how-it-works" class="mp-top-card" aria-label="Portal: Wie es funktioniert">
+          <picture>
+            <source type="image/avif" srcset="/trustbridge-hero-portal-right-1024.avif" />
+            <source type="image/webp" srcset="/trustbridge-hero-portal-right-1024.webp" />
+            <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" decoding="async" alt="" />
+          </picture>
+          <span class="mp-top-label">Wie es funktioniert</span>
+        </Link>
+      </nav>
+
             <div class="container hero-content">
         <!-- Trustbridge Logo / Title -->
         <div class="hero-title-wrapper" style="position: relative; z-index: 10;">
@@ -3081,6 +3110,11 @@ onUnmounted(() => {
   gap: 1.6rem;
   margin: 2.4rem auto 0.4rem;
 }
+
+/* Kompakte Portal-Karten unter dem Hauptportal: nur auf Telefonen
+   (<=768px) sichtbar - Basiszustand aus, damit Tablets (769-1024px)
+   weiterhin ausschliesslich die gestapelten Kacheln unten zeigen. */
+.mobile-portal-row { display: none; }
 .mobile-portal {
   width: min(68vw, 300px);
   padding: 0;
@@ -3202,6 +3236,92 @@ onUnmounted(() => {
      130vh (~1165px) erhalten die volle Scrub-Choreografie - Nebel
      weicht, Licht waermt, Portal klaert - nur auf kuerzerer Distanz. */
   .climb-track { height: 130vh; }
+
+  /* ===== Mobile Hero-Komposition (04.08.2026, Feinschliff) =====
+     Hierarchie: erst das grosse Hauptportal als Haupteingang, direkt
+     darunter die beiden kleinen Karten als ergaenzende Wege. Die Zeile
+     steht im Fluss nach der Aufstiegsbahn; -20vh + 24px zieht sie
+     exakt 24px unter die sichtbare Portalkante (Portal-Container endet
+     bei 80vh der Buehne). Waehrend der letzten Aufstiegsphase gleiten
+     die Karten so von unten an ihren Platz - synchron zum Klaren des
+     Portals, ohne GSAP-Eingriff. */
+  .mobile-portal-row {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: clamp(12px, 3.4vw, 16px);
+    margin: calc(-20vh + 30px) auto 34px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 5;
+  }
+  .mp-top-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    width: clamp(120px, 39vw, 152px);
+    min-height: 44px; /* Touch-Mindestflaeche ist real ~104px */
+    padding: 10px 8px 11px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    /* Ruhige Glasflaeche: sehr dunkles transparentes Violett, feiner
+       warmer Goldrand, leiser innerer Lichtschein - bewusst dezenter
+       als das Hauptportal. */
+    background: rgba(14, 8, 32, 0.42);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    transition: transform 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
+  }
+  /* Druckreaktion: minimal, keine Skalierung, keine Layoutverschiebung. */
+  .mp-top-card:active {
+    transform: translateY(1px);
+    filter: brightness(1.06);
+    border-color: rgba(212, 175, 55, 0.34);
+  }
+  .mp-top-card:focus-visible {
+    outline: 1px solid rgba(212, 175, 55, 0.8);
+    outline-offset: 3px;
+  }
+  .mp-top-card picture { display: contents; }
+  .mp-top-card img {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    /* Glow eng am Goldring, weich und leise - deutlich schwaecher als
+       der Hof des Hauptportals. */
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3), 0 4px 10px rgba(0, 0, 0, 0.42);
+  }
+  .mp-top-label {
+    font-family: 'Century Gothic', system-ui, sans-serif;
+    font-size: clamp(0.68rem, 3vw, 0.78rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: #e9dcb8;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+    padding: 0 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mp-top-card { transition: none; }
+    .mp-top-card:active { transform: none; }
+  }
+
+  /* Keine doppelte Portal-Darstellung auf Telefonen: die alten, tief
+     unten gestapelten Kacheln zeigen nur noch Tablets (769-1024px). */
+  .mobile-portals { display: none; }
+
+  /* Die seitlichen Overlay-Texte des Aufstiegs ("Das, was dich
+     festhaelt." / "Das, was in dir frei wird." samt Wortlisten) sind
+     auf schmalen Viewports zu viel - komplett aus, Desktop/Tablet
+     unveraendert. GSAP tweent die Listen weiter, nur unsichtbar. */
+  .climb-words { display: none; }
 
   /* Die Begriffe der Merkaba landen im gestapelten Mobil-Layout direkt
      hinter der Tagline und stoeren die Lesbarkeit. Deutlich zuruecknehmen. */
