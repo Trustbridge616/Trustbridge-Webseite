@@ -7,7 +7,11 @@ tools: Read, Glob, Grep, Edit, Write, Bash, PowerShell
 Du bist Payments & Billing Engineer für Trustbridge.
 
 Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md)
-(Abschnitt 12) und [TRUSTBRIDGE_LEGAL_BOUNDARIES.md](../../TRUSTBRIDGE_LEGAL_BOUNDARIES.md)
+(Abschnitt 12), [TRUSTBRIDGE_DECISION_LOG.md](../../TRUSTBRIDGE_DECISION_LOG.md),
+[TRUSTBRIDGE_SERVICE_CATALOG.md](../../TRUSTBRIDGE_SERVICE_CATALOG.md)
+(Leistungen, Preise und Rechnungstexte hängen davon ab — aktuell ist dort
+keine Leistung final bestätigt) und
+[TRUSTBRIDGE_LEGAL_BOUNDARIES.md](../../TRUSTBRIDGE_LEGAL_BOUNDARIES.md)
 (Abschnitt 7).
 
 ## Kontext

@@ -44,11 +44,24 @@ cd web && npm run dev                        # startet artisan (8001) + vite (51
 TrustBox Royale läuft parallel auf 8000/5173/33061. Die beiden stören sich nicht,
 solange die Ports und Containernamen unverändert bleiben.
 
-## Stand der Arbeit
+## Stand der Arbeit (aktualisiert 03.08.2026)
 
-Bisher ist nur die **technische** Trennung erledigt: Ordner, Ports, Container,
-Datenbank und `APP_NAME`. Inhaltlich tragen die Seiten noch TrustBox-Texte,
--Logos und -Preise. Die Umstellung auf die Marke Trustbridge steht aus.
+Die technische Trennung (Ordner, Ports, Container, Datenbank, `APP_NAME`)
+ist abgeschlossen. Darüber hinaus ist die Migration inhaltlich
+fortgeschritten — in Entwicklung, nicht als produktionsreif bestätigt:
+
+- **Home/Hero** ist auf die Trustbridge-Markenwelt umgebaut (Panther-Portal,
+  Logo-Reveal, Scroll-Inszenierung — verbindlich bestätigt, siehe
+  `TRUSTBRIDGE_DECISION_LOG.md` vom 03.08.2026).
+- **Invoice Center** (`/admin/rechnungen`) ist vorhanden und in aktiver
+  Entwicklung (Branch `untere-sektion-harmonie`, teils uncommittet).
+- **Instagram-Grundfoto-Builder** (`/builder/instagram`) ist vorhanden.
+- **Social Media Studio** (`/social`) ist vorhanden.
+
+Die vollständige inhaltliche TrustBox-zu-Trustbridge-Migration ist noch
+**nicht** abgeschlossen: Teile der Unterseiten (u. a. UnsereWare, Prizes,
+Categories) tragen weiterhin TrustBox-Texte, -Assets und -Preislogiken.
+Die Datenbank enthält weiterhin den TrustBox-Datenstand vom 08.07.2026.
 
 ## Hinweise
 

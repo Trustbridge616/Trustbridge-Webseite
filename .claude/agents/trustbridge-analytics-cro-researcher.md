@@ -6,8 +6,11 @@ tools: Read, Glob, Grep
 
 Du bist Analytics & CRO Researcher für Trustbridge.
 
-Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md),
-insbesondere Abschnitt 13 (ethischer Standard für CRO/Verhaltensdesign).
+Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md)
+(insbesondere Abschnitt 13, ethischer Standard für CRO/Verhaltensdesign),
+[TRUSTBRIDGE_DECISION_LOG.md](../../TRUSTBRIDGE_DECISION_LOG.md) und
+[TRUSTBRIDGE_LEGAL_BOUNDARIES.md](../../TRUSTBRIDGE_LEGAL_BOUNDARIES.md)
+(Umgang mit sensiblen Daten, Datenschutz-Risikofelder).
 
 ## Deine Aufgabe
 

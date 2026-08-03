@@ -3,7 +3,11 @@
 > Diese Datei ist die verbindliche Wahrheitsquelle für alle Agenten in diesem
 > Repository. Bei Widersprüchen zwischen dieser Datei und anderen Dokumenten,
 > Erinnerungen oder älteren Agentendateien hat **diese Datei Vorrang**.
-> Stand: 18.07.2026.
+> Stand: 18.07.2026; ergänzt am 03.08.2026 und 04.08.2026 um die
+> bestätigten Gründerentscheidungen (Hauptlogo, Panther-Hero, Asset-Pool,
+> Claude-Automatisierung, TrustBox-Verhältnis, Boxen-&-Abo-System,
+> Portalziele, Sprachen) — Details siehe
+> [TRUSTBRIDGE_DECISION_LOG.md](TRUSTBRIDGE_DECISION_LOG.md).
 
 ## 1. Identität
 
@@ -144,6 +148,19 @@ echte Menschen und natürliche Gesichter. Farben: dunkles Grün, Anthrazit,
 warmes Gold, Coral als starker Akzent. Klarheit hat Vorrang vor dekorativer
 Mystik.
 
+**Bestätigt am 03.08.2026, präzisiert am 04.08.2026
+(Gründerentscheidung):** Das offizielle Trustbridge-Hauptlogo ist das
+**vollständige Motiv des „Trustbridge Portal“-Assets** — das komplette
+Portal-/Kreis-Motiv mit Panther, Elster, Mond und
+TRUST/BRIDGE-Schriftzug. Dieses vollständige Motiv ist die maßgebliche
+Bildmarke; sie bleibt in Form, Farben, Bestandteilen und Proportionen
+unangetastet und darf nicht inhaltlich verfälscht werden. Animationen,
+Glow, Nebel, Reveal und kreisende Hero-Effekte sind erlaubt. Der
+Panther-Hero mit den Panthern links und rechts sowie die mystische
+Portalwelt des Heros (Licht, Glow, Nebel, Schleier, Reveal,
+scrollabhängige Sichtbarkeit, bewegliche Portalringe) sind verbindliche
+Trustbridge-Markenelemente.
+
 ## 10. Unternehmen
 
 - Name: **TB International Holdings Limited**
@@ -169,8 +186,10 @@ Mystik.
 Perspektivisch: Stripe (über Cashier), PayPal Business, Airwallex,
 Einmalzahlungen, wiederkehrende Zahlungen, Beratungs-Retainer, Kurskäufe,
 Mitgliedschaften, Gutscheine, Rechnungsdaten, Rückerstattungen, sichere
-Webhooks, Idempotenz, Audit-Logs, Mehrsprachigkeit, Datenschutz und
-Einwilligungen, Nutzerkonten, Kurs- und Portalzugriff.
+Webhooks, Idempotenz, Audit-Logs, Mehrsprachigkeit (Deutsch, Englisch,
+Spanisch — Deutsch inhaltlich führend, i18n-Struktur früh vorbereiten;
+Gründerentscheidung 04.08.2026), Datenschutz und Einwilligungen,
+Nutzerkonten, Kurs- und Portalzugriff.
 
 Zahlungsanbieter werden erst aktiviert, nachdem Konten, Identität,
 Unternehmensdaten, Bankverbindung und Geschäftsmodell vollständig verifiziert
@@ -198,8 +217,60 @@ demselben Rechner mit nahezu identischen Dateibäumen (siehe
 - Mystery-/Warenboxen, Retouren, Restposten, Reseller-Pakete
 - Preisstufen 111 / 333 / 999 € oder MwSt-Leiter-Argumentation
 - TrustBox-PayPal-Funnel, TrustBox-Checkout, TrustBox-Garantien
-- Boxen-/Karton-/Lagerästhetik, Panther-Maskottchen
+- Boxen-/Karton-/Lagerästhetik
 - TrustBox-Testimonials, künstliche Verkaufsverknappung
+
+**Präzisiert am 03.08.2026 (Gründerentscheidung, siehe
+[TRUSTBRIDGE_DECISION_LOG.md](TRUSTBRIDGE_DECISION_LOG.md)):**
+
+- Der Panther ist **keine** unerwünschte TrustBox-Altlast, sondern ein
+  bewusst übernommenes, bestätigtes Trustbridge-Markenelement. Das frühere
+  pauschale Verbot des Panther-Maskottchens ist insoweit aufgehoben.
+- **Asset-Pool-Freigabe (Gründerkorrektur 03.08.2026):** Alle aktuell im
+  Repository vorhandenen Panther-Visuals (Hero, `/prizes`, weitere
+  Darstellungen, alle Panther-Bilder unter `web/public/`, Renderings und
+  Varianten) sowie alle aktuell unter `web/public/` vorhandenen Bilder,
+  Videos, Renderings und sonstigen visuellen Medien sind von Ben als
+  verfügbarer visueller Trustbridge-Bestand freigegeben. Die Freigabe
+  umfasst nicht automatisch jede technische Datei oder jeden Build-Output
+  unter `web/public/`. Freigabe bedeutet Nutzbarkeit, nicht
+  verpflichtenden Einsatz. Agenten dürfen diese visuellen Medien nicht
+  eigenständig löschen, aussortieren oder als unerwünschte
+  TrustBox-Altlast einstufen — kein Asset wird allein wegen früherer
+  TrustBox-Nähe aussortiert. Ben entscheidet später selbst, welche
+  visuellen Dateien er manuell entfernt.
+- **Verbindliche Unterscheidung für alle Agenten:**
+  (A) freigegebene visuelle und technische Ausgangsbestandteile (Panther
+  und andere Visuals, Renderings, Portalwelten, Shards, Gamification,
+  Animationen, Komponenten, Dashboard-Optik, Technik) —
+  (B) zu entfernende TrustBox-**Inhalte** und **Geschäftslogiken**
+  (Markenbezeichnungen, Boxen-Angebote, Waren-/Retoureninhalte,
+  Reseller-Angebote, alte Preise, TrustBox-Texte, -Nutzerwege).
+  Kurzformel: Inhalte und Geschäftsmodell entfernen — Optik, Assets,
+  Systeme und Technik zu Trustbridge transformieren.
+- **Boxen-&-Abo-System (Gründerentscheidung 04.08.2026, ersetzt die
+  frühere Freigabepflicht-Klausel):** Die Richtung Shards / Gamification /
+  Boxen-&-Abo-System ist **ausdrücklich gewollt**. Optik,
+  Interaktionslogik, Gamification und visuelle Systematik von
+  „Boxen & Abo“ werden als Trustbridge-System erhalten und transformiert.
+  TrustBox-Inhalte und altes Wording dürfen entfernt oder umgebaut
+  werden; die gute Optik und Funktion bleiben gewollt. Die obigen
+  Verbotspunkte (Mystery-/Warenboxen, Boxen-/Karton-/Lagerästhetik usw.)
+  betreffen die alten TrustBox-**Inhalte, -Angebote und -Ästhetik der
+  Warenwelt** — nicht das bestehende UI-/Interaktionssystem, das als
+  Trustbridge-System weiterlebt.
+- TrustBox ist kein zukünftiger inhaltlicher Geschäftsbereich von
+  Trustbridge, aber eine technische und teilweise visuelle Ausgangsbasis.
+  Bewusst übernommen und weiterentwickelt werden dürfen: hochwertige
+  Renderings, Portaldesigns, Animationen, Shards-Logik, Gamification,
+  vorhandene Komponenten, Dashboard-Strukturen sowie technisch brauchbare
+  Funktionen und Codegrundlagen.
+- Alle Inhalte, Texte, Markenbezeichnungen, Angebote, Preise, Nutzerwege,
+  Produkte und zukünftigen Funktionen werden vollständig Trustbridge.
+- Alte TrustBox-spezifische Boxen-, Waren-, Retouren-, Reseller- und
+  Preislogiken verschwinden langfristig — ausschließlich nach technischer
+  Abhängigkeitsprüfung und kontrollierter Migration, keine ungeprüften
+  Löschungen.
 
 Bei jedem Zweifel gilt: zuerst nachfragen, nichts erfinden, diese Datei und
 tatsächliche Trustbridge-Dateien als einzige Quelle verwenden.

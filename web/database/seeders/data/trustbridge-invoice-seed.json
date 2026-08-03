@@ -1,0 +1,77 @@
+{
+  "brand": {
+    "name": "Trustbridge",
+    "tagline": "Trust Yourself. Bridge your Gap.",
+    "invoice_style": {
+      "primary_accent": "Trustbridge turquoise",
+      "secondary_accent": "Gold, very sparingly",
+      "text": "Dark typography on white",
+      "layout": "Premium, minimal, A4, high whitespace",
+      "logo_asset": "/brand/trustbridge-logo.png"
+    }
+  },
+  "issuer": {
+    "legal_name": "T_B International Holdings Limited",
+    "trading_name": "Trustbridge",
+    "registered_address": {
+      "line1": "UNIT 915, 9/F., CONCORDIA PLAZA",
+      "line2": "1 SCIENCE MUSEUM ROAD",
+      "city": "TSIM SHA TSUI",
+      "region": "KOWLOON",
+      "country": "HONG KONG SAR"
+    },
+    "company_registration_number": "76661325",
+    "business_registration_number_ubi": "76661325",
+    "email": "info@trustbridge.de",
+    "website": "https://www.trustbridge.de"
+  },
+  "payment_profile": {
+    "currency": "EUR",
+    "provider": "Airwallex",
+    "beneficiary_name": "T_B International Holdings Limited",
+    "iban": "DE52202208000058523311",
+    "swift_bic": "SXPYDEHH",
+    "bank_name": "Banking Circle S.A.",
+    "bank_location": "Germany",
+    "payment_reference_rule": "Invoice number"
+  },
+  "invoice_defaults": {
+    "invoice_number_format": "TBI-{YYYY}-{0001}",
+    "language": [
+      "English",
+      "German"
+    ],
+    "payment_terms_days": 7,
+    "service_title_en": "Monthly Digital Development & Strategic Advisory Retainer",
+    "service_title_de": "Monatliche digitale Weiterentwicklung und strategische Begleitung",
+    "service_description_en": "Ongoing development and expansion of the website and digital presence, technical and strategic project support, and personal business coaching/advisory services pursuant to the Service Agreement.",
+    "service_description_de": "Laufende Weiterentwicklung und Erweiterung der Webseite und des Internetauftritts, technische und strategische Projektbegleitung sowie persönliche Business-Begleitung und Coaching gemäß Service Agreement.",
+    "quantity": 1,
+    "unit": "month",
+    "unit_price_eur": "6000.00",
+    "tax_profile": "reverse_charge_german_b2b",
+    "tax_note": "Reverse charge - VAT payable by the recipient in accordance with Article 196 of Council Directive 2006/112/EC and § 13b UStG."
+  },
+  "required_customer_fields": {
+    "legal_name": null,
+    "billing_address": null,
+    "country": null,
+    "vat_id": null,
+    "email": null,
+    "contact_person": null,
+    "customer_number": null
+  },
+  "status_model": [
+    "draft",
+    "issued",
+    "sent",
+    "paid",
+    "overdue",
+    "cancelled"
+  ],
+  "do_not_print_on_invoice": [
+    "Profits Tax File Number",
+    "Return Identification Number",
+    "Director name unless specifically enabled"
+  ]
+}

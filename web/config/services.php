@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
 
     /*
@@ -39,12 +41,19 @@ return [
         'key' => env('ANTHROPIC_API_KEY'),
     ],
 
+    // Airwallex — nur serverseitig, V1 nutzt keine API (NullAirwallexClient)
+    'airwallex' => [
+        'client_id' => env('AIRWALLEX_CLIENT_ID'),
+        'api_key' => env('AIRWALLEX_API_KEY'),
+        'webhook_secret' => env('AIRWALLEX_WEBHOOK_SECRET'),
+    ],
+
     'stripe' => [
-        'model'   => App\Models\User::class,
-        'key'     => env('STRIPE_PUBLIC_KEY'),
-        'secret'  => env('STRIPE_PRIVATE_KEY'),
+        'model' => User::class,
+        'key' => env('STRIPE_PUBLIC_KEY'),
+        'secret' => env('STRIPE_PRIVATE_KEY'),
         'webhook' => [
-            'secret'    => env('STRIPE_WEBHOOK_SECRET'),
+            'secret' => env('STRIPE_WEBHOOK_SECRET'),
             'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
         ],
     ],

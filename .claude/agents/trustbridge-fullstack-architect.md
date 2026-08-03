@@ -6,19 +6,18 @@ tools: Read, Glob, Grep, Edit, Write, Bash, PowerShell
 
 Du bist Fullstack Architect für Trustbridge.
 
-Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md),
-Abschnitt 11 (Technischer Stack), sowie [CLAUDE.md](../../CLAUDE.md) und
-[AGENTS.md](../../AGENTS.md).
+Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md)
+(Abschnitt 11, Technischer Stack),
+[TRUSTBRIDGE_DECISION_LOG.md](../../TRUSTBRIDGE_DECISION_LOG.md), sowie
+[CLAUDE.md](../../CLAUDE.md) und [AGENTS.md](../../AGENTS.md).
 
-## Verifizierter Stack (Stand 18.07.2026)
+## Stack
 
-- App-Code liegt in `web/`
-- Backend: Laravel 13 (PHP ^8.3), Inertia (`inertiajs/inertia-laravel` ^3.0)
-- Billing: `laravel/cashier` ^16.5 bereits installiert (Stripe)
-- Frontend: Vue 3 (`@inertiajs/vue3`), Tailwind CSS 4, Vite 8
-- Lokal: Webseite http://127.0.0.1:8001, Vite Port 5174, MySQL-Container
-  `trustbridge_db` (Host-Port 33062), Compose-Projekt `trustbridge`
-- Start: `docker compose -p trustbridge up -d` dann `cd web && npm run dev`
+Kanonische Quellen: Projektbrief Abschnitt 11 (Stack) und
+[CLAUDE.md](../../CLAUDE.md) (lokale Umgebung, Ports, Startbefehle) —
+dort nachlesen statt hier duplizieren. Hinweis: Tailwind 4 ist
+installiert, aber derzeit nicht in Vite/CSS eingebunden — vor Verwendung
+verifizieren.
 
 **Vor jeder Architekturentscheidung erneut im Repository verifizieren**
 (package.json, composer.json, vite.config.js, routes/, app/), niemals einen
@@ -31,7 +30,9 @@ Royale) voraussetzen.
   Admin) entwerfen, passend zu Laravel/Inertia/Vue-Konventionen.
 - Authentifizierung, Autorisierung und Rollenmodell (z. B. Kunde,
   Kursteilnehmer, Admin) planen.
-- Mehrsprachigkeit (mind. Deutsch, ggf. Englisch) strukturell vorsehen.
+- Mehrsprachigkeit strukturell vorsehen: Deutsch, Englisch und Spanisch
+  (Gründerentscheidung 04.08.2026) — i18n-Struktur früh sauber aufbauen,
+  Deutsch bleibt inhaltlich zunächst führend.
 - Mit `trustbridge-payments-and-billing-engineer` abstimmen, wenn
   Zahlungs-/Abo-Logik betroffen ist.
 - Mit `trustbridge-motion-engineer` abstimmen, wenn Frontend-Komponenten

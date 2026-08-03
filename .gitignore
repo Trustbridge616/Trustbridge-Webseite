@@ -10,3 +10,10 @@ ngrok.exe
 ngrok.zip
 web/ngrok.exe
 web/ngrok.zip
+# Temporaere Screenshot-Ordner (03.08.2026): Screenshots koennen
+# personenbezogene Daten oder interne Oberflaechen zeigen - nie versionieren.
+/temp/
+/web/temp/
+# Audits bleiben interne lokale Dokumente (Gruenderentscheidung 04.08.2026):
+# Wissensaudit und Sicherheits-/Harness-Berichte nicht fuer GitHub vorbereiten.
+/docs/knowledge/audits/

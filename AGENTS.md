@@ -1,5 +1,13 @@
 - Local Dev: Project is in web directory.
 - We have a docker container in project folder for local dev purpose. Start it when necessary
 - Use best practises for coding.
-- If i write a new prompt: If it's a new task and you are working on an other task, write it complete down in a markup. Save screenshots as file in a temp folder in project, link the path to the screenshot / attachment.
-- AUtomatically when starting dev, make or set a loop to check for tasks in the task file and process them autoamtiscally one by one.
+- Prompt-Notizen & Screenshots (präzisiert 03.08.2026): Das Mitschreiben neuer Prompts/Aufgaben in Markdown-Dateien und das Ablegen von Screenshots im Projekt (temp/-Ordner, gitignoriert) erfolgen **nur** auf ausdrücklichen Auftrag oder innerhalb eines ausdrücklich von Ben freigegebenen Arbeits-, Umsetzungs- oder Automatikmodus. Ohne eine solche Freigabe erfolgen keine dokumentarischen Dateiänderungen.
+- TASKS-Regel (03.08.2026, ersetzt die frühere automatische Task-Schleife):
+  - Ein Entwicklungsstart (Docker, Server, Vite) verändert **keine** Dateien.
+  - `TASKS.md` wird nur in einem ausdrücklich von Ben gestarteten Arbeits-, Umsetzungs- oder Automatikmodus bearbeitet.
+  - Bereits freigegebene Aufgaben dürfen in diesem Modus selbstständig abgearbeitet werden.
+  - Autonomie im Auftrag (04.08.2026): Bei einem Umsetzungs- oder Gestaltungsauftrag von Ben darf Claude innerhalb des Auftrags autonom arbeiten, mitdenken und nötige Folgeanpassungen selbst ausführen — keine Rückfragen wegen Kleinigkeiten.
+  - Harte Stopp-Punkte (04.08.2026 — **nur** diese erfordern Stopp und Rückfrage): irreversible Löschungen großer Bestände, Datenbank-Schreibzugriffe/-Resets, Git-History-Rewrites, externe Uploads/Pushes/Veröffentlichungen, Umgang mit Live-Secrets. Details: TRUSTBRIDGE_DECISION_LOG.md, Einträge vom 03.08. und 04.08.2026.
+  - Rein lesende Inventuren der lokalen Projektstruktur und der lokalen Datenbank sind ausdrücklich freigegeben (04.08.2026) — sie verändern nichts und brauchen keine gesonderte Freigabe.
+  - Es gibt **kein dauerhaftes globales Startsignal**. Jede Freigabe gilt nur für den jeweils ausdrücklich benannten Arbeitsblock. Die allgemeine Lebensdauer eines Arbeits-/Automatikmodus (Beginn, Umfang, Ende) ist eine noch offene Gründerentscheidung.
+  - Externe persistente Claude-Memory-Dateien (unter `C:\Users\tisch\.claude\projects\...`) werden nur nach ausdrücklicher Freigabe von Ben verändert.

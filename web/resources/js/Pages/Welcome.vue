@@ -119,21 +119,34 @@
              Vor der Optimierung waren das 10 MB unsichtbarer Download
              auf jedem Handy. Die 2048er-Originale bleiben als letzter
              Fallback; AVIF/WebP (1024px, ~80/119 kB) tragen die Last. -->
-        <button v-if="isWideView" type="button" @click="isVideoOpen = true" class="portal-circle portal-circle-left" aria-label="Portal: Begleite mich beim Erklärvideo">
+        <!-- Portalziele (Gründerentscheidung 04.08.2026): links → Unsere
+             Ware, Mitte → Finder (/prizes), rechts → Wie es funktioniert.
+             Die Modals bleiben über die Hero-Shards weiter erreichbar. -->
+        <Link v-if="isWideView" href="/unsere-ware" class="portal-circle portal-circle-left" aria-label="Portal: Unsere Ware">
           <picture>
             <source type="image/avif" srcset="/trustbridge-hero-portal-left-1024.avif" />
             <source type="image/webp" srcset="/trustbridge-hero-portal-left-1024.webp" />
-            <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" decoding="async" alt="Portal: Begleite mich" />
+            <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" decoding="async" alt="Portal: Unsere Ware" />
           </picture>
-        </button>
-        <PortalLoop class="panther panther-center" />
-        <button v-if="isWideView" type="button" @click="isHowItWorksOpen = true" class="portal-circle portal-circle-right" aria-label="Portal: Informationen – So funktioniert's">
+        </Link>
+        <!-- Klick-/Tastaturlogik per Attribut-Durchreichung auf die
+             Komponentenwurzel: der Selektor .tb-loop.panther-center und
+             die gesamte Inszenierung bleiben unangetastet. -->
+        <PortalLoop
+          class="panther panther-center"
+          role="link"
+          tabindex="0"
+          aria-label="Finder öffnen"
+          @click="goToFinder"
+          @keydown.enter.prevent="goToFinder"
+        />
+        <Link v-if="isWideView" href="/how-it-works" class="portal-circle portal-circle-right" aria-label="Portal: Wie es funktioniert">
           <picture>
             <source type="image/avif" srcset="/trustbridge-hero-portal-right-1024.avif" />
             <source type="image/webp" srcset="/trustbridge-hero-portal-right-1024.webp" />
-            <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" decoding="async" alt="Portal: Informationen" />
+            <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" decoding="async" alt="Portal: Wie es funktioniert" />
           </picture>
-        </button>
+        </Link>
 
         <!-- ===== Kreuz-Bildunterschriften =====
              Woertlich gelesen stehen links "Trust your Gap" und rechts
@@ -290,22 +303,22 @@
                im Fluss unter der Wortmarke — mit Label, damit klar ist,
                was ein Tap auslöst. (25.07.2026) -->
           <div v-if="!isWideView" class="mobile-portals">
-            <button type="button" class="mobile-portal" @click="isVideoOpen = true" aria-label="Portal: Begleite mich beim Erklärvideo">
+            <Link href="/unsere-ware" class="mobile-portal" aria-label="Portal: Unsere Ware">
               <picture>
                 <source type="image/avif" srcset="/trustbridge-hero-portal-left-1024.avif" />
                 <source type="image/webp" srcset="/trustbridge-hero-portal-left-1024.webp" />
                 <img src="/trustbridge-hero-portal-left.png" width="1024" height="1024" loading="lazy" decoding="async" alt="" />
               </picture>
-              <span class="mobile-portal-label">Begleite mich — das Erklärvideo</span>
-            </button>
-            <button type="button" class="mobile-portal" @click="isHowItWorksOpen = true" aria-label="Portal: Informationen – So funktioniert's">
+              <span class="mobile-portal-label">Unsere Ware</span>
+            </Link>
+            <Link href="/how-it-works" class="mobile-portal" aria-label="Portal: Wie es funktioniert">
               <picture>
                 <source type="image/avif" srcset="/trustbridge-hero-portal-right-1024.avif" />
                 <source type="image/webp" srcset="/trustbridge-hero-portal-right-1024.webp" />
                 <img src="/trustbridge-hero-portal-right.png" width="1024" height="1024" loading="lazy" decoding="async" alt="" />
               </picture>
-              <span class="mobile-portal-label">So funktioniert's</span>
-            </button>
+              <span class="mobile-portal-label">Wie es funktioniert</span>
+            </Link>
           </div>
 
           <!-- Die Schwelle. Oben endet der Aufstieg ("Danke deiner
@@ -485,6 +498,11 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 
 const isVideoOpen = ref(false);
 const isHowItWorksOpen = ref(false);
+
+/* Mittleres Portal → Finder (Gründerentscheidung 04.08.2026). Navigation
+   per router statt Link-Wrapper, damit .tb-loop.panther-center ein
+   Element bleibt und Maske/Animation unangetastet weiterlaufen. */
+const goToFinder = () => router.visit('/prizes');
 
 /* Strukturierte Daten fuer Suchmaschinen. Das Template band homeLd
    seit jeher - definiert war es nie, was bei jedem Laden eine
@@ -1854,6 +1872,9 @@ onUnmounted(() => {
 .panther-center {
   height: 100%;
   z-index: 3;
+  /* Seit 04.08.2026 klickbar (role="link" → Finder) — nur der Cursor
+     signalisiert das, die Inszenierung bleibt unveraendert. */
+  cursor: pointer;
   animation: float-3d-center 8s ease-in-out infinite;
   filter: drop-shadow(0 30px 50px rgba(0,0,0,0.5)) drop-shadow(0 0 60px rgba(212,175,55,0.25));
   /* Freistellung in zwei Lagen, damit kein Rechteckrand stehen bleibt.
@@ -1930,6 +1951,10 @@ onUnmounted(() => {
   padding: 0;
   cursor: pointer;
   outline-offset: 8px;
+  /* Seit dem Umbau zu echten Links (04.08.2026): Anker-Artefakte
+     unterbinden, Optik bleibt identisch zum frueheren <button>. */
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Das <picture> soll im Flex-Layout unsichtbar sein - das img bleibt
@@ -3046,6 +3071,8 @@ onUnmounted(() => {
   background: none;
   border: none;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;

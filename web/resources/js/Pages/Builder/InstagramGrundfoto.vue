@@ -256,6 +256,62 @@
             <button class="ce-btn ghost" @click="copyCaption">{{ copied ? 'Kopiert ✓' : 'Caption + Hashtags kopieren' }}</button>
           </section>
 
+          <!-- 6 · KAMPAGNE -->
+          <section class="ce-panel" v-show="aktivTab === 'kampagne'">
+            <h2 class="ce-panel-title"><span class="ce-num">📦</span> Kampagne — komplette Serie auf einen Klick</h2>
+            <p class="ce-hint" style="margin-bottom:0.8rem">
+              Strukturierte Post-Serie: pro Post <strong>Hook</strong> (steht groß auf dem Bild),
+              <strong>Aussage</strong> + <strong>Frage</strong> (wandern in die Caption) und ein
+              <strong>Hintergrund</strong>-Wunsch — der passende Hintergrund wird automatisch aus deinen
+              Bildern gewählt. Ein Klick rendert alle Posts in allen gewählten Formaten als ZIP,
+              inklusive Captions, Hashtags und Posting-Fahrplan.
+            </p>
+
+            <div class="ce-row-between">
+              <button class="ce-btn ghost" style="margin-top:0" @click="kampagneText = SIGNATURE_KAMPAGNE">✨ 10 Signature-Posts laden</button>
+              <span class="ce-hint">{{ kampagnePosts.length }} Posts erkannt</span>
+            </div>
+
+            <label class="ce-label" style="margin-top:0.8rem">Posts <span class="ce-hint">(### trennt Posts · Zeilen: HOOK:, AUSSAGE:, FRAGE:, HINTERGRUND:)</span></label>
+            <textarea v-model="kampagneText" class="ce-input" rows="10" placeholder="### 1 · Titel&#10;HOOK: Der Satz, der auf dem Bild steht.&#10;AUSSAGE:&#10;Mehrzeilige Vertiefung — landet in der Caption.&#10;FRAGE: Die Reflexionsfrage für die Caption.&#10;HINTERGRUND: Wald / Nebel"></textarea>
+
+            <ul class="ce-kampagne-liste" v-if="kampagnePosts.length">
+              <li v-for="(p, i) in kampagnePosts" :key="i">
+                <button class="ce-archiv-load" @click="previewKampagnePost(i)" title="In die Vorschau laden">
+                  <span class="ce-archiv-text">{{ i + 1 }}. {{ p.titel || p.hook }}</span>
+                  <span class="ce-archiv-meta">{{ p.hintergrund || 'Hintergrund: aktuell gewählter' }}</span>
+                </button>
+              </li>
+            </ul>
+
+            <div class="ce-grid2" style="margin-top:0.8rem">
+              <div>
+                <label class="ce-label">Serienname <span class="ce-hint">(Überschrift auf dem Bild, leer = ohne)</span></label>
+                <input v-model="kampagneSerie" class="ce-input" placeholder="z. B. Denköffner" />
+              </div>
+              <div>
+                <label class="ce-label">Bild-Text</label>
+                <div class="ce-toggle">
+                  <button :class="{ active: kampagneBildmodus === 'hook' }" @click="kampagneBildmodus = 'hook'" title="Scroll-Stopp-Prinzip: nur der Hook auf dem Bild, die Tiefe in der Caption">Nur Hook</button>
+                  <button :class="{ active: kampagneBildmodus === 'voll' }" @click="kampagneBildmodus = 'voll'">Hook + Aussage</button>
+                </div>
+              </div>
+              <div>
+                <label class="ce-label">Formate <span class="ce-hint">(jeder Post wird in jedem Format gerendert)</span></label>
+                <div class="ce-chips">
+                  <button v-for="(f, key) in FORMATS" :key="key" class="ce-chip" :class="{ active: kampagneFormats.includes(key) }" @click="toggleKampagneFormat(key)">{{ key }} · {{ f.label }}</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="ce-row-between" style="margin-top:1rem">
+              <button class="ce-btn gold" :disabled="kampagneBusy || !kampagnePosts.length || !kampagneFormats.length" @click="runKampagne">
+                {{ kampagneBusy ? `Rendere ${kampagneProgress}…` : `${kampagnePosts.length} Posts × ${kampagneFormats.length} Formate generieren (ZIP)` }}
+              </button>
+              <span class="ce-hint">Je Post: Bilder + caption.txt + hashtags.txt + post.json · dazu posting-plan.md</span>
+            </div>
+          </section>
+
           <!-- 7 · ARCHIV -->
           <section class="ce-panel" v-show="aktivTab === 'archiv'">
             <h2 class="ce-panel-title"><span class="ce-num">5</span> Archiv</h2>
@@ -393,6 +449,9 @@ import {
   drawCard, heuristicCaption, suggestHashtags, loadImage, canvasToBlob,
 } from './builderEngine'
 import { buildViralLinks } from './viralResearch'
+import {
+  SIGNATURE_KAMPAGNE, parseKampagne, mapHintergrund, kampagnenCaption, slugify, postingPlan,
+} from './kampagnen'
 
 // LOGO-REGEL: immer das Original-Portal-Logo, unverändert (siehe .agents/rules/style_and_notes.md)
 const LOGO_SRC = '/Trustbridge Portal.png'
@@ -407,6 +466,7 @@ const TABS = {
   design: '🎨 Design',
   branding: '🐆 Branding',
   caption: '💬 Caption',
+  kampagne: '📦 Kampagne',
   archiv: '🗂 Archiv',
   batch: '🚀 Batch',
   abtest: '🧪 A/B-Test',
@@ -452,7 +512,9 @@ const branding = reactive({
 const qrAvailable = ref(false)
 let qrImg = null
 
-const aktivTab = ref('content')
+// ?tab=kampagne (usw.) öffnet den Builder direkt im gewünschten Tab
+const startTab = new URLSearchParams(window.location.search).get('tab')
+const aktivTab = ref(startTab && startTab in TABS ? startTab : 'content')
 const format = ref('4:5')
 const fileType = ref('png')
 const safeZone = ref(true)
@@ -478,6 +540,21 @@ const archivSuche = ref('')
 const batchText = ref('')
 const batchBusy = ref(false)
 const batchProgress = ref('')
+
+// ── Kampagne ──
+const kampagneText = ref(SIGNATURE_KAMPAGNE)
+const kampagneSerie = ref('Denköffner')
+const kampagneBildmodus = ref('hook') // 'hook' = Scroll-Stopp, Rest in die Caption
+const kampagneFormats = ref(['4:5', '9:16'])
+const kampagneBusy = ref(false)
+const kampagneProgress = ref('')
+const kampagnePosts = computed(() => parseKampagne(kampagneText.value))
+
+function toggleKampagneFormat(key) {
+  const i = kampagneFormats.value.indexOf(key)
+  if (i >= 0) kampagneFormats.value.splice(i, 1)
+  else kampagneFormats.value.push(key)
+}
 
 // ── A/B-Test ──
 const AB_VARIANTS = {
@@ -822,6 +899,106 @@ async function runBatch() {
   }
 }
 
+// ── Kampagne: alle Posts × alle Formate als ZIP ──
+function kampagneContentFor(post, i, n) {
+  const spruch = kampagneBildmodus.value === 'voll' && post.aussage
+    ? `${post.hook}\n\n${post.aussage}`
+    : post.hook
+  return {
+    spruch,
+    ueberschrift: kampagneSerie.value ? `${kampagneSerie.value} · ${i + 1}/${n}` : '',
+    untertitel: '↓ Lies die Caption',
+    autor: '',
+    cta: content.cta,
+  }
+}
+
+async function kampagneBgFor(post, i) {
+  const map = mapHintergrund(post.hintergrund, backgrounds.value, i)
+  const bg = backgrounds.value.find((b) => b.name === map.bgName) || null
+  let img = null
+  if (map.bgMode === 'image' && bg) {
+    if (!bgCache.has(bg.src)) bgCache.set(bg.src, await loadImage(bg.src))
+    img = bgCache.get(bg.src)
+  }
+  return { map, bg, img }
+}
+
+// Einzelnen Kampagnen-Post in die Live-Vorschau übernehmen (rechte Spalte)
+async function previewKampagnePost(i) {
+  const posts = kampagnePosts.value
+  const post = posts[i]
+  if (!post) return
+  const { map } = await kampagneBgFor(post, i)
+  design.bgMode = map.bgMode
+  if (map.bgName) design.bgName = map.bgName
+  Object.assign(design, map.tweaks)
+  Object.assign(content, kampagneContentFor(post, i, posts.length))
+  caption.value = kampagnenCaption(post, branding.followText || '@ben.trustbridge')
+  hashtags.value = suggestHashtags(`${post.hook} ${post.aussage} ${post.frage}`).join(' ')
+}
+
+async function runKampagne() {
+  const posts = kampagnePosts.value
+  if (!posts.length || !kampagneFormats.value.length) return
+  kampagneBusy.value = true
+  try {
+    const zip = new JSZip()
+    const root = zip.folder(`trustbridge-kampagne-${stamp()}`)
+    const off = document.createElement('canvas')
+    const ctx = off.getContext('2d')
+    const n = posts.length
+    const fmtDateiname = { '4:5': 'feed-4x5', '9:16': 'story-9x16', '1:1': 'quadrat-1x1' }
+
+    for (let i = 0; i < n; i++) {
+      kampagneProgress.value = `${i + 1}/${n}`
+      const post = posts[i]
+      const { map, bg, img } = await kampagneBgFor(post, i)
+      const contentOverride = kampagneContentFor(post, i, n)
+      const capText = kampagnenCaption(post, branding.followText || '@ben.trustbridge')
+      const tags = suggestHashtags(`${post.hook} ${post.aussage} ${post.frage}`)
+      const folder = root.folder(`post-${String(i + 1).padStart(2, '0')}-${slugify(post.titel || post.hook)}`)
+
+      for (const fmt of kampagneFormats.value) {
+        const d = FORMATS[fmt]
+        off.width = d.w
+        off.height = d.h
+        const opts = renderOptions(d.w, d.h, img, contentOverride)
+        opts.bgMode = map.bgMode
+        opts.bgFocus = bg && typeof bg.focus === 'number' ? bg.focus : 0.5
+        Object.assign(opts, map.tweaks)
+        drawCard(ctx, opts)
+        const blob = await canvasToBlob(off, mime(), 0.92)
+        folder.file(`${fmtDateiname[fmt]}.${fileType.value}`, blob)
+      }
+
+      folder.file('caption.txt', `${capText}\n\n${tags.join(' ')}`)
+      folder.file('hashtags.txt', tags.join(' '))
+      folder.file('post.json', JSON.stringify({
+        erstellt: new Date().toISOString(),
+        serie: kampagneSerie.value, nummer: i + 1,
+        titel: post.titel, hook: post.hook, aussage: post.aussage, frage: post.frage,
+        hintergrundWunsch: post.hintergrund,
+        gewaehlterHintergrund: map.bgMode === 'image' ? map.bgName : 'Schwarz',
+        formate: [...kampagneFormats.value],
+        caption: capText, hashtags: tags,
+        analytics: { likes: null, kommentare: null, gespeichert: null, geteilt: null, profilbesuche: null, follows: null },
+      }, null, 2))
+    }
+
+    root.file('posting-plan.md', postingPlan(posts, {
+      serie: kampagneSerie.value,
+      followText: branding.followText || '@ben.trustbridge',
+    }))
+    const out = await zip.generateAsync({ type: 'blob' })
+    triggerDownload(out, `trustbridge-kampagne-${stamp()}-${n}-posts.zip`)
+  } finally {
+    kampagneBusy.value = false
+    kampagneProgress.value = ''
+    render()
+  }
+}
+
 // ── A/B-Test: Hooks × Layout-Varianten als ZIP ──
 async function runAbTest() {
   if (!abCount.value) return
@@ -1131,6 +1308,14 @@ function deleteFromArchiv(id) {
   background: rgba(240,207,90,0.15); border-color: rgba(240,207,90,0.6);
   color: #F0CF5A;
 }
+
+/* Kampagne */
+.ce-kampagne-liste {
+  list-style: none; margin: 0.7rem 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 0.4rem;
+  max-height: 260px; overflow-y: auto;
+}
+.ce-kampagne-liste li { display: flex; }
 
 /* Archiv */
 .ce-archiv { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; max-height: 300px; overflow-y: auto; }

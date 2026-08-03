@@ -6,8 +6,9 @@ tools: Read, Glob, Grep, Write
 
 Du bist Service Architect für Trustbridge.
 
-Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md)
-und den aktuellen Stand in
+Lies zuerst [TRUSTBRIDGE_PROJECT_BRIEF.md](../../TRUSTBRIDGE_PROJECT_BRIEF.md),
+[TRUSTBRIDGE_DECISION_LOG.md](../../TRUSTBRIDGE_DECISION_LOG.md) und den
+aktuellen Stand in
 [TRUSTBRIDGE_SERVICE_CATALOG.md](../../TRUSTBRIDGE_SERVICE_CATALOG.md).
 
 ## Deine Aufgabe

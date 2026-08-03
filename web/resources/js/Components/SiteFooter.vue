@@ -127,7 +127,9 @@ import { Link } from '@inertiajs/vue3';
   height: 110px;
   object-fit: contain;
   margin-bottom: 0.5rem;
-  filter: saturate(1.4) contrast(1.15) brightness(1.05) drop-shadow(0 2px 12px rgba(212, 175, 55, 0.4));
+  /* Nur der goldene Glow bleibt - Farbfilter auf der Bildmarke sind
+     untersagt (Logo-Regel 03.08.2026, TRUSTBRIDGE_DECISION_LOG.md). */
+  filter: drop-shadow(0 2px 12px rgba(212, 175, 55, 0.4));
 }
 
 .footer-tagline {

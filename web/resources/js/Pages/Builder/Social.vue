@@ -14,6 +14,7 @@
         <h1 class="sm-title">Ein Inhalt. Alle Plattformen.</h1>
         <p class="sm-sub">Master-Content → Instagram · TikTok · Facebook — mit Safe-Areas, Auto-Layout, Validierung &amp; Export</p>
         <a href="/builder/instagram" class="sm-back-link">🖼 Zurück zum Grundfoto-Builder</a>
+        <a href="/builder/instagram?tab=kampagne" class="sm-back-link sm-kampagne-link">📦 Kampagne: 10 Posts auf einen Klick generieren</a>
       </header>
 
       <!-- Hauptnavigation -->
@@ -799,6 +800,11 @@ async function saveDocument() {
   transition: all 0.25s ease;
 }
 .sm-back-link:hover { border-color: rgba(142,245,210,0.55); color: #8EF5D2; transform: translateY(-2px); }
+.sm-kampagne-link {
+  margin-left: 0.6rem;
+  background: rgba(240,207,90,0.14); border-color: rgba(240,207,90,0.55); color: #F0CF5A;
+}
+.sm-kampagne-link:hover { border-color: rgba(240,207,90,0.9); color: #F0CF5A; box-shadow: 0 0 14px rgba(240,207,90,0.25); }
 
 .sm-nav { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.6rem; background: rgba(30,20,50,0.6); border: 1px solid rgba(142,245,210,0.22); border-radius: 16px; padding: 0.5rem; backdrop-filter: blur(12px); }
 .sm-nav button { flex: 1; min-width: 110px; padding: 0.6rem 0.8rem; border-radius: 10px; cursor: pointer; background: transparent; border: 1px solid transparent; color: #D9CFE8; font-family: inherit; font-size: 0.9rem; font-weight: 700; transition: all 0.2s ease; }

@@ -28,7 +28,7 @@
         <!-- Nav Links -->
         <div class="nav-links" :class="{ 'mobile-open': isMenuOpen }">
           <Link href="/" :class="{ 'active-link': isActive('/') }" @click="isMenuOpen = false">Home</Link>
-          <Link href="/prizes" :class="{ 'active-link': isActive('/prizes') }" @click="isMenuOpen = false">Boxen & Abo</Link>
+          <Link href="/prizes" :class="{ 'active-link': isActive('/prizes') }" @click="isMenuOpen = false">Finder</Link>
           <Link href="/unsere-ware" :class="{ 'active-link': isActive('/unsere-ware') }" @click="isMenuOpen = false">Unsere Ware</Link>
           <Link href="/how-it-works" :class="{ 'active-link': isActive('/how-it-works') }" @click="isMenuOpen = false">Wie es funktioniert</Link>
           <Link href="/partner" :class="{ 'active-link': isActive('/partner') }" class="nav-partner-link" @click="isMenuOpen = false">Partner</Link>
@@ -430,13 +430,13 @@ onUnmounted(() => {
 .trustbridge-logo-img {
   height: var(--logo-height);
   width: var(--logo-width);
-  filter: saturate(1.4) contrast(1.15) brightness(1.05);
+  /* Keine Farbfilter: die Bildmarke bleibt original (Logo-Regel 03.08.2026,
+     TRUSTBRIDGE_DECISION_LOG.md). Uniforme Skalierung ist erlaubt. */
   transform: scale(1);
   transition: transform 0.3s ease;
 }
 
 .logo-wrapper:hover .trustbridge-logo-img {
-  filter: saturate(1.4) contrast(1.15) brightness(1.05);
   transform: scale(1.04);
 }
   
