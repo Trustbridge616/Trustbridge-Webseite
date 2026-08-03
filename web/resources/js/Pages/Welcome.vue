@@ -2517,11 +2517,17 @@ onUnmounted(() => {
     width: 100%;
     align-items: stretch;
   }
-  @media (max-width: 900px) {
-    .hero-shards-grid { 
-      flex-direction: column; 
-      align-items: center; 
-      gap: 25px; 
+  /* Stapeln bereits ab 1024px statt 900px: in der Zeile brauchen die
+     drei Kacheln min. 3x300px + 2x30px Gap + 48px Seitenpolster = 1008px.
+     Zwischen 901 und 1023px ragte die Zeile deshalb links/rechts aus dem
+     Viewport (overflow:clip schnitt sie unsichtbar ab). 1024 ist zudem
+     die Grenze, ab der der Hero ohnehin mobil komponiert (Seitenportale
+     aus, Kacheln an) - so bleibt alles an einer Kante ausgerichtet. */
+  @media (max-width: 1024px) {
+    .hero-shards-grid {
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
     }
   }
   
@@ -2578,9 +2584,19 @@ onUnmounted(() => {
     100% { background-position: -200% 0; }
   }
 
-  @media (max-width: 900px) {
-    .hero-shard { min-width: 100%; max-width: 400px; padding: 2.5rem 2rem; }
+  @media (max-width: 1024px) { /* gleiche Grenze wie das Stapeln oben */
+    /* min-width: 0 statt 100%: bei 100% erbte die Kachel jede
+       Ueberbreite des Elternraums (und max-width: 400px konnte nie
+       greifen, weil min-width im Konflikt gewinnt). So bleibt die
+       Kachel immer <= Viewport und <= 400px. */
+    .hero-shard { min-width: 0; width: 100%; max-width: 400px; padding: 2.5rem 2rem; }
     .shard-center { order: -1; } /* On mobile, Center (Box auswählen) goes first! */
+    /* Der Desktop-Prominenz-Scale (1.06) wuerde die Kachel mobil ueber
+       den Rand heben - gestapelt braucht sie ihn nicht. GSAP-Reveals
+       setzen Inline-Transforms und bleiben davon unberuehrt. */
+    .shard-center,
+    .shard-center:hover,
+    .shard-center:active { transform: none; }
   }
 
   .hero-shard:hover { transform: translateY(-6px); z-index: 10; }
@@ -3142,6 +3158,26 @@ onUnmounted(() => {
 
   .hero-content { margin-top: 0; }
 
+  /* Harte Breitengarantien fuer die Inhaltssaeule: .hero-content
+     zentriert seine Kinder (align-items: center), dadurch war der
+     Wrapper fit-content und konnte von einem einzigen ueberbreiten
+     Kind (z. B. Desktop-Typo im Zwischenband, kaputte Asset-Staende)
+     ueber den Viewport hinaus aufgespannt werden - gemessen als
+     ~1047px-Boxen bei x=-316. width: 100% pinnt ihn an den realen
+     Container; die Kinder zentrieren sich weiterhin selbst. */
+  .hero-title-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+  .hero-shards-grid {
+    width: 100%;
+    max-width: 100%;
+  }
+  .merkaba-3d-container {
+    width: 90vw;
+    max-width: 100%;
+  }
+
   /* Die absoluten Seitenportale der Buehne bleiben mobil ausgeblendet
      (sie waeren 124vw breit und laegen ueber dem Text). Seit 25.07.2026
      stehen sie stattdessen als .mobile-portals gestapelt im Textfluss
@@ -3160,6 +3196,12 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .hero-title-wrapper { margin-top: 0; }
+
+  /* Aufstiegsbahn auf Telefonen straffen: 160vh fuehlten sich als
+     grosser leerer Zwischenraum an (bei 896px Hoehe = 1434px Strecke).
+     130vh (~1165px) erhalten die volle Scrub-Choreografie - Nebel
+     weicht, Licht waermt, Portal klaert - nur auf kuerzerer Distanz. */
+  .climb-track { height: 130vh; }
 
   /* Die Begriffe der Merkaba landen im gestapelten Mobil-Layout direkt
      hinter der Tagline und stoeren die Lesbarkeit. Deutlich zuruecknehmen. */

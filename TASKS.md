@@ -21,6 +21,64 @@ Status: `[ ]` = offen, `[~]` = in Arbeit, `[x]` = erledigt
 
 <!-- Offene Tasks unterhalb dieser Linie -->
 
+## [x] Mobile Responsive-Prüfung und -Reparatur der Startseite (04.08.2026)
+Befund: Die gemeldete 414px-Katastrophe (Titel/Grid ~1000px breit) war mit
+dem aktuellen Code **nicht reproduzierbar** — Dev-Modus und Build wurden
+bei 360/390/414/768/1024/1440 vermessen: `scrollWidth == innerWidth`
+überall, Portal zentriert, Titel und Kacheln im Viewport. Wahrscheinlichste
+Erklärung für das Fehlerbild: veralteter/gecachter `public/build`-Bundle
+(wird immer ausgeliefert, wenn Vite nicht läuft bzw. `public/hot` fehlt)
+oder Browser-Modus „Desktop-Website anfordern" (~980px Layout-Viewport).
+
+Tatsächlich gefundene und behobene Probleme:
+1. **Shard-Zeile lief bei 901–1024px aus dem Viewport** (3 × min-width
+   300px + Gaps = 1008px Bedarf; bei 910px begann Kachel 1 bei x=−17,
+   `overflow:clip` schnitt sie unsichtbar ab). Fix: beide
+   `@media (max-width: 900px)`-Blöcke der Shards auf **1024px** angehoben —
+   die Grenze, ab der der Hero ohnehin mobil komponiert (Seitenportale
+   aus, mobile Kacheln an, `isWideView` = min-width 1025px). Desktop ab
+   1025px pixelidentisch (1440: Grid x=120/w=1200, Shards 361px — wie
+   zuvor).
+2. **Produktions-Build war vom 01.08.** (ohne Finder-Nav, Portal-Links
+   und diesen Fix). Neu gebaut via `npm run build` — ohne Vite-Dev-Server
+   wird jetzt der aktuelle Stand ausgeliefert.
+
+Getestet (headless Chrome): 6 Viewports Layout-Messung + Screenshots,
+Interaktionssuite 18/18 (Finder-Nav, drei Portalziele, Tastatur,
+Zurücknavigation, keine Modal-Doppelauslösung), Hamburger-Menü inkl.
+Finder-Klick, Build-Modus separat bei 414/910/1440 verifiziert.
+
+Bekannte Einschränkungen: 3 vorbestehende 404-Legacy-Assets auf den
+Zielseiten (nicht Startseite); die große Hero-Gesamthöhe auf Mobil ist
+gewollte Scroll-Choreografie (Aufstieg), kein Leerraum-Bug. Hero-Optik,
+Panther, Motiv und Choreografie unverändert.
+
+NACHTRAG (04.08.2026, zweiter Durchgang nach erneutem Fehlerbericht):
+Bei echtem 414-Viewport mit frischen Dev-Assets und deaktiviertem Cache
+war der Zustand erneut gesund (scrollWidth=414, Titel x=24/w=366,
+scoped CSS nachweislich geladen). Die gemeldeten ~1047px-Boxen bei
+x=-316 entsprechen exakt „überbreites Kind, zentriert in 414px" — dieses
+strukturelle Loch wurde geschlossen, unabhängig vom Auslöser:
+
+1. `.hero-title-wrapper`/`.hero-shards-grid` erhalten ≤1024px harte
+   `width/max-width: 100%`-Clamps (vorher fit-content durch
+   Flex-Zentrierung → von jedem überbreiten Kind aufspannbar).
+2. `.hero-shard` ≤1024px: `min-width: 0; width: 100%; max-width: 400px`
+   (vorher `min-width: 100%`, wodurch `max-width: 400px` nie greifen
+   konnte und Überbreite des Elternraums vererbt wurde).
+3. `.shard-center` ≤1024px: `transform: none` (Desktop-scale(1.06)
+   mobil neutralisiert; GSAP-Inline-Transforms unberührt).
+4. `.merkaba-3d-container` ≤1024px: `max-width: 100%` (statt 1400px-Kappe).
+5. Aufstiegsbahn ≤768px gestrafft: `.climb-track` 160vh → **130vh**
+   (bei 896px Höhe: 1434px → 1165px Strecke; Dokumenthöhe bei 414px:
+   5551 → 5283px). Scrub-Choreografie bleibt vollständig, nur kürzer.
+
+Neu gemessen (Dev UND Produktions-Build): 360/390/414/768/910/1024/
+1025/1440 — überall scrollWidth == innerWidth, Shards ≤400px zentriert,
+Desktop ab 1025px pixelidentisch. Interaktionssuite 18/18, Hamburger ok.
+Build neu erzeugt; Dev-Umgebung (1× artisan, 1× Vite, hot auf
+[::1]:5174) wiederhergestellt.
+
 ## [x] Hero-Portale und Navigation umsetzen (Gründerentscheidung vom 04.08.2026)
 Umgesetzt am 04.08.2026 im freigegebenen UI-Arbeitsblock:
 
