@@ -208,11 +208,26 @@ onUnmounted(() => {
    durchscheinender Grund: die Navbar bleibt als eigene Ebene lesbar,
    der Hero scheint gedaempft hindurch. */
 .navbar-home.navbar-scrolled {
-  background: rgba(16, 8, 34, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Block C1 (Scroll-Performance): Blur 12px -> 8px, dafuer Alpha
+     0.88 -> 0.94 - der backdrop-filter auf einem fixed-Element ueber
+     voller Viewportbreite zwingt den Compositor sonst bei jedem
+     Scroll-Frame zum Neurendern des Hintergrunds. Optisch gleicht die
+     hoehere Deckkraft die geringere Truebung aus.
+     PERF: geprüft werden — kein contain: paint hier: das Logo
+     (200px) ueberragt die 90px-Bar und wuerde beschnitten. */
+  background: rgba(16, 8, 34, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+}
+
+/* Block C3: Fallback ohne backdrop-filter - fast deckender Grund,
+   damit die Navbar auch dort lesbar bleibt. Aendert fuer Chrome nichts. */
+@supports not (backdrop-filter: blur(1px)) {
+  .navbar-home.navbar-scrolled {
+    background: rgba(16, 8, 34, 0.97);
+  }
 }
 
 /* Auf dem dunklen Grund bleiben Links und Konto-Aktionen hell.

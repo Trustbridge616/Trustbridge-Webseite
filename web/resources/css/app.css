@@ -411,4 +411,13 @@ p { margin-bottom: 1rem; color: #4a3870; } /* Darker text for readability */
   opacity: 1;
   transform: translateY(0);
 }
-html { scroll-behavior: smooth; }
+/* Block E (Scroll-Performance): global auto - smooth machte auch
+   Tastatur-Scrolling (Leertaste, Bild ab, Pfeile) und Scrollbar-Klicks
+   traege. Anker-Spruenge bleiben weich: Seiten mit Sprungzielen nutzen
+   bereits scrollIntoView({behavior:'smooth'}) (Partner, AlexTischler);
+   fuer reine #-Anker greift die :has(:target)-Weiche darunter. */
+html { scroll-behavior: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(:target) { scroll-behavior: smooth; }
+}

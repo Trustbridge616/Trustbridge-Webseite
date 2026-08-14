@@ -920,9 +920,15 @@ onUnmounted(() => {
 
 /* ===== PAGE WRAPPER WITH CONTINUOUS GRADIENT ===== */
 .welcome-page {
-  background: linear-gradient(-45deg, #4a2685, #29155c, #1a0b36, #37176b); /* Brighter Royal Purple */
-  background-size: 400% 400%;
-  animation: bg-shift 20s ease infinite;
+  /* Der wandernde Royal-Purple-Verlauf lebt seit Block D1 (Scroll-
+     Performance-Patch) als transform-animiertes ::before im Starfield-
+     Layer: eine background-position-Endlosanimation auf 2159x3771px
+     malte den kompletten Dokument-Hintergrund permanent neu. Hier
+     ist hier transparent: der Verlauf haengt als Negativ-z-Ebene im
+     Wurzel-Stacking-Kontext und muss durchscheinen, damit er - wie der
+     fruehere Element-Hintergrund - unter ALLEM liegt (auch unter dem
+     nicht positionierten .footer-transition-Band). */
+  background: transparent;
   /* clip statt hidden: hidden macht dieses Element zum Scroll-Container,
      und daran wuerde .climb-stage kleben statt am Viewport - der
      Aufstieg fand dann gar nicht statt. clip schneidet identisch ab. */
@@ -942,12 +948,48 @@ onUnmounted(() => {
 .starfield {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  /* Kein z-index (auto): mit z-index 0 waere das Element ein eigener
+     Stacking-Kontext und wuerde das Verlaufs-::before (z-index -1)
+     einsperren - es muss aber im Wurzelkontext hinter die In-Flow-
+     Hintergruende (Footer-Band) fallen. Die Malposition des Starfields
+     selbst ist mit auto identisch (Step 8, erstes Kind in Baumfolge). */
   /* clip statt hidden: hidden macht dieses Element zum Scroll-
      Container, und daran wuerde das sticky-Fenster darunter kleben
      statt am Viewport. clip schneidet identisch ab. */
   overflow: clip;
   pointer-events: none;
+}
+
+/* Der wandernde Seitenverlauf (Block D1). Ersetzt die fruehere
+   background-position-Animation auf .welcome-page 1:1:
+     - Flaeche 400% x 400% = background-size 400% 400%
+     - top -150%            = background-position-Y 50%
+     - translateX 0..-75%   = background-position-X 0%..100%
+     - 20s / ease / gleiche Keyframe-Struktur (0/50/100)
+   Als promoteter Layer rastert der Verlauf einmal in Kacheln und wird
+   danach nur noch verschoben - kein Repaint pro Frame. Malt vor den
+   Sternenebenen (eigener Baum, ::before zuerst), ueber dem statischen
+   Seitengrund. */
+.starfield::before {
+  content: '';
+  position: absolute;
+  /* z-index -1 im Wurzelkontext: malt nach dem Canvas-Grund, aber vor
+     allen In-Flow- und positionierten Inhalten - exakt die Ebene, auf
+     der der fruehere .welcome-page-Hintergrund lag. */
+  z-index: -1;
+  left: 0;
+  top: -150%;
+  width: 400%;
+  height: 400%;
+  background: linear-gradient(-45deg, #4a2685, #29155c, #1a0b36, #37176b); /* Brighter Royal Purple */
+  will-change: transform;
+  animation: bg-shift-transform 20s ease infinite;
+}
+
+@keyframes bg-shift-transform {
+  0%   { transform: translate3d(0, 0, 0); }
+  50%  { transform: translate3d(-75%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 }
 
 /* Das Fenster fuer die getilten Ebenen: klebt in Viewport-Hoehe am
@@ -1738,12 +1780,6 @@ onUnmounted(() => {
 }
 
 
-@keyframes bg-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 .panthers-container {
   position: absolute;
   top: 10%;
@@ -1763,11 +1799,16 @@ onUnmounted(() => {
 .panthers-container::after {
   content: '';
   position: absolute;
-  top: 0; left: -100%;
+  /* Block D2: left-Animation -> transform. left 0 als fester Anker,
+     der Weg lebt in den Keyframes. Umrechnung left% (Elternbreite) zu
+     translateX% (Eigenbreite 50%): Faktor 2 (-150% -> -300%,
+     200% -> 400%). skewX bleibt in jedem Keyframe erhalten. */
+  top: 0; left: 0;
   width: 50%; height: 100%;
   /* Halbiert (0.3 -> 0.15): der Sheen soll streifen, nicht blitzen. */
   background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
-  transform: skewX(-25deg);
+  transform: translate3d(-300%, 0, 0) skewX(-25deg);
+  will-change: transform;
   animation: glassy-sweep 10s infinite;
   z-index: 10;
   pointer-events: none;
@@ -1775,9 +1816,9 @@ onUnmounted(() => {
 }
 
 @keyframes glassy-sweep {
-  0% { left: -150%; }
-  15% { left: 200%; }
-  100% { left: 200%; }
+  0% { transform: translate3d(-300%, 0, 0) skewX(-25deg); }
+  15% { transform: translate3d(400%, 0, 0) skewX(-25deg); }
+  100% { transform: translate3d(400%, 0, 0) skewX(-25deg); }
 }
 
 /* Magische Nebel-Hintergründe (Blur) */
@@ -1789,6 +1830,19 @@ onUnmounted(() => {
   /* Von 0.8 auf 0.55: die Nebelhoefe stuetzen das Portal, sie sind
      nicht selbst die Lichtquelle. */
   opacity: 0.55;
+}
+
+/* Block B1 (Scroll-Performance): genau diese Blur-Traeger werden als
+   eigene Compositor-Layer promotet - der Blur rastert einmal in eine
+   Textur und wird danach nur noch bewegt/skaliert, statt bei jedem
+   Frame neu berechnet zu werden. Bewusst KEIN globales will-change
+   (Layer-Budget). Der scale-Anteil von haze-drift und spin-ring-*
+   skaliert damit die fertige Textur auf der GPU (Block B2). */
+.ambient-glow,
+.blurry-ring,
+.climb-portal-haze {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .glow-center {
@@ -1949,7 +2003,11 @@ onUnmounted(() => {
      signalisiert das, die Inszenierung bleibt unveraendert. */
   cursor: pointer;
   animation: float-3d-center 8s ease-in-out infinite;
-  filter: drop-shadow(0 30px 50px rgba(0,0,0,0.5)) drop-shadow(0 0 60px rgba(212,175,55,0.25));
+  /* Block F: die beiden drop-shadow-Filter sind vom Video-Container
+     entfernt - zwei Schatten pro VIDEOFRAME neu zu rechnen war
+     Dauer-GPU-Last. Der goldene Hof lebt als statisches ::before
+     (siehe unten), der schwarze Weichschatten war auf dem dunklen
+     Violett durch die Maske praktisch unsichtbar. */
   /* Freistellung in zwei Lagen, damit kein Rechteckrand stehen bleibt.
      Der Container ist 2:3, deshalb ergibt eine Ellipse mit rx = 1,5 x ry
      einen exakten Kreis.
@@ -1965,6 +2023,30 @@ onUnmounted(() => {
   -webkit-mask-image:
     radial-gradient(ellipse 50% 33.33% at 50.7% 45.1%, #000 0%, #000 82%, transparent 100%),
     radial-gradient(ellipse 26% 17% at 50% 81%, #000 0%, rgba(0,0,0,0.92) 34%, transparent 100%);
+}
+
+/* Block F: statischer Ersatz fuer den goldenen drop-shadow-Hof des
+   Videos. Ein einmal gerasterter Radialverlauf am Portalring
+   (Ringmitte 50.7%/45.1%, Ringradius ~35% der Breite, Ausdehnung
+   +60px wie der fruehere Blur-Radius) statt Schattenberechnung pro
+   Videoframe. Die Maske des Containers beschneidet ihn identisch,
+   wie sie zuvor das Filterergebnis beschnitten hat.
+   PERF: geprüft werden — Hof-Intensitaet gegen Vorher-Stand. */
+.panther-center::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse calc(35% + 60px) calc(23.33% + 60px) at 50.7% 45.1%,
+    transparent 0%,
+    transparent 62%,
+    rgba(212, 175, 55, 0.14) 80%,
+    rgba(212, 175, 55, 0.22) 87%,
+    rgba(212, 175, 55, 0.10) 94%,
+    transparent 100%
+  );
 }
 
 @keyframes float-3d-center {
@@ -2643,6 +2725,12 @@ onUnmounted(() => {
     -webkit-mask-composite: xor;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
+    /* PERF: geprüft werden — shard-rim-shimmer animiert background-
+       position auf einer maskierten 1px-Rahmenkante. Ein transform-
+       Overlay (Block D3) braeuchte ein Pseudo-Element IM Pseudo-
+       Element (Maske + bewegte Ebene), das CSS nicht kann; ohne
+       DOM-Aenderung (Regel 3) nicht portierbar. Gemalte Flaeche ist
+       nur der 1px-Ring, Paint-Kosten entsprechend klein. */
     animation: shard-rim-shimmer 7s ease-in-out infinite;
     opacity: 0.75;
     pointer-events: none;
@@ -2706,8 +2794,13 @@ onUnmounted(() => {
   
   /* Base Glass */
   .shard-glass {
-    position: absolute; inset: 0; 
-    backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
+    position: absolute; inset: 0;
+    /* Block C2: Blur 35px -> 16px (dreifach vorhandene Flaeche, teuerste
+       backdrop-Variante). Der Hintergrund hinter den Kacheln ist ein
+       weicher Verlauf ohne Feindetail - der Unterschied ist bei diesen
+       Groessen minimal; die Glas-Verlaeufe unten sind zum Ausgleich
+       minimal angehoben. PERF: geprüft werden. */
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);
     border-top: 1px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.25);
     box-shadow:
@@ -2719,29 +2812,43 @@ onUnmounted(() => {
   
   /* Glass Colors */
   .shard-left .shard-glass {
-    /* Royal Violet & Gold Note */
-    background: linear-gradient(135deg, rgba(60, 30, 90, 0.48) 0%, rgba(212, 175, 55, 0.12) 100%);
+    /* Royal Violet & Gold Note (Alphas +0.04/+0.02 als Ausgleich fuer
+       den reduzierten Blur, Block C2) */
+    background: linear-gradient(135deg, rgba(60, 30, 90, 0.52) 0%, rgba(212, 175, 55, 0.14) 100%);
     border-top-color: rgba(212, 175, 55, 0.6);
     border-left-color: rgba(139, 92, 246, 0.45);
   }
   .shard-center .shard-glass {
-    /* Rich Legacy Mint & Strong Gold Edge */
-    background: linear-gradient(135deg, rgba(142, 245, 210, 0.45) 0%, rgba(212, 175, 55, 0.25) 100%);
+    /* Rich Legacy Mint & Strong Gold Edge (Alphas +0.04/+0.02, s.o.) */
+    background: linear-gradient(135deg, rgba(142, 245, 210, 0.49) 0%, rgba(212, 175, 55, 0.27) 100%);
     box-shadow: 0 40px 80px rgba(0,0,0,0.85), inset 0 0 50px rgba(142,245,210,0.25), inset 0 2px 15px rgba(212,175,55,0.5);
     border-top-color: rgba(212, 175, 55, 0.8);
     border-left-color: rgba(142, 245, 210, 0.7);
   }
   .shard-right .shard-glass {
-    /* Royal Violet & Gold Note */
-    background: linear-gradient(135deg, rgba(60, 30, 90, 0.48) 0%, rgba(212, 175, 55, 0.12) 100%);
+    /* Royal Violet & Gold Note (Alphas +0.04/+0.02, s.o.) */
+    background: linear-gradient(135deg, rgba(60, 30, 90, 0.52) 0%, rgba(212, 175, 55, 0.14) 100%);
     border-top-color: rgba(212, 175, 55, 0.6);
     border-left-color: rgba(139, 92, 246, 0.45);
   }
+
+  /* Block C3: ohne backdrop-filter tragen kraeftigere Glasverlaeufe
+     die Flaeche allein. Aendert fuer Chrome nichts. */
+  @supports not (backdrop-filter: blur(1px)) {
+    .shard-left .shard-glass,
+    .shard-right .shard-glass {
+      background: linear-gradient(135deg, rgba(60, 30, 90, 0.78) 0%, rgba(212, 175, 55, 0.22) 100%);
+    }
+    .shard-center .shard-glass {
+      background: linear-gradient(135deg, rgba(142, 245, 210, 0.6) 0%, rgba(212, 175, 55, 0.38) 100%);
+    }
+  }
   
-  /* Hover Glass Colors */
-  .shard-left:hover .shard-glass { background: linear-gradient(135deg, rgba(60, 30, 90, 0.5) 0%, rgba(212, 175, 55, 0.15) 100%); }
-  .shard-center:hover .shard-glass { background: linear-gradient(135deg, rgba(142, 245, 210, 0.55) 0%, rgba(212, 175, 55, 0.35) 100%); }
-  .shard-right:hover .shard-glass { background: linear-gradient(135deg, rgba(60, 30, 90, 0.5) 0%, rgba(212, 175, 55, 0.15) 100%); }
+  /* Hover Glass Colors (gleicher +0.04/+0.02-Ausgleich wie die
+     Basiszustaende, Block C2 - der Hover-Hub bleibt identisch) */
+  .shard-left:hover .shard-glass { background: linear-gradient(135deg, rgba(60, 30, 90, 0.54) 0%, rgba(212, 175, 55, 0.17) 100%); }
+  .shard-center:hover .shard-glass { background: linear-gradient(135deg, rgba(142, 245, 210, 0.59) 0%, rgba(212, 175, 55, 0.37) 100%); }
+  .shard-right:hover .shard-glass { background: linear-gradient(135deg, rgba(60, 30, 90, 0.54) 0%, rgba(212, 175, 55, 0.17) 100%); }
   
   .shard-refraction {
     position: absolute; inset: 0;
@@ -2754,10 +2861,14 @@ onUnmounted(() => {
   .shard-refraction::after {
     content: '';
     position: absolute;
-    top: 0; left: -60%;
+    /* Block D2: left-Animation -> transform. Umrechnung left%
+       (Elternbreite) zu translateX% (Eigenbreite 45%): Faktor 1/0.45
+       (-60% -> -133.333%, 160% -> 355.556%). */
+    top: 0; left: 0;
     width: 45%; height: 100%;
     background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%);
-    transform: skewX(-22deg);
+    transform: translate3d(-133.333%, 0, 0) skewX(-22deg);
+    will-change: transform;
     animation: shard-sheen 7s ease-in-out infinite;
     pointer-events: none;
   }
@@ -2766,31 +2877,48 @@ onUnmounted(() => {
   .shard-right .shard-refraction::after { animation-delay: -4.6s; }
 
   @keyframes shard-sheen {
-    0%        { left: -60%; }
-    35%, 100% { left: 160%; }
+    0%        { transform: translate3d(-133.333%, 0, 0) skewX(-22deg); }
+    35%, 100% { transform: translate3d(355.556%, 0, 0) skewX(-22deg); }
   }
   
   .shard-aura {
     position: absolute; inset: -4px; border-radius: 28px;
-    background-size: 300% 300%;
+    /* Block D3: die background-position-Endlosanimation (Paint pro
+       Frame auf ~390x300, dreifach) lebt jetzt als transform-bewegtes
+       ::after in dreifacher Breite. Der Verlauf zieht in den Rahmen
+       des Elternteils (overflow + border-radius), Blur und Deckkraft
+       bleiben unveraendert auf dem Elternteil. */
+    overflow: hidden;
     /* Im Ruhezustand bereits sichtbar, damit das Glas auch ohne Hover lebt */
     opacity: 0.42; filter: blur(18px);
-    animation: auraSpin 9s linear infinite;
     transition: opacity 0.4s ease, filter 0.4s ease; z-index: -1;
   }
 
-  @keyframes auraSpin {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  .shard-aura::after {
+    content: '';
+    position: absolute;
+    /* Umrechnung background-position auf size 300% 300%:
+       X 0%..100% = Offset 0..-2 Breiten = translateX 0..-66.667%
+       (Eigenbreite 300%), Y 50% fest = top -100%. */
+    left: 0; top: -100%;
+    width: 300%; height: 300%;
+    will-change: transform;
+    animation: auraSpin 9s linear infinite;
   }
-  
+
+  @keyframes auraSpin {
+    0%   { transform: translate3d(0, 0, 0); }
+    50%  { transform: translate3d(-66.667%, 0, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+
   /* Auras */
-  .shard-left .shard-aura { background: linear-gradient(45deg, #3c1e5a, #D4AF37, #5c3b8a, #3c1e5a); }
-  .shard-center .shard-aura { background: linear-gradient(45deg, #8EF5D2, #D4AF37, #5CE1C6, #8EF5D2); }
-  .shard-right .shard-aura { background: linear-gradient(45deg, #D4AF37, #3c1e5a, #8b5cf6, #D4AF37); }
-  
-  .hero-shard:hover .shard-aura { opacity: 0.95; filter: blur(22px); animation-duration: 3s; }
+  .shard-left .shard-aura::after { background: linear-gradient(45deg, #3c1e5a, #D4AF37, #5c3b8a, #3c1e5a); }
+  .shard-center .shard-aura::after { background: linear-gradient(45deg, #8EF5D2, #D4AF37, #5CE1C6, #8EF5D2); }
+  .shard-right .shard-aura::after { background: linear-gradient(45deg, #D4AF37, #3c1e5a, #8b5cf6, #D4AF37); }
+
+  .hero-shard:hover .shard-aura { opacity: 0.95; filter: blur(22px); }
+  .hero-shard:hover .shard-aura::after { animation-duration: 3s; }
   .shard-center .shard-aura { opacity: 0.6; }
   .shard-center:hover .shard-aura { opacity: 1; }
   
