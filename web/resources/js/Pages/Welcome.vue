@@ -516,6 +516,22 @@ import { initHomeLowerSections } from '../animations/homeLowerSections';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* Scroll-Performance (Block A2): Callbacks nur bei echtem Fortschritt,
+   kein Refresh beim Adressleisten-Toggle, keine Nachhol-Spruenge nach
+   Main-Thread-Haengern. Rein zeitliches Verhalten - die Kurven und
+   Positionen aller Tweens bleiben unveraendert. */
+ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true });
+gsap.ticker.lagSmoothing(0);
+
+/* Block A1: Kann der Browser scrollgetriebene CSS-Animationen, laeuft
+   die Portal-Mikro-Parallaxe (.wrapper-center) komplett im Compositor -
+   frame-exakt zum Scroll, ohne Main-Thread-Writes. Der GSAP-Tween in
+   setupBeats bleibt als Fallback fuer aeltere Browser erhalten und darf
+   das Element im CSS-Pfad nicht anfassen (Inline-Style wuerde die
+   Animation ueberstimmen). */
+const cssScrollTimeline =
+  typeof CSS !== 'undefined' && CSS.supports('animation-timeline', 'view()');
+
 /* Nur im Dev-Modus: GSAP fuer die manuelle Verifikation in der
    Browser-Konsole erreichbar machen. Als ES-Modul gebuendelt liegt
    es sonst in keinem globalen Namensraum - window.gsap === undefined
@@ -698,10 +714,14 @@ function setupBeats() {
     /* Mikro-Parallaxe: das Portal bewegt sich minimal anders als die
        einlaufenden Seiten - raeumliche Tiefe statt flacher Flaeche.
        Nur der statische wrapper-center; panther-center und Glows
-       tragen eigene CSS-Transform-Animationen. */
-    masterTl.fromTo('.wrapper-center',
-      { y: 0, scale: 1 },
-      { y: PORTAL_PARALLAX.y, scale: PORTAL_PARALLAX.scale, ease: 'power2.inOut', duration: 1 }, 0);
+       tragen eigene CSS-Transform-Animationen.
+       Im CSS-Scroll-Timeline-Pfad (Block A1) uebernimmt das Stylesheet
+       (portal-parallax auf --climb-track) - GSAP bleibt dann weg. */
+    if (!cssScrollTimeline) {
+      masterTl.fromTo('.wrapper-center',
+        { y: 0, scale: 1 },
+        { y: PORTAL_PARALLAX.y, scale: PORTAL_PARALLAX.scale, ease: 'power2.inOut', duration: 1 }, 0);
+    }
   });
 }
 
@@ -1124,6 +1144,11 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 175vh;
+  /* Benannte View-Timeline fuer die scrollgetriebene Portal-Parallaxe
+     (Block A1): 'contain 0% .. contain 100%' dieser Bahn ist exakt die
+     Sticky-Strecke - identisch mit ScrollTrigger 'top top'..'bottom
+     bottom', unabhaengig von der Bahnhoehe (175/160/130vh). */
+  view-timeline: --climb-track block;
 }
 
 .climb-stage {
@@ -1818,6 +1843,25 @@ onUnmounted(() => {
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 95vh; height: 95vh; /* Mitgewachsen mit dem Panther */
+}
+
+/* Block A1: die Mikro-Parallaxe des Portals laeuft im Compositor,
+   frame-exakt zum Scroll. Werte und Kurve entsprechen dem bisherigen
+   GSAP-Tween (y 0 -> -14px, scale 1 -> 1.025, power2.inOut als
+   Bezier). Aeltere Browser behalten den GSAP-Fallback (setupBeats). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .wrapper-center {
+      animation: portal-parallax both cubic-bezier(0.455, 0.03, 0.515, 0.955);
+      animation-timeline: --climb-track;
+      animation-range: contain 0% contain 100%;
+    }
+  }
+}
+
+@keyframes portal-parallax {
+  from { transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate(-50%, -50%) translate3d(0, -14px, 0) scale(1.025); }
 }
 
 .wrapper-left {
@@ -2758,6 +2802,23 @@ onUnmounted(() => {
     color: rgba(255,255,255,0.9); filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
   }
   .shard-icon svg { width: 42px; height: 42px; }
+
+  /* Das Schweben der Icons (Block A): frueher drei GSAP-Inline-Writes
+     pro Frame, jetzt Compositor-CSS. Werte 1:1 aus dem alten Tween:
+     y -4px..4px, halbe Periode 1.6/1.8/2.0s (alternate = voller Zyklus
+     3.2-4s), Phasenversatz -0.9s je Kachel, sine.inOut als Bezier. */
+  @media (prefers-reduced-motion: no-preference) {
+    .shard-icon svg {
+      animation: shard-icon-float 1.6s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
+    }
+    .shard-center .shard-icon svg { animation-duration: 1.8s; animation-delay: -0.9s; }
+    .shard-right  .shard-icon svg { animation-duration: 2.0s; animation-delay: -1.8s; }
+  }
+
+  @keyframes shard-icon-float {
+    from { transform: translateY(-4px); }
+    to   { transform: translateY(4px); }
+  }
   .shard-center .shard-icon svg { 
     width: 54px; height: 54px; 
     color: #8EF5D2; 

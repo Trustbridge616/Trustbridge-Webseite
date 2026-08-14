@@ -42,7 +42,9 @@ export function initHomeLowerSections() {
 
     const reveal = (targets, trigger, extra = {}) =>
       gsap.from(targets, {
-        scrollTrigger: { trigger, start: 'top 88%' },
+        /* fastScrollEnd (Block A2): wer durchrauscht, bekommt den
+           Endzustand sofort statt einer nachlaufenden Animation. */
+        scrollTrigger: { trigger, start: 'top 88%', fastScrollEnd: true },
         y: 40,
         autoAlpha: 0,
         duration: 0.9,
@@ -65,26 +67,12 @@ export function initHomeLowerSections() {
     reveal('.hero-guarantee-bar', '.hero-guarantee-bar', { y: 26, duration: 0.8 });
 
     /* --- Eigenleben der Kachel-Icons ---
-       Nur das SVG schwebt, nicht .shard-icon: auf dem Element liegen
-       CSS-Filter und der Hover-Glow-Puls, das SVG selbst ist
-       transform-frei. Form, Farbe und Linienfuehrung der Icons bleiben
-       unangetastet - bewegt wird ausschliesslich translateY.
-       Versetzte Dauern und Startpunkte, damit die drei nicht im
-       Gleichschritt atmen. */
-    gsap.utils.toArray('.shard-icon svg').forEach((el, i) => {
-      gsap.fromTo(
-        el,
-        { y: -4 },
-        {
-          y: 4,
-          duration: 1.6 + i * 0.2, /* halbe Periode: voller Zyklus 3.2-4s */
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: i * -0.9, /* negatives Delay = versetzter Phasenstart ohne Wartezeit */
-        }
-      );
-    });
+       Seit dem Scroll-Performance-Patch (Block A) lebt das Schweben als
+       CSS-Keyframe in Welcome.vue (shard-icon-float): der GSAP-Ticker
+       schrieb dafuer pro Frame drei Inline-Transforms - als CSS laeuft
+       dieselbe Bewegung (gleiche Dauern, Phasen und Kurve) komplett im
+       Compositor. Die Zustaendigkeitsgrenze bleibt: nur das SVG schwebt,
+       .shard-icon traegt weiterhin Filter und Hover-Glow. */
 
     /* --- Uebergang zum Footer ---
        Der Verlauf (Seitenlila -> Footer-Tiefviolett) blendet mit dem
@@ -109,7 +97,7 @@ export function initHomeLowerSections() {
        Marke, Navigation, Konto, Rechtliches treten gestaffelt ein -
        dieselbe Handschrift wie die Kacheln darueber, nur leiser. */
     gsap.from('.site-footer .footer-brand, .site-footer .footer-nav', {
-      scrollTrigger: { trigger: '.site-footer', start: 'top 88%' },
+      scrollTrigger: { trigger: '.site-footer', start: 'top 88%', fastScrollEnd: true },
       y: 24,
       autoAlpha: 0,
       duration: 0.8,
