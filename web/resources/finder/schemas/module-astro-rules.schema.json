@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/module-astro-rules.schema.json",
+  "title": "FinderAstroRulesModule",
+  "description": "Astrologische Interpretationsregeln in Bens Worten. Die Engine wählt pro Gespräch die Regeln, die zu den berechneten Astro-Fakten (astro-facts.schema.json) und zum Thema passen, und übergibt nur diese an die KI. Die KI deutet ausschließlich innerhalb dieser Regeln.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "slug", "title", "house_system_default", "orbs", "framing", "rules"],
+  "properties": {
+    "kind": { "const": "astro_rules" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "house_system_default": { "type": "string", "enum": ["placidus", "whole_sign"] },
+    "orbs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conjunction", "opposition", "trine", "square", "sextile"],
+      "description": "Orben in Grad für Radix-Aspekte.",
+      "properties": {
+        "conjunction": { "type": "number", "minimum": 0, "maximum": 12 },
+        "opposition": { "type": "number", "minimum": 0, "maximum": 12 },
+        "trine": { "type": "number", "minimum": 0, "maximum": 12 },
+        "square": { "type": "number", "minimum": 0, "maximum": 12 },
+        "sextile": { "type": "number", "minimum": 0, "maximum": 12 },
+        "transit": { "type": "number", "minimum": 0, "maximum": 6, "description": "Orb für Transite zu Radix-Punkten." }
+      }
+    },
+    "framing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intro"],
+      "properties": {
+        "intro": { "type": "string", "description": "Wie die astrologische Perspektive eingeführt wird (in Bens Worten)." },
+        "tone": { "type": "string", "description": "Stil-ID aus dem Persona-Modul für astrologische Passagen." },
+        "max_rules_per_turn": { "type": "integer", "minimum": 1, "maximum": 5 }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+  "$defs": {
+    "planet": { "type": "string", "enum": ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "north_node"] },
+    "point": { "type": "string", "enum": ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "north_node", "asc", "mc"] },
+    "sign": { "type": "string", "enum": ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"] },
+    "aspect": { "type": "string", "enum": ["conjunction", "opposition", "trine", "square", "sextile"] },
+    "life_area": { "type": "string", "enum": ["arbeit", "berufung", "beziehung", "familie", "finanzen", "selbst", "wandel", "kommunikation", "sinn", "koerper_energie"] },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "match", "meaning", "reflection_questions", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "kind": { "type": "string", "enum": ["planet_in_sign", "planet_in_house", "aspect", "transit", "cycle", "general"] },
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Welche Konstellation die Regel auslöst. Felder je nach kind.",
+          "properties": {
+            "planet": { "$ref": "#/$defs/planet" },
+            "sign": { "$ref": "#/$defs/sign" },
+            "house": { "type": "integer", "minimum": 1, "maximum": 12 },
+            "planet2": { "$ref": "#/$defs/planet" },
+            "aspect": { "$ref": "#/$defs/aspect" },
+            "transit_planet": { "$ref": "#/$defs/planet" },
+            "natal_point": { "$ref": "#/$defs/point" },
+            "cycle": { "type": "string", "enum": ["saturn_return", "jupiter_return", "uranus_opposition", "nodal_return", "chiron_return"] },
+            "moon_phase": { "type": "string", "enum": ["neumond", "zunehmende_sichel", "erstes_viertel", "zunehmender_mond", "vollmond", "abnehmender_mond", "letztes_viertel", "abnehmende_sichel"] }
+          }
+        },
+        "meaning": { "type": "string", "description": "Bens Deutung — als Reflexionsangebot formuliert, nie als Vorhersage." },
+        "life_areas": { "type": "array", "items": { "$ref": "#/$defs/life_area" } },
+        "reflection_questions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "bridge": { "type": "string", "description": "Möglicher Brückenansatz (kleiner Schritt), falls passend." },
+        "weight": { "type": "integer", "minimum": 1, "maximum": 5, "default": 3 },
+        "status": { "type": "string", "enum": ["draft", "active"] },
+        "note": { "type": "string", "description": "Interne Notiz (nur Studio)." }
+      }
+    }
+  }
+}

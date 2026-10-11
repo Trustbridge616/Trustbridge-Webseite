@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/session-record.schema.json",
+  "title": "FinderSessionRecord",
+  "description": "Eine Finder-Session (Tabelle finder_sessions). Testphase: vollständige Speicherung mit ausdrücklicher Einwilligung, konfigurierbarer Löschfrist (config/finder.php: retention_days) und Löschfunktion. Niemals Geheimnisse oder API-Schlüssel.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "status", "consents", "module", "astro", "retention", "created_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "user_id": { "type": ["integer", "null"], "description": "Gesetzt, sobald die Session einem Konto gehört." },
+    "anon_token_hash": { "type": ["string", "null"], "description": "Hash des Browser-Tokens (pseudonym); das Token selbst liegt nur beim Nutzer." },
+    "tester_label": { "type": ["string", "null"], "description": "Frei wählbares Pseudonym des Testnutzers, kein Klarname nötig." },
+    "status": { "type": "string", "enum": ["active", "completed", "abandoned", "error", "deleted"] },
+    "consents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["test_storage", "astro"],
+      "properties": {
+        "test_storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["given", "at", "text_version"],
+          "properties": {
+            "given": { "type": "boolean" },
+            "at": { "type": ["string", "null"], "format": "date-time" },
+            "text_version": { "type": "string", "description": "Version des angezeigten Einwilligungstexts." }
+          }
+        },
+        "astro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["given", "at"],
+          "properties": {
+            "given": { "type": "boolean" },
+            "at": { "type": ["string", "null"], "format": "date-time" }
+          }
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["journey_version_id", "persona_version_id"],
+      "properties": {
+        "journey_version_id": { "type": "integer" },
+        "persona_version_id": { "type": ["integer", "null"] },
+        "astro_rules_version_id": { "type": ["integer", "null"] },
+        "reflection_version_ids": { "type": "array", "items": { "type": "integer" } }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phase": { "type": ["string", "null"] },
+        "turns": { "type": "integer", "minimum": 0 },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "value", "source", "turn_seq"],
+            "properties": {
+              "key": { "type": "string" },
+              "value": { "type": "string" },
+              "source": { "type": "string", "enum": ["user_text", "card"] },
+              "turn_seq": { "type": "integer" }
+            }
+          }
+        },
+        "finder_card": { "type": ["object", "null"] },
+        "next_step": { "type": ["string", "null"] }
+      }
+    },
+    "astro": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["house_system", "profile_id"],
+      "properties": {
+        "house_system": { "type": "string", "enum": ["placidus", "whole_sign"], "description": "Aus Studio-Einstellung der Modulversion, pro Session fixiert." },
+        "profile_id": { "type": ["integer", "null"], "description": "astro_profiles.id (Geburtsdaten verschlüsselt, getrennt gespeichert)." },
+        "chart_id": { "type": ["integer", "null"] }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cost_usd": { "type": "number", "minimum": 0 },
+        "api_calls": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expires_at", "policy"],
+      "properties": {
+        "expires_at": { "type": "string", "format": "date-time" },
+        "policy": { "type": "string", "description": "z. B. testphase-2026-v1 (Name der gültigen Aufbewahrungsregel)." },
+        "deleted_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "locale": { "type": "string" },
+        "viewport": { "type": "string" },
+        "app_version": { "type": "string", "description": "Git-Commit/Build der Anwendung." }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

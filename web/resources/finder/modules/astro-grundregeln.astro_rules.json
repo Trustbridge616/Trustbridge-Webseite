@@ -1,0 +1,87 @@
+{
+  "kind": "astro_rules",
+  "slug": "astro-grundregeln",
+  "title": "Astrologische Grundregeln (Platzhalter)",
+  "description": "Strukturbeispiel für Bens Interpretationsmethodik. Alle Deutungstexte sind bewusst neutrale PLATZHALTER (status: draft) und werden im Finder Studio durch Bens eigene Lehre ersetzt. Die Engine nutzt nur Regeln mit status=active.",
+  "house_system_default": "placidus",
+  "orbs": { "conjunction": 8, "opposition": 8, "trine": 7, "square": 7, "sextile": 5, "transit": 3 },
+  "framing": {
+    "intro": "Ein zusätzlicher Blickwinkel aus deiner Konstellation — ein Reflexionsangebot, keine Vorhersage.",
+    "tone": "spirituell",
+    "max_rules_per_turn": 2
+  },
+  "rules": [
+    {
+      "id": "transit.saturn.sun",
+      "kind": "transit",
+      "match": { "transit_planet": "saturn", "natal_point": "sun" },
+      "meaning": "Saturn über der Radix-Sonne lädt ein, Strukturen zu prüfen, die bisher getragen haben: Was hält wirklich, was war nur Gewohnheit?",
+      "life_areas": ["arbeit", "selbst", "wandel"],
+      "reflection_questions": ["Welche Verantwortung trägst du gerade freiwillig — und welche aus Gewohnheit?", "Was würde bleiben, wenn die äußere Struktur wegfiele?"],
+      "bridge": "Eine Struktur benennen, die du behalten willst, und eine, die du loslassen darfst.",
+      "weight": 4,
+      "status": "draft",
+      "note": "Platzhalter — durch Bens Formulierung ersetzen."
+    },
+    {
+      "id": "transit.uranus.mc",
+      "kind": "transit",
+      "match": { "transit_planet": "uranus", "natal_point": "mc" },
+      "meaning": "Uranus am MC kann berufliche Umbrüche begleiten: Das Alte bricht auf, damit etwas Eigeneres sichtbar werden kann.",
+      "life_areas": ["arbeit", "berufung", "wandel"],
+      "reflection_questions": ["Was an deiner bisherigen Rolle hat dich eingeengt?", "Welche Freiheit wäre jetzt möglich, die vorher undenkbar war?"],
+      "bridge": "Eine ungewöhnliche Möglichkeit eine Woche lang ernsthaft anschauen, ohne sie zu bewerten.",
+      "weight": 4,
+      "status": "draft",
+      "note": "Platzhalter."
+    },
+    {
+      "id": "transit.jupiter.asc",
+      "kind": "transit",
+      "match": { "transit_planet": "jupiter", "natal_point": "asc" },
+      "meaning": "Jupiter am Aszendenten lädt ein, größer zu denken und sich neuen Erfahrungen zu öffnen — nicht alles auf einmal, aber mit mehr Vertrauen.",
+      "life_areas": ["selbst", "wandel", "sinn"],
+      "reflection_questions": ["Wo hältst du dich kleiner, als du bist?", "Welche Tür könntest du einen Spalt öffnen?"],
+      "bridge": "Einen Menschen oder Ort aufsuchen, der dich weiter denken lässt.",
+      "weight": 3,
+      "status": "draft",
+      "note": "Platzhalter."
+    },
+    {
+      "id": "cycle.saturn_return",
+      "kind": "cycle",
+      "match": { "cycle": "saturn_return" },
+      "meaning": "Die Saturn-Wiederkehr (um das 29./30. und 58./59. Lebensjahr) ist klassisch eine Zeit der Reifeprüfung: Was ich bisher gebaut habe, wird auf Tragfähigkeit geprüft.",
+      "life_areas": ["selbst", "arbeit", "wandel"],
+      "reflection_questions": ["Was hast du in den letzten Jahren aufgebaut, das wirklich deins ist?", "Welche Verpflichtung ist fällig — und welche darfst du neu verhandeln?"],
+      "bridge": "Eine Verpflichtung bewusst bestätigen oder bewusst beenden.",
+      "weight": 5,
+      "status": "draft",
+      "note": "Platzhalter."
+    },
+    {
+      "id": "planet_in_house.sun.10",
+      "kind": "planet_in_house",
+      "match": { "planet": "sun", "house": 10 },
+      "meaning": "Mit der Sonne im zehnten Haus ist die öffentliche Rolle oft eng mit dem Selbstgefühl verbunden — ein Verlust der Rolle kann sich wie ein Verlust des Selbst anfühlen, ist es aber nicht.",
+      "life_areas": ["berufung", "selbst"],
+      "reflection_questions": ["Wer bist du, wenn niemand zuschaut?", "Welche Aufgabe würdest du auch ohne Titel weiterführen?"],
+      "bridge": "Etwas tun, das deinen Wert zeigt, ohne dass es jemand sieht.",
+      "weight": 3,
+      "status": "draft",
+      "note": "Platzhalter."
+    },
+    {
+      "id": "general.moon_phase.neumond",
+      "kind": "general",
+      "match": { "moon_phase": "neumond" },
+      "meaning": "Neumond steht symbolisch für den Beginn eines Zyklus: eine Zeit, in der Absichten gesetzt werden dürfen, bevor sie sichtbar werden.",
+      "life_areas": ["wandel", "sinn"],
+      "reflection_questions": ["Welche Absicht würdest du setzen, wenn niemand ein Ergebnis erwartet?"],
+      "bridge": "Eine Absicht in einem Satz aufschreiben.",
+      "weight": 2,
+      "status": "draft",
+      "note": "Allgemeine Konstellation — auch ohne Geburtsdaten nutzbar, wenn das Modul es erlaubt."
+    }
+  ]
+}

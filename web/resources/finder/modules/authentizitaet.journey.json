@@ -1,0 +1,325 @@
+{
+  "kind": "journey",
+  "slug": "authentizitaet",
+  "title": "Authentizität",
+  "language": "de",
+  "entry": {
+    "situations": ["Ich habe Ja gesagt, obwohl ich Nein wollte.", "Ich habe anders gehandelt, als ich eigentlich wollte.", "Ich weiß gerade nicht, was ich wirklich möchte."],
+    "match_hints": ["Ja gesagt", "Nein gemeint", "nicht zu mir gestanden", "weiß nicht, was ich will", "Kompromiss", "gegen mich selbst"],
+    "intro": "Eine Frage pro Schritt. Antworte mit einer Kachel oder in deinen eigenen Worten. Der Finder macht sichtbar, wo deine Wünsche, deine Aussagen und dein Verhalten auseinanderliegen."
+  },
+  "goal": "Die Person erkennt, wo ihr Wollen, Sagen und Tun auseinanderliegen, versteht den Grund und die Mechanik dahinter — bewusster Kompromiss oder Zurückhalten — und findet eine nächste, authentischere Entscheidung.",
+  "background": "Modul A — Import des Finders V0.1 (15.08./11.10.2026). Methode: FAKT → ABWEICHUNG → WARUM → MECHANIK → BRÜCKE. Zuerst nur Beobachtbares: Was wurde gewollt, gesagt, getan. Eine Abweichung ist kein Fehler, sondern der Ort, an dem sich etwas erkennen lässt. Gründe werden verstanden, nicht verurteilt. Entscheidend ist die Mechanik: Ein bewusster Kompromiss ist authentisch, wenn die Person ihn kennt und trägt — Zurückhalten heißt, etwas anderes hat für sie entschieden. Ein bewusster Kompromiss wird nie als unauthentisch bewertet. Die Brücke ist klein, konkret und in den nächsten 48 Stunden gehbar. Keine Diagnosen, keine erzwungene positive Erkenntnis.",
+  "persona_ref": "trustbridge-standard",
+  "default_style": "klar",
+  "reflection_refs": ["fakt-vor-urteil"],
+  "astro": {
+    "enabled": true,
+    "house_system": "placidus",
+    "rules_ref": "astro-grundregeln",
+    "offer_consent": true,
+    "earliest_phase": "warum",
+    "never_in": ["fakt", "abweichung"],
+    "general_transits_without_profile": false
+  },
+  "facts": [
+    { "key": "situation", "label": "Situation", "description": "Welche der drei Einstiegssituationen zutrifft — oder 'eigene' bei freier Beschreibung.", "kind": "category", "choices": ["ja-statt-nein", "anders-gehandelt", "unklar", "eigene"] },
+    { "key": "bereich", "label": "Bereich", "description": "Lebensbereich, in dem es passiert ist.", "kind": "category", "choices": ["job", "familie", "partnerschaft", "freunde", "selbst"] },
+    { "key": "passiert", "label": "Passiert", "description": "Was beobachtbar passiert ist — in den Worten der Person, ohne Bewertung.", "kind": "text" },
+    { "key": "gewollt", "label": "Gewollt", "description": "Was die Person eigentlich wollte.", "kind": "text" },
+    { "key": "gesagt", "label": "Gesagt", "description": "Was tatsächlich gesagt wurde.", "kind": "text" },
+    { "key": "getan", "label": "Getan", "description": "Was tatsächlich getan wurde.", "kind": "text" },
+    { "key": "abweichung", "label": "Abweichung", "description": "Wo Wollen, Sagen und Tun auseinanderlaufen.", "kind": "category", "choices": ["wollen-sagen", "sagen-tun", "wollen-tun", "keine", "unsicher"] },
+    { "key": "warum", "label": "Warum", "description": "Der ehrlichste Grund für die Entscheidung.", "kind": "text" },
+    { "key": "mechanik", "label": "Mechanik", "description": "Bewusster Kompromiss, Zurückhalten oder unsicher.", "kind": "category", "choices": ["kompromiss", "zurueckgehalten", "unsicher"] },
+    { "key": "bruecke", "label": "Brücke", "description": "Die nächste authentischere Entscheidung — klein und konkret.", "kind": "text" }
+  ],
+  "phases": [
+    {
+      "id": "fakt",
+      "label": "Fakt",
+      "goal": "Nur Beobachtbares erfassen: Situation, Bereich, Gewollt, Gesagt, Getan.",
+      "style": "klar",
+      "question_order": "fixed",
+      "questions": [
+        {
+          "id": "situation",
+          "text": "Was beschäftigt dich gerade?",
+          "purpose": "Einstieg über eine der drei Situationen; bestimmt die Fragen-Varianten der folgenden Schritte.",
+          "fact_key": "situation",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "ja-statt-nein", "label": "Ja statt Nein", "title": "Ich habe Ja gesagt, obwohl ich Nein wollte.", "icon": "message-circle" },
+            { "id": "anders-gehandelt", "label": "Anders gehandelt", "title": "Ich habe anders gehandelt, als ich eigentlich wollte.", "icon": "shuffle" },
+            { "id": "unklar", "label": "Noch unklar", "title": "Ich weiß gerade nicht, was ich wirklich möchte.", "icon": "compass" }
+          ]
+        },
+        {
+          "id": "passiert",
+          "text": "Was ist passiert?",
+          "purpose": "Bereich und Hergang — nur das Beobachtbare, in zwei, drei Sätzen.",
+          "fact_key": "passiert",
+          "deepen_if": ["Antwort enthält vor allem Bewertungen („es war schrecklich“) statt Hergang"],
+          "deepen_how": "Freundlich zum Beobachtbaren zurückführen: „Was genau wurde gesagt oder getan?“",
+          "answer_strategy": "Bereich zuordnen (bereich), Hergang spiegeln, nicht deuten.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "job", "label": "Arbeit", "title": "Im Job, im Studium oder im Geschäft.", "icon": "briefcase" },
+            { "id": "familie", "label": "Familie", "title": "In der Familie oder zu Hause.", "icon": "home" },
+            { "id": "partnerschaft", "label": "Partnerschaft", "title": "In meiner Beziehung.", "icon": "heart" },
+            { "id": "freunde", "label": "Freunde", "title": "Im Freundeskreis oder im Umfeld.", "icon": "users" },
+            { "id": "selbst", "label": "Mit mir selbst", "title": "Es betrifft vor allem mich.", "icon": "user" }
+          ]
+        },
+        {
+          "id": "gewollt",
+          "text": "Was wolltest du eigentlich?",
+          "purpose": "Das eigene Wollen sichtbar machen — getrennt von dem, was gesagt oder getan wurde.",
+          "fact_key": "gewollt",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "nein", "label": "Nein sagen", "title": "Ich wollte ablehnen.", "icon": "x-circle" },
+            { "id": "zeit", "label": "Mehr Zeit", "title": "Ich wollte erst nachdenken.", "icon": "clock" },
+            { "id": "grenze", "label": "Eine Grenze", "title": "Ich wollte sagen, was für mich nicht geht.", "icon": "flag" },
+            { "id": "anderes", "label": "Etwas anderes", "title": "Ich wollte einen anderen Weg vorschlagen.", "icon": "corner-up-right" },
+            { "id": "weiss-nicht", "label": "Nicht sicher", "title": "Ich weiß es nicht genau.", "icon": "help-circle" }
+          ],
+          "variants": {
+            "when_fact": "situation",
+            "cases": {
+              "unklar": {
+                "text": "Was wünschst du dir eigentlich?",
+                "card_pool": [
+                  { "id": "klarheit", "label": "Klarheit", "title": "Ich wünsche mir Ruhe und einen klaren Kopf.", "icon": "feather" },
+                  { "id": "zeit", "label": "Mehr Zeit", "title": "Ich will nichts überstürzen.", "icon": "clock" },
+                  { "id": "entscheidung", "label": "Eine Entscheidung", "title": "Ich will endlich wissen, wohin.", "icon": "target" },
+                  { "id": "abnahme", "label": "Entlastung", "title": "Ich wünsche mir, dass mir jemand die Wahl abnimmt.", "icon": "users" },
+                  { "id": "weiss-nicht", "label": "Nicht sicher", "title": "Genau das ist die Frage.", "icon": "help-circle" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "gesagt",
+          "text": "Was hast du tatsächlich gesagt?",
+          "purpose": "Die Aussage so genau wie möglich — Wort für Wort, so gut die Erinnerung reicht.",
+          "fact_key": "gesagt",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "ja", "label": "Ja", "title": "Ich habe zugesagt.", "icon": "check" },
+            { "id": "nein", "label": "Nein", "title": "Ich habe abgelehnt.", "icon": "x" },
+            { "id": "vielleicht", "label": "Vielleicht", "title": "Ich bin ausgewichen.", "icon": "more-horizontal" },
+            { "id": "nichts", "label": "Nichts", "title": "Ich habe geschwiegen.", "icon": "volume-x" }
+          ],
+          "variants": {
+            "when_fact": "situation",
+            "cases": {
+              "unklar": {
+                "text": "Was sagst du anderen dazu?",
+                "card_pool": [
+                  { "id": "alles-gut", "label": "Alles gut", "title": "Ich sage, es sei alles in Ordnung.", "icon": "smile" },
+                  { "id": "offen", "label": "Offen", "title": "Ich sage, dass ich es noch nicht weiß.", "icon": "message-circle" },
+                  { "id": "vielleicht", "label": "Ausweichend", "title": "Ich rede drumherum.", "icon": "more-horizontal" },
+                  { "id": "nichts", "label": "Nichts", "title": "Ich spreche nicht darüber.", "icon": "volume-x" }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "getan",
+          "text": "Was hast du tatsächlich getan?",
+          "purpose": "Das Verhalten ohne Bewertung — die dritte Ebene neben Wollen und Sagen.",
+          "fact_key": "getan",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "mitgemacht", "label": "Mitgemacht", "title": "Ich habe es durchgezogen.", "icon": "check-circle" },
+            { "id": "gelassen", "label": "Gelassen", "title": "Ich habe es nicht gemacht.", "icon": "x-circle" },
+            { "id": "aufgeschoben", "label": "Aufgeschoben", "title": "Ich habe es vor mir hergeschoben.", "icon": "pause-circle" },
+            { "id": "halb", "label": "Halbherzig", "title": "Ich habe es gemacht, aber ohne Überzeugung.", "icon": "shuffle" }
+          ],
+          "variants": {
+            "when_fact": "situation",
+            "cases": {
+              "unklar": {
+                "text": "Was tust du gerade tatsächlich?",
+                "card_pool": [
+                  { "id": "aufschieben", "label": "Aufschieben", "title": "Ich schiebe die Entscheidung vor mir her.", "icon": "pause-circle" },
+                  { "id": "erwartung", "label": "Was erwartet wird", "title": "Ich mache, was andere erwarten.", "icon": "users" },
+                  { "id": "ausprobieren", "label": "Ausprobieren", "title": "Ich teste Dinge aus.", "icon": "compass" },
+                  { "id": "weiter", "label": "Weiter wie bisher", "title": "Ich mache weiter, ohne Überzeugung.", "icon": "repeat" }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "gate": { "requires_facts": ["situation", "passiert", "gewollt", "gesagt", "getan"], "max_turns": 10 },
+      "allowed_intents": ["question", "mirror", "explain", "safety"],
+      "allowed_components": ["choice_cards", "free_text", "method_note"],
+      "astro": { "allowed": false },
+      "closing": null
+    },
+    {
+      "id": "abweichung",
+      "label": "Abweichung",
+      "goal": "Sichtbar machen, wo Wollen, Sagen und Tun auseinanderlaufen — ohne Bewertung.",
+      "style": "klar",
+      "questions": [
+        {
+          "id": "abweichung",
+          "text": "Wo liegt möglicherweise eine Abweichung?",
+          "purpose": "Die Person ordnet selbst ein, zwischen welchen Ebenen die Lücke liegt. Keine Abweichung ist ein gültiges Ergebnis.",
+          "fact_key": "abweichung",
+          "answer_strategy": "Die drei Ebenen in ihren eigenen Worten nebeneinanderstellen, dann die Einordnung bestätigen.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "wollen-sagen", "label": "Wollen ↔ Sagen", "title": "Ich wollte etwas anderes, als ich gesagt habe.", "icon": "message-circle" },
+            { "id": "sagen-tun", "label": "Sagen ↔ Tun", "title": "Ich habe etwas anderes getan, als ich gesagt habe.", "icon": "activity" },
+            { "id": "wollen-tun", "label": "Wollen ↔ Tun", "title": "Ich habe anders gehandelt, als ich wollte.", "icon": "target" },
+            { "id": "keine", "label": "Keine", "title": "Wollen, Sagen und Tun passen zusammen.", "icon": "check-circle" },
+            { "id": "unsicher", "label": "Unsicher", "title": "Ich kann es noch nicht einordnen.", "icon": "help-circle" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["abweichung"], "max_turns": 3 },
+      "allowed_intents": ["question", "mirror", "explain"],
+      "allowed_components": ["choice_cards", "free_text", "method_note"],
+      "astro": { "allowed": false },
+      "closing": null
+    },
+    {
+      "id": "warum",
+      "label": "Warum",
+      "goal": "Den ehrlichsten Grund verstehen — nicht verurteilen.",
+      "style": "philosophisch",
+      "questions": [
+        {
+          "id": "warum",
+          "text": "Warum hast du so entschieden?",
+          "purpose": "Gründe verstehen, nicht verurteilen. Was geschützt hat, muss nicht für immer begrenzen.",
+          "fact_key": "warum",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "enttaeuschen", "label": "Niemanden enttäuschen", "title": "Ich wollte niemanden verletzen.", "icon": "heart" },
+            { "id": "konflikt", "label": "Konflikt vermeiden", "title": "Ich wollte keinen Streit.", "icon": "shield" },
+            { "id": "dazugehoeren", "label": "Dazugehören", "title": "Ich wollte nicht außen vor sein.", "icon": "users" },
+            { "id": "schnell", "label": "Keine Zeit", "title": "Es ging schnell – ich habe nicht nachgedacht.", "icon": "zap" },
+            { "id": "abgewogen", "label": "Abgewogen", "title": "Ich habe die Folgen bewusst bedacht.", "icon": "sliders" },
+            { "id": "weiss-nicht", "label": "Weiß ich nicht", "title": "Ich kann es noch nicht sagen.", "icon": "help-circle" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["warum"], "max_turns": 3 },
+      "allowed_intents": ["question", "mirror", "explain", "perspective", "astro_perspective"],
+      "allowed_components": ["choice_cards", "free_text", "method_note", "astro_consent", "astro_perspective"],
+      "astro": { "allowed": true, "when": "Nur wenn der Grund benannt ist und die Person für größere Zusammenhänge offen wirkt." },
+      "closing": null
+    },
+    {
+      "id": "mechanik",
+      "label": "Mechanik",
+      "goal": "Unterscheiden: bewusster Kompromiss oder Zurückhalten. Der Unterschied liegt nicht im Ergebnis, sondern darin, wer entschieden hat.",
+      "style": "klar",
+      "questions": [
+        {
+          "id": "mechanik",
+          "text": "War es ein bewusster Kompromiss oder hast du dich zurückgehalten?",
+          "purpose": "Kein Urteil, nur ein Befund. Ein bewusster Kompromiss ist authentisch, wenn die Person ihn kennt und trägt.",
+          "fact_key": "mechanik",
+          "answer_strategy": "Den Befund in ihren Worten spiegeln. Bei 'kompromiss': ausdrücklich als stimmig stehen lassen. Bei 'zurueckgehalten': als Beobachtung benennen, nicht als Schwäche. Bei 'unsicher': als ehrlichen Stand würdigen.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "kompromiss", "label": "Bewusster Kompromiss", "title": "Ich habe mich mit offenen Augen entschieden.", "icon": "sliders" },
+            { "id": "zurueckgehalten", "label": "Zurückgehalten", "title": "Ich habe mich kleiner gemacht, als ich bin.", "icon": "lock" },
+            { "id": "unsicher", "label": "Nicht sicher", "title": "Ich kann es noch nicht sagen.", "icon": "help-circle" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["mechanik"], "max_turns": 3 },
+      "allowed_intents": ["question", "mirror", "explain"],
+      "allowed_components": ["choice_cards", "free_text", "method_note"],
+      "astro": { "allowed": false },
+      "closing": null
+    },
+    {
+      "id": "bruecke",
+      "label": "Brücke",
+      "goal": "Die nächste authentischere Entscheidung finden — klein, konkret, in 48 Stunden.",
+      "style": "sachlich",
+      "questions": [
+        {
+          "id": "bruecke",
+          "text": "Was könnte deine nächste authentischere Entscheidung sein?",
+          "purpose": "Erkenntnis in eine Handlung übersetzen, die der Person gehört. Dabei bleiben ist ebenfalls eine Brücke.",
+          "fact_key": "bruecke",
+          "deepen_if": ["Schritt ist zu groß oder abstrakt"],
+          "deepen_how": "Verkleinern: „Was wäre der erste Zentimeter davon, in den nächsten 48 Stunden?“",
+          "answer_strategy": "Schritt spiegeln, 48-Stunden-Rahmen anbieten, Finder Card erstellen.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "gespraech", "label": "Gespräch nachholen", "title": "Ich sage, was ich eigentlich meinte.", "icon": "message-circle" },
+            { "id": "bedenkzeit", "label": "Bedenkzeit", "title": "Beim nächsten Mal: „Ich melde mich morgen.“", "icon": "clock" },
+            { "id": "grenze", "label": "Grenze benennen", "title": "Ich sage klar, was für mich nicht geht.", "icon": "flag" },
+            { "id": "dabei-bleiben", "label": "Dabei bleiben", "title": "Ich stehe bewusst zu meinem Kompromiss.", "icon": "check-circle" },
+            { "id": "beobachten", "label": "Beobachten", "title": "Ich schaue beim nächsten Mal genauer hin.", "icon": "eye" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["bruecke"], "max_turns": 3 },
+      "allowed_intents": ["question", "mirror", "next_step", "closing"],
+      "allowed_components": ["choice_cards", "free_text", "method_note", "finder_card"],
+      "astro": { "allowed": false },
+      "closing": "finder_card"
+    }
+  ],
+  "branches": [
+    {
+      "id": "im-einklang",
+      "when": { "fact": "abweichung", "equals": "keine" },
+      "then": { "insert_note": "Wollen, Sagen und Tun fallen zusammen. Es gibt nichts zu reparieren — in Warum und Mechanik nur prüfen, ob das Wollen wirklich das eigene ist. Finder-Card-Überschrift: „Im Einklang“." }
+    },
+    {
+      "id": "unsicher-beobachten",
+      "when": { "fact": "mechanik", "equals": "unsicher" },
+      "then": { "insert_note": "Die Person kann die Mechanik noch nicht einordnen. Das ist ein ehrlicher Befund — die Brücke darf 'Beobachten' sein; nicht zu einer Einordnung drängen.", "style": "warm" }
+    }
+  ],
+  "next_steps": {
+    "framing": "Klein, konkret, in den nächsten 48 Stunden. Eine Brücke, die heute gehbar ist, ist mehr wert als zehn, die man sich vornimmt.",
+    "templates": [
+      { "id": "gespraech", "label": "Gespräch nachholen", "title": "Ich sage, was ich eigentlich meinte.", "icon": "message-circle" },
+      { "id": "bedenkzeit", "label": "Bedenkzeit", "title": "Beim nächsten Mal: „Ich melde mich morgen.“", "icon": "clock" },
+      { "id": "grenze", "label": "Grenze benennen", "title": "Ich sage klar, was für mich nicht geht.", "icon": "flag" },
+      { "id": "dabei-bleiben", "label": "Dabei bleiben", "title": "Ich stehe bewusst zu meinem Kompromiss.", "icon": "check-circle" },
+      { "id": "beobachten", "label": "Beobachten", "title": "Ich schaue beim nächsten Mal genauer hin.", "icon": "eye" }
+    ]
+  },
+  "finder_card": {
+    "headline_rule": "Aus der Mechanik: kompromiss → „Bewusster Kompromiss“, zurueckgehalten → „Eine Lücke erkannt“, unsicher → „Noch offen“, abweichung=keine → „Im Einklang“, nur Freitext → „Deine Einschätzung“.",
+    "rows": [
+      { "label": "Fakt", "from_facts": ["passiert", "gewollt", "gesagt", "getan"], "note": "Vier Zeilen: Was passiert ist / Gewollt / Gesagt / Getan." },
+      { "label": "Abweichung", "from_facts": ["abweichung"] },
+      { "label": "Warum", "from_facts": ["warum"] },
+      { "label": "Mechanik", "from_facts": ["mechanik"], "note": "Befund in ruhigen Worten; ein bewusster Kompromiss ist kein Bruch mit sich selbst." },
+      { "label": "Brücke", "from_facts": ["bruecke"], "note": "Nächster Schritt + „Klein, konkret, in den nächsten 48 Stunden.“" }
+    ]
+  },
+  "method_notes": {
+    "fakt": { "title": "ZUR METHODE", "text": "Bleib bei dem, was beobachtbar ist: Was wurde gesagt, was wurde getan. Bewertungen kommen später – oder gar nicht.", "strong": "Fakt vor Urteil.", "sub": "Der Finder stellt keine Diagnosen. Er macht sichtbar." },
+    "abweichung": { "title": "ZUR METHODE", "text": "Eine Abweichung ist kein Fehler. Sie ist der Ort, an dem Wunsch, Aussage und Verhalten auseinanderlaufen – und damit der Ort, an dem du etwas erkennen kannst.", "strong": "Abweichung ist kein Fehler.", "sub": "Sie ist nur eine Stelle, an der es sich lohnt, genauer hinzusehen." },
+    "warum": { "title": "ZUR METHODE", "text": "Es gibt gute Gründe für fast jede Entscheidung. Wir suchen nicht den Schuldigen, sondern den Mechanismus dahinter.", "strong": "Gründe verstehen, nicht verurteilen.", "sub": "Was dich geschützt hat, muss dich nicht für immer begrenzen." },
+    "mechanik": { "title": "ZUR METHODE", "text": "Ein bewusster Kompromiss ist authentisch, wenn du ihn kennst und trägst. Zurückhalten heißt: Etwas anderes hat für dich entschieden.", "strong": "Kompromiss ist keine Schwäche.", "sub": "Der Unterschied liegt nicht im Ergebnis, sondern darin, wer entschieden hat." },
+    "bruecke": { "title": "ZUR METHODE", "text": "Eine Brücke ist klein, konkret und in deiner Hand. Nicht das ganze Leben ändern – nur die nächste Entscheidung.", "strong": "Klein. Konkret. Deins.", "sub": "Eine Brücke, die du heute gehen kannst, ist mehr wert als zehn, die du dir vornimmst." },
+    "finale": { "title": "ZUR METHODE", "text": "Die Finder Card ist ein Spiegel, kein Urteil. Lies sie in Ruhe – und prüfe, ob sie sich stimmig anfühlt. Wenn nicht, geh einen Schritt zurück.", "strong": "Du entscheidest, was stimmt.", "sub": "Kopiere dir die Card, wenn du sie behalten willst." }
+  },
+  "panther_notes": {
+    "fakt": ["Notiert. Fakten zuerst.", "Gut. Beobachtet, nicht bewertet.", "Das ist ein Fakt – kein Urteil."],
+    "abweichung": ["Gut beobachtet.", "Da liegt etwas. Schauen wir hin."],
+    "warum": ["Danke für deine Ehrlichkeit.", "Ein Grund ist kein Vorwurf."],
+    "mechanik": ["Kein Urteil – nur ein Befund.", "Das darfst du so stehen lassen."],
+    "bruecke": ["Das ist eine Brücke.", "Klein genug, um sie zu gehen."]
+  },
+  "limits": { "max_turns": 24, "max_turns_per_phase": 6 }
+}

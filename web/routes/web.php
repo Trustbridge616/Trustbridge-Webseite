@@ -30,6 +30,8 @@ Route::get('/about', fn () => Inertia::render('About'))->name('about');
 Route::get('/how-it-works', fn () => Inertia::render('HowItWorks'))->name('how-it-works');
 Route::get('/unsere-ware', fn () => Inertia::render('UnsereWare'))->name('unsere-ware');
 Route::get('/prizes', [FrontendController::class, 'prizes'])->name('prizes');
+// Trustbridge Finder V0.1 (Authentizität) — rein clientseitig, keine Props
+Route::get('/trustbridgefinder', fn () => Inertia::render('TrustbridgeFinder'))->name('trustbridgefinder');
 Route::get('/faq', fn () => Inertia::render('Faq'))->name('faq');
 Route::get('/partner', fn () => Inertia::render('Partner'))->name('partner');
 Route::get('/kontakt', fn () => Inertia::render('Kontakt'))->name('kontakt');

@@ -1,0 +1,214 @@
+{
+  "kind": "journey",
+  "slug": "jobverlust",
+  "title": "Jobverlust & Neuorientierung",
+  "language": "de",
+  "entry": {
+    "situations": ["Ich wurde gekündigt und weiß nicht weiter.", "Mein Job ist weg.", "Ich habe meine Arbeit verloren und stehe vor dem Nichts."],
+    "match_hints": ["Kündigung", "gekündigt", "Job verloren", "Arbeitsplatz", "arbeitslos", "Neuorientierung"],
+    "intro": "Eine Kündigung ist ein Fakt. Was sie für dich bedeutet, ist etwas anderes — und genau das schauen wir uns an. Schritt für Schritt, ohne dass etwas schöngeredet wird."
+  },
+  "goal": "Die Person erkennt, was die bisherige Arbeit ihr gegeben und was ihr gefehlt hat, sieht Möglichkeiten, die sie bisher nicht betrachtet hat, und findet einen nächsten Schritt, der Sicherheit oder neue Orientierung gibt.",
+  "background": "Modul B (Entwurf 12.10.2026). Haltung: das Gold im Dunkeln erkennen, ohne die Lage zu verharmlosen. Eine Kündigung trifft oft drei Ebenen zugleich: Existenz (Geld, Sicherheit), Identität (wer bin ich ohne diese Rolle) und Beziehung (Kollegen, Zugehörigkeit, Scham vor dem Umfeld). Zuerst wird die Belastung sortiert, nicht gelöst. Danach wird getrennt, was die Arbeit gegeben hat (das lässt sich oft woanders finden) und was gefehlt hat (das zeigt oft die Richtung). Erst dann werden Möglichkeiten geöffnet — nicht als Ratschlag, sondern als Blick, den die Person selbst wirft. Der nächste Schritt ist klein, konkret und gibt Boden. Keine Arbeitsrechts-, Sozialrechts- oder Finanzberatung: Fristen, Ansprüche, Abfindungen und Geld gehören zu Fachstellen; ein allgemeiner Hinweis, dass eine frühzeitige Meldung bei der Agentur für Arbeit wichtig ist, ist erlaubt, ohne Fristen oder Ansprüche individuell zu beurteilen.",
+  "persona_ref": "trustbridge-standard",
+  "default_style": "warm",
+  "reflection_refs": ["gold-im-dunkeln"],
+  "astro": {
+    "enabled": true,
+    "house_system": "placidus",
+    "rules_ref": "astro-grundregeln",
+    "offer_consent": true,
+    "earliest_phase": "perspektive",
+    "never_in": ["verstehen"],
+    "general_transits_without_profile": false
+  },
+  "facts": [
+    { "key": "belastung", "label": "Belastet am meisten", "description": "Was die Person als schwerste Belastung benennt — in ihren Worten.", "kind": "text" },
+    { "key": "belastung_kategorie", "label": "Art der Belastung", "description": "Zuordnung der Hauptbelastung.", "kind": "category", "choices": ["finanzen", "identitaet", "ploetzlichkeit", "scham", "zukunft", "beziehungen", "sonstiges"] },
+    { "key": "gegeben", "label": "Hat die Arbeit gegeben", "description": "Was die bisherige Arbeit der Person gegeben hat (Struktur, Anerkennung, Menschen, Sinn, Geld …).", "kind": "text" },
+    { "key": "gefehlt", "label": "Hat gefehlt", "description": "Was in der bisherigen Arbeit gefehlt hat oder zu kurz kam.", "kind": "text" },
+    { "key": "moeglichkeiten", "label": "Möglichkeiten", "description": "Welche neuen Möglichkeiten die Person betrachten möchte — in ihren Worten.", "kind": "text" },
+    { "key": "richtung", "label": "Richtung", "description": "Grobe Richtung der betrachteten Möglichkeit.", "kind": "category", "choices": ["aehnlich", "neu", "selbststaendig", "pause", "weiterbildung", "offen"] },
+    { "key": "schritt", "label": "Nächster Schritt", "description": "Der konkrete nächste Schritt, den die Person wählt.", "kind": "text" }
+  ],
+  "phases": [
+    {
+      "id": "verstehen",
+      "label": "Verstehen",
+      "goal": "Die Belastung sortieren und benennen, ohne sie zu lösen oder zu bewerten.",
+      "style": "warm",
+      "questions": [
+        {
+          "id": "belastung",
+          "text": "Was belastet dich gerade am meisten?",
+          "purpose": "Trennt den Fakt (Kündigung) von seiner Bedeutung (Geld, Identität, Plötzlichkeit, Scham, Zukunft). Die Person soll die eine Belastung finden, die jetzt am schwersten wiegt — nicht alle auf einmal.",
+          "fact_key": "belastung",
+          "deepen_if": ["Antwort bleibt allgemein („alles“, „keine Ahnung“)", "mehrere Belastungen gleichzeitig", "Antwort beschreibt nur den Hergang, nicht das Gewicht"],
+          "deepen_how": "Die genannten Punkte zurückspiegeln und bitten, einen auszuwählen: „Wenn du nur eines davon nehmen dürftest — welches wiegt heute am schwersten?“",
+          "answer_strategy": "Erst spiegeln (ein Satz in ihren Worten), die Belastung kategorisieren (belastung_kategorie), dann ohne Trost-Floskel weitergehen.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "finanzen", "label": "Geld", "title": "Ich weiß nicht, wie es finanziell weitergeht.", "icon": "shield" },
+            { "id": "identitaet", "label": "Wer bin ich", "title": "Ohne diese Arbeit weiß ich nicht, wer ich bin.", "icon": "user" },
+            { "id": "ploetzlichkeit", "label": "Plötzlich", "title": "Es kam ohne Vorwarnung.", "icon": "zap" },
+            { "id": "scham", "label": "Scham", "title": "Ich weiß nicht, wie ich es anderen sage.", "icon": "eye" },
+            { "id": "zukunft", "label": "Zukunft", "title": "Ich sehe gerade keinen Weg nach vorn.", "icon": "compass" },
+            { "id": "beziehungen", "label": "Menschen", "title": "Mir fehlen die Kollegen und der Platz.", "icon": "users" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["belastung"], "max_turns": 4 },
+      "allowed_intents": ["question", "mirror", "explain", "safety"],
+      "allowed_components": ["choice_cards", "free_text", "method_note"],
+      "astro": { "allowed": false },
+      "closing": null
+    },
+    {
+      "id": "muster",
+      "label": "Muster erkennen",
+      "goal": "Trennen, was die Arbeit gegeben hat, von dem, was gefehlt hat — das Gegebene lässt sich oft woanders finden, das Fehlende zeigt die Richtung.",
+      "style": "klar",
+      "questions": [
+        {
+          "id": "gegeben_gefehlt",
+          "text": "Was hat dir dein bisheriger Beruf gegeben — und was hat dir gefehlt?",
+          "purpose": "Macht sichtbar, dass die Person nicht „den Job“ verliert, sondern bestimmte Dinge (Struktur, Anerkennung, Menschen, Geld, Sinn). Und dass das Fehlende schon vor der Kündigung da war.",
+          "fact_key": "gegeben",
+          "deepen_if": ["nur eine Seite beantwortet (nur gegeben oder nur gefehlt)", "Antwort bleibt in Rollenbegriffen („war halt mein Job“)"],
+          "deepen_how": "Nach der fehlenden Seite fragen. Bei Rollenbegriffen nach dem Konkreten fragen: „Was genau an diesem Job — ein Mensch, eine Aufgabe, ein Gefühl am Feierabend?“",
+          "answer_strategy": "Beide Seiten getrennt spiegeln: „Gegeben hat dir … Gefehlt hat dir …“. Keine Schlussfolgerung ziehen, die Person soll den Kontrast selbst sehen.",
+          "components": ["free_text", "choice_cards"],
+          "card_pool": [
+            { "id": "struktur", "label": "Struktur", "title": "Ein fester Rahmen im Alltag.", "icon": "sliders" },
+            { "id": "anerkennung", "label": "Anerkennung", "title": "Das Gefühl, gebraucht zu werden.", "icon": "heart" },
+            { "id": "menschen", "label": "Menschen", "title": "Kollegen, Zugehörigkeit, Austausch.", "icon": "users" },
+            { "id": "sicherheit", "label": "Sicherheit", "title": "Ein verlässliches Einkommen.", "icon": "shield" },
+            { "id": "sinn", "label": "Sinn", "title": "Das Gefühl, dass es wofür gut ist.", "icon": "feather" }
+          ]
+        },
+        {
+          "id": "gefehlt",
+          "text": "Und was hat dir dort gefehlt — vielleicht schon länger?",
+          "purpose": "Folgefrage, falls nur das Gegebene genannt wurde. Das Fehlende ist oft das Gold im Dunkeln.",
+          "fact_key": "gefehlt",
+          "optional": true,
+          "components": ["free_text"]
+        }
+      ],
+      "gate": { "requires_facts": ["gegeben", "gefehlt"], "max_turns": 4 },
+      "allowed_intents": ["question", "mirror", "explain"],
+      "allowed_components": ["choice_cards", "free_text", "method_note"],
+      "astro": { "allowed": false },
+      "closing": null
+    },
+    {
+      "id": "perspektive",
+      "label": "Perspektive öffnen",
+      "goal": "Möglichkeiten sichtbar machen, die die Person bisher nicht betrachtet hat — als eigener Blick, nicht als Ratschlag.",
+      "style": "philosophisch",
+      "questions": [
+        {
+          "id": "moeglichkeiten",
+          "text": "Welche neuen Möglichkeiten möchtest du betrachten — auch solche, die du bisher nicht angeschaut hast?",
+          "purpose": "Öffnet den Rahmen. Verknüpft mit dem, was gefehlt hat: Möglichkeiten, die das Fehlende enthalten, haben Gewicht. Keine Lösung vorgeben.",
+          "fact_key": "moeglichkeiten",
+          "deepen_if": ["Antwort ist „keine“ oder „ich muss schnell irgendwas finden“", "nur die alte Rolle in neuem Gewand"],
+          "deepen_how": "An das Fehlende anknüpfen: „Du hast gesagt, dir hat … gefehlt. Gibt es eine Möglichkeit, in der genau das vorkommt — auch wenn sie unrealistisch wirkt?“",
+          "answer_strategy": "Die genannten Möglichkeiten als Richtungen spiegeln (richtung), dann — falls freigeschaltet und das Modul es erlaubt — die astrologische Perspektive als zusätzlichen Blickwinkel anbieten, nie als Entscheidung.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "aehnlich", "label": "Ähnlich", "title": "Etwas Ähnliches, aber unter besseren Bedingungen.", "icon": "repeat" },
+            { "id": "neu", "label": "Neu", "title": "Etwas, das ich noch nie gemacht habe.", "icon": "compass" },
+            { "id": "selbststaendig", "label": "Eigenes", "title": "Etwas Eigenes aufbauen.", "icon": "flag" },
+            { "id": "pause", "label": "Pause", "title": "Erst einmal Abstand, dann entscheiden.", "icon": "pause-circle" },
+            { "id": "weiterbildung", "label": "Lernen", "title": "Etwas dazulernen, das mir gefehlt hat.", "icon": "feather" },
+            { "id": "offen", "label": "Offen", "title": "Ich weiß es noch nicht — und das ist okay.", "icon": "help-circle" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["moeglichkeiten"], "max_turns": 5 },
+      "allowed_intents": ["question", "mirror", "explain", "perspective", "astro_perspective"],
+      "allowed_components": ["choice_cards", "free_text", "method_note", "astro_consent", "astro_perspective"],
+      "astro": { "allowed": true, "when": "Nachdem mindestens eine Möglichkeit benannt wurde — nie als Einstieg in die Phase, nie bei Krisensignal." },
+      "closing": null
+    },
+    {
+      "id": "bruecke",
+      "label": "Brücke bauen",
+      "goal": "Einen nächsten Schritt finden, der Sicherheit oder neue Orientierung gibt — klein, konkret, in der Hand der Person.",
+      "style": "sachlich",
+      "questions": [
+        {
+          "id": "schritt",
+          "text": "Welcher nächste Schritt gibt dir Sicherheit oder neue Orientierung?",
+          "purpose": "Übersetzt Erkenntnis in Handlung. Sicherheit (Boden unter den Füßen) und Orientierung (Richtung) sind beides gültige Brücken — die Person wählt.",
+          "fact_key": "schritt",
+          "deepen_if": ["Schritt ist zu groß („neuen Job finden“)", "Schritt ist fremdbestimmt („was meine Frau sagt“)"],
+          "deepen_how": "Verkleinern: „Was wäre der erste Zentimeter davon, den du bis übermorgen gehen kannst?“",
+          "answer_strategy": "Den Schritt in den Worten der Person spiegeln, Zeitrahmen anbieten (48 Stunden), dann die Finder Card erstellen.",
+          "components": ["choice_cards", "free_text"],
+          "card_pool": [
+            { "id": "boden", "label": "Boden", "title": "Erst das Nötigste regeln, damit ich ruhiger schlafe.", "icon": "shield" },
+            { "id": "gespraech", "label": "Gespräch", "title": "Mit einem Menschen reden, dem ich vertraue.", "icon": "message-circle" },
+            { "id": "sortieren", "label": "Sortieren", "title": "Aufschreiben, was mir die Arbeit gegeben hat und was gefehlt hat.", "icon": "sliders" },
+            { "id": "erkunden", "label": "Erkunden", "title": "Eine Möglichkeit konkret anschauen, ohne mich zu entscheiden.", "icon": "compass" },
+            { "id": "pause", "label": "Atem", "title": "Mir bewusst ein paar Tage geben, bevor ich etwas entscheide.", "icon": "pause-circle" }
+          ]
+        }
+      ],
+      "gate": { "requires_facts": ["schritt"], "max_turns": 4 },
+      "allowed_intents": ["question", "mirror", "next_step", "closing"],
+      "allowed_components": ["choice_cards", "free_text", "method_note", "finder_card"],
+      "astro": { "allowed": false },
+      "closing": "finder_card"
+    }
+  ],
+  "branches": [
+    {
+      "id": "finanzen-fachgrenze",
+      "when": { "fact": "belastung_kategorie", "equals": "finanzen" },
+      "then": {
+        "boundary_notice": "financial",
+        "insert_note": "Die Hauptbelastung ist finanziell. Keine Beratung zu Ansprüchen, Fristen, Abfindung oder Geldanlage; freundlich auf Agentur für Arbeit und Fachstellen verweisen und beim Sortieren der Belastung bleiben. Die Brücke darf ein „Boden“-Schritt sein."
+      }
+    },
+    {
+      "id": "offen-bleiben",
+      "when": { "fact": "richtung", "equals": "offen" },
+      "then": { "insert_note": "Die Person will sich noch nicht festlegen. Das ist ein gültiger Stand — keine Richtung erzwingen; die Brücke darf ein Schritt des Sortierens oder Atemholens sein.", "style": "warm" }
+    }
+  ],
+  "next_steps": {
+    "framing": "Klein, konkret, in den nächsten 48 Stunden, in der Hand der Person. Entweder Boden (Sicherheit) oder Richtung (Orientierung) — beides zählt.",
+    "templates": [
+      { "id": "boden", "label": "Boden", "title": "Erst das Nötigste regeln.", "icon": "shield" },
+      { "id": "gespraech", "label": "Gespräch", "title": "Mit einem Menschen reden, dem ich vertraue.", "icon": "message-circle" },
+      { "id": "sortieren", "label": "Sortieren", "title": "Gegeben und Gefehlt aufschreiben.", "icon": "sliders" },
+      { "id": "erkunden", "label": "Erkunden", "title": "Eine Möglichkeit konkret anschauen.", "icon": "compass" },
+      { "id": "pause", "label": "Atem", "title": "Ein paar Tage bewusst nicht entscheiden.", "icon": "pause-circle" }
+    ]
+  },
+  "finder_card": {
+    "headline_rule": "Kurztitel aus der gewählten Richtung oder dem Schritt, in den Worten der Person; nie wertend (z. B. „Boden zuerst“, „Eine Möglichkeit anschauen“).",
+    "rows": [
+      { "label": "Situation", "from_facts": ["belastung"], "note": "Fakt: Kündigung. Dann die benannte Belastung in ihren Worten." },
+      { "label": "Muster", "from_facts": ["gegeben", "gefehlt"], "note": "Gegeben / Gefehlt als zwei Zeilen." },
+      { "label": "Perspektive", "from_facts": ["moeglichkeiten"], "note": "Die betrachteten Möglichkeiten; astrologische Perspektive nur, wenn im Gespräch genutzt, gekennzeichnet." },
+      { "label": "Brücke", "from_facts": ["schritt"], "note": "Nächster Schritt + 48-Stunden-Rahmen." }
+    ]
+  },
+  "method_notes": {
+    "verstehen": { "title": "ZUR METHODE", "text": "Eine Kündigung ist ein Fakt. Was sie wiegt, entscheidet nicht der Vertrag, sondern das, was er für dich getragen hat. Deshalb sortieren wir zuerst — ohne zu lösen.", "strong": "Erst sortieren, dann lösen.", "sub": "Nichts davon wird bewertet. Es wird nur sichtbar." },
+    "muster": { "title": "ZUR METHODE", "text": "Was dir die Arbeit gegeben hat, lässt sich oft woanders finden. Was dir gefehlt hat, war meist schon vorher da — und zeigt jetzt eine Richtung.", "strong": "Das Fehlende zeigt die Richtung.", "sub": "Das ist das Gold im Dunkeln: nicht die Kündigung, sondern das, was sie sichtbar macht." },
+    "perspektive": { "title": "ZUR METHODE", "text": "Möglichkeiten sind keine Entscheidungen. Du darfst sie anschauen, ohne sie zu wählen. Auch die, die unrealistisch wirken, sagen etwas über dich.", "strong": "Anschauen ist nicht entscheiden.", "sub": "Falls du die astrologische Perspektive freigeschaltet hast, ist sie ein zusätzlicher Blickwinkel — nie ein Urteil." },
+    "bruecke": { "title": "ZUR METHODE", "text": "Eine Brücke ist klein, konkret und in deiner Hand. Sicherheit und Orientierung sind beides gültige Brücken — du wählst, was du jetzt brauchst.", "strong": "Boden oder Richtung — beides zählt.", "sub": "Nicht das ganze Leben neu bauen. Nur den nächsten Schritt." },
+    "finale": { "title": "ZUR METHODE", "text": "Die Finder Card ist ein Spiegel, kein Urteil. Lies sie in Ruhe und prüfe, ob sie sich stimmig anfühlt. Wenn nicht, geh einen Schritt zurück.", "strong": "Du entscheidest, was stimmt.", "sub": "Für Fristen, Ansprüche und Geld sind Fachstellen die richtige Adresse — der Finder begleitet dich bei allem anderen." }
+  },
+  "panther_notes": {
+    "verstehen": ["Notiert. Das darf schwer sein.", "Gut, dass du hinschaust."],
+    "muster": ["Zwei Seiten, sauber getrennt.", "Da liegt etwas. Schauen wir hin."],
+    "perspektive": ["Anschauen ist nicht entscheiden.", "Das ist ein Blickwinkel, kein Urteil."],
+    "bruecke": ["Das ist eine Brücke.", "Klein genug, um sie zu gehen."]
+  },
+  "limits": { "max_turns": 24, "max_turns_per_phase": 6 }
+}

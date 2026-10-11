@@ -1,0 +1,157 @@
+{
+  "$comment": "Trustbridge Finder — Komponenten-Registry. EINZIGE Quelle der registrierten Darstellungsbausteine: Vue rendert nach `type`, PHP erzeugt daraus den Enum im FinderTurn-Schema und validiert jede KI-Antwort. Die KI wählt nur `type` + Inhalte; Layout und Animation sind fest (bestehende Glas-Optik). ai_may_use=false: nur die Engine setzt diesen Baustein.",
+  "version": 1,
+  "icons": [
+    "check", "x", "check-circle", "x-circle", "help-circle", "pause-circle", "message-circle", "shuffle", "compass",
+    "briefcase", "home", "heart", "users", "user", "activity", "target", "shield", "zap", "sliders", "lock", "clock",
+    "flag", "eye", "volume-x", "more-horizontal", "smile", "corner-up-right", "feather", "repeat"
+  ],
+  "components": [
+    {
+      "type": "choice_cards",
+      "label": "Auswahlkacheln",
+      "status": "available",
+      "ai_may_use": true,
+      "vue": "Components/Finder/FinderCrystalCard.vue (Grid)",
+      "origin": "/prizes Zahlungsart- und Boxen-Kacheln",
+      "limits": { "min_options": 2, "max_options": 6, "title_max_chars": 90 },
+      "props": { "label": "Versalzeile über den Kacheln", "options": "[{ id, label, title, icon }] — label kurz, title ein Satz" }
+    },
+    {
+      "type": "free_text",
+      "label": "Eigene Worte",
+      "status": "available",
+      "ai_may_use": true,
+      "vue": "Pages/TrustbridgeFinder.vue (Textpanel, Preview-Panel-Optik)",
+      "origin": "/prizes Vorschau-Panel",
+      "props": { "label": "Versalzeile", "placeholder": "Platzhaltertext" }
+    },
+    {
+      "type": "method_note",
+      "label": "Zur Methode",
+      "status": "available",
+      "ai_may_use": true,
+      "vue": "Pages/TrustbridgeFinder.vue (.pro-tip)",
+      "origin": "/prizes PRO-TIPP-Block",
+      "props": { "title": "Versalzeile", "text": "Haupttext", "strong": "Kernsatz", "sub": "Unterzeile" }
+    },
+    {
+      "type": "finder_card",
+      "label": "Finder Card",
+      "status": "available",
+      "ai_may_use": true,
+      "vue": "Pages/TrustbridgeFinder.vue (.epic-ck-card)",
+      "origin": "/prizes Epic-Checkout",
+      "props": { "headline": "Kurztitel", "situation": "Situationszeile", "rows": "[{ label, lines[] }]", "next_step": "Konkreter nächster Schritt" }
+    },
+    {
+      "type": "protocol",
+      "label": "Dein Protokoll",
+      "status": "available",
+      "ai_may_use": false,
+      "vue": "Pages/TrustbridgeFinder.vue (.calc-panel)",
+      "origin": "/prizes Kalkulationspanel",
+      "props": { "phases": "aus Engine", "entries": "erfasste Fakten", "current_phase": "aus Engine" }
+    },
+    {
+      "type": "panther_note",
+      "label": "Panther-Hinweis",
+      "status": "available",
+      "ai_may_use": false,
+      "vue": "Pages/TrustbridgeFinder.vue (.panther-toast)",
+      "origin": "/prizes Panther-Toast",
+      "props": { "text": "kurzer Satz aus Modul-Listen" }
+    },
+    {
+      "type": "safety_notice",
+      "label": "Sicherheitshinweis",
+      "status": "phase_1",
+      "ai_may_use": false,
+      "vue": "neu, Optik method_note mit goldenem Rahmen",
+      "origin": "PRO-TIPP-Block",
+      "props": { "kind": "crisis | boundary", "text": "fester Text aus dem Sicherheitskern", "contacts": "[{ label, value }]" }
+    },
+    {
+      "type": "astro_consent",
+      "label": "Astrologische Perspektive freischalten",
+      "status": "phase_1",
+      "ai_may_use": true,
+      "vue": "neu, Crystal-Card + Formularfelder im Textpanel",
+      "origin": "/prizes Kacheln + Vorschau-Panel",
+      "props": { "text": "Einladungstext", "fields": "Geburtsdatum, Geburtszeit (optional), Geburtsort — vom Baustein fest vorgegeben" }
+    },
+    {
+      "type": "astro_perspective",
+      "label": "Astrologische Perspektive",
+      "status": "phase_1",
+      "ai_may_use": true,
+      "vue": "neu, Kalkulationspanel-Optik",
+      "origin": "/prizes Kalkulationspanel + goldener Dashed-Kasten",
+      "props": { "title": "Versalzeile", "constellation": "Konstellation in Klartext (aus Astro-Fakten)", "interpretation": "Deutung nach Studio-Regel", "reflection_questions": "[string]", "rule_refs": "[Regel-IDs]" },
+      "fixed_label": "Astrologische Perspektive – ein Reflexionsangebot, keine Vorhersage"
+    },
+    {
+      "type": "decision_fork",
+      "label": "Entscheidungsweiche",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Crystal-Cards mit Konsequenz-Zeile",
+      "origin": "/prizes Boxen-Auswahl",
+      "props": { "label": "Versalzeile", "paths": "[{ id, label, title, consequence }]" }
+    },
+    {
+      "type": "development_map",
+      "label": "Entwicklungslandkarte",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Flow-Connector mit Stationen",
+      "origin": "/prizes Verbindungslinien",
+      "props": { "stations": "[{ id, label, state }]" }
+    },
+    {
+      "type": "cycle_view",
+      "label": "Zyklus-Ansicht",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Plateau mit Zeitstrahl",
+      "origin": "/prizes Plateau",
+      "props": { "title": "", "markers": "[{ date, label }]", "today": "Datum" }
+    },
+    {
+      "type": "video",
+      "label": "Erklärvideo",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Video-Stage-Rahmen",
+      "origin": "/prizes Vision-Video",
+      "props": { "video_ref": "ID eines im Studio registrierten Videos", "intro": "ein Satz" }
+    },
+    {
+      "type": "exercise",
+      "label": "Übung",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, PRO-TIPP + Finder-Navigation",
+      "origin": "/prizes PRO-TIPP-Block",
+      "props": { "exercise_ref": "ID einer im Studio registrierten Übung", "intro": "ein Satz" }
+    },
+    {
+      "type": "learning_card",
+      "label": "Lernkarte",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Finder-Card-Optik",
+      "origin": "/prizes Epic-Checkout",
+      "props": { "title": "", "text": "" }
+    },
+    {
+      "type": "insight_card",
+      "label": "Erkenntniskarte",
+      "status": "planned",
+      "ai_may_use": true,
+      "vue": "neu, Finder-Card-Optik, speicherbar",
+      "origin": "/prizes Epic-Checkout",
+      "props": { "title": "", "text": "" }
+    }
+  ]
+}

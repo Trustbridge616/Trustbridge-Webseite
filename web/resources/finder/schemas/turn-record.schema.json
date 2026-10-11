@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/turn-record.schema.json",
+  "title": "FinderTurnRecord",
+  "description": "Ein gespeicherter Gesprächsschritt (Tabelle finder_turns, Spalte content als JSON). Trennt strikt: user (Eingabe) · ai (FinderTurn, KI-generiert) · engine (technische Regeln, von PHP gesetzt) · usage (Modell, Tokens, Kosten, Zeit). Im Studio-Archiv werden engine.* und ai.rationale getrennt dargestellt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "session_id", "seq", "role", "created_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "session_id": { "type": "string", "format": "uuid" },
+    "seq": { "type": "integer", "minimum": 1, "description": "Laufende Nummer innerhalb der Session." },
+    "role": { "type": "string", "enum": ["user", "assistant", "engine"] },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "user": {
+      "type": "object",
+      "description": "Nur bei role=user.",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": ["string", "null"] },
+        "selected_option": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["component_index", "option_id"],
+          "properties": {
+            "component_index": { "type": "integer", "minimum": 0 },
+            "option_id": { "type": "string" }
+          }
+        },
+        "astro_consent_given": { "type": ["boolean", "null"] }
+      }
+    },
+
+    "ai": {
+      "description": "Nur bei role=assistant: die unveränderte FinderTurn-Antwort der KI.",
+      "$ref": "finder-turn.schema.json"
+    },
+
+    "engine": {
+      "type": "object",
+      "description": "Von der Engine gesetzt — technische Regeln, nicht KI-generiert.",
+      "additionalProperties": false,
+      "required": ["module_version_id", "persona_version_id", "phase_before", "phase_after", "gates", "applied_rules", "safety_override"],
+      "properties": {
+        "module_version_id": { "type": "integer" },
+        "persona_version_id": { "type": ["integer", "null"] },
+        "astro_rules_version_id": { "type": ["integer", "null"] },
+        "phase_before": { "type": ["string", "null"] },
+        "phase_after": { "type": ["string", "null"] },
+        "gates": {
+          "type": "array",
+          "description": "Jedes geprüfte Gate mit Ergebnis.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "result"],
+            "properties": {
+              "id": { "type": "string", "description": "z. B. phase.verstehen.requires_facts, session.max_turns, safety.keyword_scan" },
+              "result": { "type": "string", "enum": ["pass", "block", "advance", "override"] },
+              "detail": { "type": "string" }
+            }
+          }
+        },
+        "applied_rules": {
+          "type": "array",
+          "description": "IDs der Modulregeln, die die Engine deterministisch angewendet hat (Verzweigungen, Stilvorgaben, erlaubte Bausteine, Astro-Freigabe).",
+          "items": { "type": "string" }
+        },
+        "branch_taken": { "type": ["string", "null"] },
+        "style_requested": { "type": ["string", "null"], "description": "Von der Engine vorgegebener Persona-Stil (Vergleich mit ai.style_used)." },
+        "safety_override": { "type": "string", "enum": ["none", "crisis_protocol", "boundary_notice", "fallback_static", "schema_repair"] },
+        "astro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["consent", "house_system", "facts_available"],
+          "properties": {
+            "consent": { "type": "boolean" },
+            "house_system": { "type": "string", "enum": ["placidus", "whole_sign"] },
+            "facts_available": { "type": "boolean" },
+            "facts_hash": { "type": ["string", "null"], "description": "SHA-256 der übergebenen Astro-Fakten (Nachvollziehbarkeit, keine Rohdaten)." },
+            "rules_selected": { "type": "array", "items": { "type": "string" }, "description": "Astro-Regeln, die die Engine der KI übergeben hat." }
+          }
+        },
+        "prompt": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "core_hash": { "type": "string", "description": "SHA-256 des Sicherheitskerns (Version nachvollziehbar)." },
+            "module_hash": { "type": "string" },
+            "input_token_estimate": { "type": "integer" },
+            "debug_prompt_ref": { "type": ["string", "null"], "description": "Nur Studio-Testmodus: Verweis auf den vollständigen Prompt-Text." }
+          }
+        }
+      }
+    },
+
+    "usage": {
+      "type": "object",
+      "description": "Nur bei role=assistant.",
+      "additionalProperties": false,
+      "required": ["model", "input_tokens", "output_tokens", "cost_usd", "latency_ms", "stop_reason"],
+      "properties": {
+        "model": { "type": "string", "description": "Tatsächlich verwendete Modellkennung aus der API-Antwort." },
+        "request_id": { "type": ["string", "null"] },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_read_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cost_usd": { "type": "number", "minimum": 0, "description": "Berechnet aus config/finder.php Preistabelle zum Zeitpunkt des Aufrufs." },
+        "latency_ms": { "type": "integer", "minimum": 0 },
+        "stop_reason": { "type": "string" },
+        "effort": { "type": ["string", "null"] }
+      }
+    },
+
+    "error": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["type", "message"],
+      "properties": {
+        "type": { "type": "string", "enum": ["api_error", "rate_limit", "timeout", "refusal", "schema_invalid", "astro_error", "other"] },
+        "message": { "type": "string", "description": "Ohne Geheimnisse, ohne Nutzertext." },
+        "retryable": { "type": "boolean" }
+      }
+    }
+  }
+}

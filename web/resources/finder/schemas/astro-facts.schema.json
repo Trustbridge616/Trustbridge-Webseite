@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/astro-facts.schema.json",
+  "title": "AstroFacts",
+  "description": "Berechnete astrologische Fakten — Ausgabe von web/astro/chart.mjs, Eingabe für die Finder Engine. Ausschließlich aus Ephemeriden berechnet, nie vom Sprachmodell. Beide Häusersysteme werden immer berechnet; die Modulversion bestimmt, welches gedeutet wird.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["engine", "input", "chart", "transits", "notes"],
+  "properties": {
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "library", "computed_at"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "library": { "type": "string" },
+        "computed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["birth_date", "birth_time", "time_known", "place", "utc_datetime", "house_system_requested"],
+      "properties": {
+        "birth_date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "birth_time": { "type": ["string", "null"], "pattern": "^[0-9]{2}:[0-9]{2}$" },
+        "time_known": { "type": "boolean" },
+        "place": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "lat", "lon", "tz"],
+          "properties": {
+            "name": { "type": "string" },
+            "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+            "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+            "tz": { "type": "string", "description": "IANA-Zeitzone oder 'LMT' (Ortszeit nach Länge, für historische Daten vor Einführung der Zonenzeit)." },
+            "utc_offset_minutes": { "type": "number", "description": "Tatsächlich angewendeter Versatz zur UTC." }
+          }
+        },
+        "utc_datetime": { "type": "string", "format": "date-time" },
+        "house_system_requested": { "type": "string", "enum": ["placidus", "whole_sign"] }
+      }
+    },
+    "chart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["julian_day", "obliquity", "ramc", "angles", "planets", "houses", "aspects", "points", "moon_phase"],
+      "properties": {
+        "julian_day": { "type": "number" },
+        "obliquity": { "type": "number", "description": "Wahre Schiefe der Ekliptik in Grad." },
+        "ramc": { "type": ["number", "null"], "description": "Rektaszension des MC (lokale Sternzeit in Grad); null ohne Geburtszeit." },
+        "angles": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["asc", "mc", "dsc", "ic"],
+          "properties": {
+            "asc": { "$ref": "#/$defs/position" },
+            "mc": { "$ref": "#/$defs/position" },
+            "dsc": { "$ref": "#/$defs/position" },
+            "ic": { "$ref": "#/$defs/position" }
+          }
+        },
+        "planets": { "type": "array", "items": { "$ref": "#/$defs/planet" } },
+        "houses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["placidus", "whole_sign"],
+          "properties": {
+            "placidus": { "$ref": "#/$defs/cusps" },
+            "whole_sign": { "$ref": "#/$defs/cusps" }
+          }
+        },
+        "aspects": { "type": "array", "items": { "$ref": "#/$defs/aspect" } },
+        "points": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["north_node", "south_node"],
+          "properties": {
+            "north_node": { "$ref": "#/$defs/position" },
+            "south_node": { "$ref": "#/$defs/position" }
+          }
+        },
+        "moon_phase": { "$ref": "#/$defs/moon_phase" }
+      }
+    },
+    "transits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["datetime", "positions", "to_natal", "moon_phase", "cycles"],
+      "properties": {
+        "datetime": { "type": "string", "format": "date-time" },
+        "positions": { "type": "array", "items": { "$ref": "#/$defs/planet" } },
+        "to_natal": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["transit", "natal", "type", "orb"],
+            "properties": {
+              "transit": { "type": "string" },
+              "natal": { "type": "string" },
+              "type": { "type": "string", "enum": ["conjunction", "opposition", "trine", "square", "sextile"] },
+              "orb": { "type": "number" }
+            }
+          }
+        },
+        "moon_phase": { "$ref": "#/$defs/moon_phase" },
+        "cycles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "active", "description"],
+            "properties": {
+              "id": { "type": "string", "enum": ["saturn_return", "jupiter_return", "uranus_opposition", "nodal_return"] },
+              "active": { "type": "boolean" },
+              "description": { "type": "string" },
+              "orb": { "type": "number" }
+            }
+          }
+        },
+        "age_years": { "type": "number" }
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" }, "description": "Hinweise wie 'Geburtszeit unbekannt: Häuser, Aszendent und Mondposition ungenau'." }
+  },
+  "$defs": {
+    "sign": { "type": "string", "enum": ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"] },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lon", "sign", "degree", "minute"],
+      "properties": {
+        "lon": { "type": "number", "minimum": 0, "maximum": 360 },
+        "sign": { "$ref": "#/$defs/sign" },
+        "degree": { "type": "integer", "minimum": 0, "maximum": 29 },
+        "minute": { "type": "integer", "minimum": 0, "maximum": 59 }
+      }
+    },
+    "house_pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["placidus", "whole_sign"],
+      "properties": {
+        "placidus": { "type": ["integer", "null"], "minimum": 1, "maximum": 12 },
+        "whole_sign": { "type": ["integer", "null"], "minimum": 1, "maximum": 12 }
+      }
+    },
+    "planet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "lon", "sign", "degree", "minute", "lat", "speed", "retrograde", "house"],
+      "properties": {
+        "id": { "type": "string", "enum": ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"] },
+        "lon": { "type": "number", "minimum": 0, "maximum": 360 },
+        "sign": { "$ref": "#/$defs/sign" },
+        "degree": { "type": "integer", "minimum": 0, "maximum": 29 },
+        "minute": { "type": "integer", "minimum": 0, "maximum": 59 },
+        "lat": { "type": "number" },
+        "speed": { "type": "number", "description": "Grad pro Tag; negativ = rückläufig." },
+        "retrograde": { "type": "boolean" },
+        "house": { "$ref": "#/$defs/house_pair", "description": "Bei Transiten: Haus im Radix." }
+      }
+    },
+    "cusps": {
+      "type": ["array", "null"],
+      "minItems": 12,
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/position" },
+      "description": "Spitzen der Häuser 1–12; null, wenn nicht berechenbar (ohne Geburtszeit, Placidus jenseits der Polarkreise)."
+    },
+    "aspect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["a", "b", "type", "orb"],
+      "properties": {
+        "a": { "type": "string" },
+        "b": { "type": "string" },
+        "type": { "type": "string", "enum": ["conjunction", "opposition", "trine", "square", "sextile"] },
+        "orb": { "type": "number", "description": "Abweichung vom exakten Winkel in Grad." }
+      }
+    },
+    "moon_phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["angle", "name"],
+      "properties": {
+        "angle": { "type": "number", "minimum": 0, "maximum": 360 },
+        "name": { "type": "string", "enum": ["neumond", "zunehmende_sichel", "erstes_viertel", "zunehmender_mond", "vollmond", "abnehmender_mond", "letztes_viertel", "abnehmende_sichel"] }
+      }
+    }
+  }
+}

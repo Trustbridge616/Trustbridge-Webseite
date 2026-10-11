@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/finder-turn.schema.json",
+  "title": "FinderTurn",
+  "description": "Strukturierte Antwort der KI für genau einen Gesprächsschritt. Wird als output_config.format (json_schema) an Claude gegeben. Bewusst ohne min/max/pattern-Constraints (von Structured Outputs nicht unterstützt) — Längen und Anzahlen prüft die Engine serverseitig. Die Engine erzeugt dieses Schema zur Laufzeit aus components.json; diese Datei ist die normative Referenz und muss mit der Laufzeitfassung übereinstimmen (Test).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["phase", "intent", "style_used", "message", "components", "facts", "hypotheses", "question_ref", "rule_refs", "rationale", "safety"],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "description": "ID der Phase (aus der Modulversion), in der sich das Gespräch nach diesem Schritt befindet."
+    },
+    "intent": {
+      "type": "string",
+      "enum": ["question", "mirror", "explain", "perspective", "astro_perspective", "exercise", "next_step", "closing", "safety"],
+      "description": "Was dieser Schritt tut. Pro Schritt höchstens eine Frage."
+    },
+    "style_used": {
+      "type": "string",
+      "description": "ID des Persona-Stils, in dem gesprochen wurde (aus dem Persona-Modul)."
+    },
+    "message": {
+      "type": "string",
+      "description": "Text an den Nutzer. Du-Ansprache, Deutsch, kurz (Richtwert höchstens 120 Wörter)."
+    },
+    "components": {
+      "type": "array",
+      "description": "Darstellungsbausteine für diesen Schritt, nur registrierte Typen (components.json, ai_may_use=true).",
+      "items": {
+        "anyOf": [
+          { "$ref": "#/$defs/choice_cards" },
+          { "$ref": "#/$defs/free_text" },
+          { "$ref": "#/$defs/method_note" },
+          { "$ref": "#/$defs/finder_card" },
+          { "$ref": "#/$defs/astro_consent" },
+          { "$ref": "#/$defs/astro_perspective" }
+        ]
+      }
+    },
+    "facts": {
+      "type": "array",
+      "description": "Aus der letzten Nutzerantwort erfasste FAKTEN — nur das, was gesagt oder gewählt wurde. Keine Deutungen.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "value", "source"],
+        "properties": {
+          "key": { "type": "string", "description": "Fakt-Schlüssel aus der Modul-Definition (facts[].key)." },
+          "value": { "type": "string" },
+          "source": { "type": "string", "enum": ["user_text", "card"] }
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "description": "Deutungen/Hypothesen der KI — getrennt von Fakten, immer mit Grundlage und Sicherheit.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text", "confidence", "basis"],
+        "properties": {
+          "text": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+          "basis": { "type": "string", "description": "Worauf die Hypothese beruht (Fakten, Regel-IDs)." }
+        }
+      }
+    },
+    "question_ref": {
+      "type": ["string", "null"],
+      "description": "ID der Studio-Frage, die gestellt oder vertieft wurde; null, wenn keine Frage."
+    },
+    "rule_refs": {
+      "type": "array",
+      "description": "IDs der Methodik-Regeln, auf die sich dieser Schritt stützt (Fragen, Vertiefungsregeln, Reflexionsmodelle, Persona-Stile, Astro-Regeln). Die Engine protokolliert ihre eigenen Gates separat.",
+      "items": { "type": "string" }
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Begründung für den Studio-Testmodus: warum diese Frage/dieser Baustein/dieser Stil. Wird Nutzern nie angezeigt."
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crisis_signal", "boundary"],
+      "properties": {
+        "crisis_signal": { "type": "boolean", "description": "true bei Hinweisen auf akute Selbst- oder Fremdgefährdung." },
+        "boundary": {
+          "type": "string",
+          "enum": ["none", "medical", "legal", "tax", "financial", "other"],
+          "description": "Wenn die Anfrage eine Fachgrenze berührt (Verweis auf Fachpartner nötig)."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "card_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "title", "icon"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string", "description": "Kurze Versalzeile (1–3 Wörter)." },
+        "title": { "type": "string", "description": "Ein Satz." },
+        "icon": {
+          "type": "string",
+          "enum": ["check", "x", "check-circle", "x-circle", "help-circle", "pause-circle", "message-circle", "shuffle", "compass", "briefcase", "home", "heart", "users", "user", "activity", "target", "shield", "zap", "sliders", "lock", "clock", "flag", "eye", "volume-x", "more-horizontal", "smile", "corner-up-right", "feather", "repeat"]
+        }
+      }
+    },
+    "choice_cards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label", "options"],
+      "properties": {
+        "type": { "type": "string", "enum": ["choice_cards"] },
+        "label": { "type": "string" },
+        "options": { "type": "array", "items": { "$ref": "#/$defs/card_option" }, "description": "2 bis 6 Kacheln." }
+      }
+    },
+    "free_text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label", "placeholder"],
+      "properties": {
+        "type": { "type": "string", "enum": ["free_text"] },
+        "label": { "type": "string" },
+        "placeholder": { "type": "string" }
+      }
+    },
+    "method_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "text", "strong", "sub"],
+      "properties": {
+        "type": { "type": "string", "enum": ["method_note"] },
+        "title": { "type": "string" },
+        "text": { "type": "string" },
+        "strong": { "type": "string" },
+        "sub": { "type": "string" }
+      }
+    },
+    "finder_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "headline", "situation", "rows", "next_step"],
+      "properties": {
+        "type": { "type": "string", "enum": ["finder_card"] },
+        "headline": { "type": "string" },
+        "situation": { "type": "string" },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "lines"],
+            "properties": {
+              "label": { "type": "string" },
+              "lines": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "next_step": { "type": "string", "description": "Klein, konkret, in den nächsten 48 Stunden." }
+      }
+    },
+    "astro_consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "type": "string", "enum": ["astro_consent"] },
+        "text": { "type": "string", "description": "Einladung, die astrologische Perspektive freizuschalten. Nur wenn das Modul es in dieser Phase erlaubt." }
+      }
+    },
+    "astro_perspective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "constellation", "interpretation", "reflection_questions", "rule_refs"],
+      "properties": {
+        "type": { "type": "string", "enum": ["astro_perspective"] },
+        "title": { "type": "string" },
+        "constellation": { "type": "string", "description": "Nur Konstellationen aus den übergebenen Astro-Fakten, in Klartext." },
+        "interpretation": { "type": "string", "description": "Deutung ausschließlich nach den übergebenen Studio-Regeln, als Reflexionsangebot formuliert." },
+        "reflection_questions": { "type": "array", "items": { "type": "string" } },
+        "rule_refs": { "type": "array", "items": { "type": "string" }, "description": "IDs der verwendeten Astro-Regeln." }
+      }
+    }
+  }
+}

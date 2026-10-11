@@ -4,6 +4,70 @@
 > oben anfügen. Format: Datum — Entscheidung — Begründung — betroffene
 > Agenten/Dateien.
 
+## 12.10.2026 — Trustbridge Finder: Architektur freigegeben (KI-Engine, Finder Studio, Astrologie im Kern, Testgespräch-Archiv)
+
+**Entscheidung (Ben, Gründer, nach Beratung mit strategischem Berater):**
+Die Architektur in `TRUSTBRIDGE_FINDER_ARCHITEKTUR.md` ist freigegeben:
+Sicherheitskern (Code) → Methodik (Finder Studio, versioniert) →
+Fakten/Astrologie → zentrale KI-Engine (ein Claude-Aufruf pro Schritt,
+strukturierte Antwort) → registrierte UI-Bausteine in der bestehenden
+Glas-Optik. Verbindliche Festlegungen mit Vorrang vor früheren Planungen:
+
+1. **Personas statt Einheitsstil:** Gesprächsstile (warm, klar,
+   philosophisch, spirituell, sachlich …) werden im Studio definiert; die
+   Methodik bestimmt, wann welcher Stil gilt. Keine Diagnosen, keine
+   vorgetäuschte Gewissheit, keine erzwungene positive Erkenntnis, keine
+   Verharmlosung („das Gold im Dunkeln erkennen“).
+2. **Astrologie mit beiden Häusersystemen (Placidus und Whole Sign)** als
+   Bestandteil der Grundkonfiguration, im Studio einstellbar.
+3. **Erste Module:** A „Authentizität“ (aus Finder V0.1) und B „Jobverlust &
+   Neuorientierung“ parallel; Fragen, Ziele, Hintergründe, Methodik und
+   Antwortstrategien bearbeitet Ben selbst im Studio.
+4. **KI-Modell:** Qualität zuerst – Claude Opus (`claude-opus-5-5`, laut
+   offizieller Modellübersicht 12.10.2026), austauschbar über Konfiguration;
+   Verfügbarkeit für den Account vor dem ersten kostenpflichtigen Aufruf
+   prüfen; Testmodus zeigt Tokens, Kosten je Schritt und Gespräch,
+   Antwortzeit, Modellkennung.
+5. **Echte astrologische Berechnung bereits im ersten KI-Prototyp** (nicht
+   Phase 3): Geburtsdaten mit Zeitzonen, Planeten, Radix, Aspekte, Transite,
+   beide Häusersysteme, strukturierte Astro-Daten, erste konfigurierbare
+   Regeln, einfacher Astro-Baustein. Nie vom Sprachmodell erfundene
+   Positionen; ohne Geburtsdaten und Freigabe keine personalisierte Deutung.
+6. **Vollständige Speicherung der Testgespräche** (auch pseudonym ohne
+   Registrierung, mit Einwilligung): Eingaben, KI-Antworten, Kachelwahlen,
+   Modulversionen, Frage-IDs, Phasen, Regeln, Fakten/Interpretationen
+   getrennt, Astro-Analysen, Finder Cards, Fehler, Tokens/Modell/Kosten.
+   Konfigurierbare Löschfrist, Löschfunktion, Zugriffsschutz, keine
+   Geheimnisse. Konkrete Frist vor Freischaltung externer Tester.
+7. **Finder Studio** als Methodik-Werkzeug mit Testmodus; angewendete
+   technische Regeln getrennt von KI-Begründungen.
+8. Bestehendes Design und Finder V0.1 bleiben; bei API-Ausfällen bleiben
+   Gespräche erhalten und wiederholbar. Portal-Erweiterbarkeit bleibt
+   Anforderung.
+9. **Phase 0 freigegeben und am 12.10.2026 umgesetzt:** Komponenten-Registry,
+   FinderTurn-/Record-/Modul-/Astro-Schemas, Sicherheitskern-Entwurf
+   (Gegenlesung durch Ben offen), Modul-Seeds, Berechnungsschicht
+   `web/astro/` mit Referenzprüfung (28/28, u. a. Einstein-Radix inkl.
+   Placidus-Häuser). Phase 1 startet nach Gegenlesung, API-Key und
+   Freigabe der Aufwandsschätzung (3–4 Wochen).
+   *Nachtrag 12.10.2026:* API-Key eingetragen, kostenfreier Account-Check
+   bestanden (`claude-opus-5-5` verfügbar). Die 3–4 Wochen sind als
+   **grober Planungsrahmen** akzeptiert, nicht als feste Entwicklungsdauer.
+   Wunsch: frühestmöglich ein vollständiger KI-geführter Testdialog;
+   Designkomponenten und astrologische Kernarchitektur bleiben Teil des Plans.
+
+**Begründung:** Die Methodik soll von Ben ohne Entwickler steuerbar sein;
+Astrologie und Spiritualität sind Kernphilosophie, keine Zusatzfunktion;
+die Testphase braucht vollständige Nachvollziehbarkeit, um die Methodik zu
+verbessern.
+
+**Betroffene Dateien:** `TRUSTBRIDGE_FINDER_ARCHITEKTUR.md`,
+`web/resources/finder/**` (Registry, Schemas, `core-system.md`, Seeds),
+`web/astro/chart.mjs`, `web/astro/verify.mjs`,
+`web/tests/js/finder-schemas.test.mjs`, `web/package.json`
+(`astronomy-engine`, `tz-lookup`, `ajv`; Scripts `test:finder`,
+`astro:verify`).
+
 ## 04.08.2026 — Acht verbindliche Gründerentscheidungen (Logo-Master, Portalziele, Autonomie, Boxen-System, Sprachen, Leserechte, Tailwind-Prüfung, Audits)
 
 **Entscheidung (Ben, Gründer):**

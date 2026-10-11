@@ -33,6 +33,7 @@
           <Link href="/how-it-works" :class="{ 'active-link': isActive('/how-it-works') }" @click="isMenuOpen = false">Wie es funktioniert</Link>
           <Link href="/partner" :class="{ 'active-link': isActive('/partner') }" class="nav-partner-link" @click="isMenuOpen = false">Partner</Link>
           <a href="/prizes#writer" :class="{ 'active-link': isActive('/writer') }" @click="isMenuOpen = false">Writer</a>
+          <Link href="/trustbridgefinder" :class="{ 'active-link': isActive('/trustbridgefinder') }" @click="isMenuOpen = false">Trustbridge Finder</Link>
           <Link href="/faq" :class="{ 'active-link': isActive('/faq') }" @click="isMenuOpen = false">FAQ</Link>
           <Link href="/builder/instagram" :class="{ 'active-link': isActive('/builder/instagram') }" @click="isMenuOpen = false">Instagram Builder</Link>
 
@@ -329,7 +330,11 @@ onUnmounted(() => {
   margin-top: 1rem;
 }
 
-@media (max-width: 1024px) {
+/* Unter 1440px uebernimmt das Burger-Menue (vorher 1024px): mit neun
+   Menuepunkten (seit "Trustbridge Finder") wuerde die Zeile darunter
+   unleserlich eng. Die Stufen fuer 1440-1920px stehen am Ende der Datei,
+   hinter den Basisregeln von .nav-links. */
+@media (max-width: 1440px) {
   .desktop-only {
     display: none !important;
   }
@@ -392,10 +397,11 @@ onUnmounted(() => {
   .nav-links.mobile-open a:nth-child(6) { transition-delay: 0.33s; }
   .nav-links.mobile-open a:nth-child(7) { transition-delay: 0.38s; }
   .nav-links.mobile-open a:nth-child(8) { transition-delay: 0.43s; }
+  .nav-links.mobile-open a:nth-child(9) { transition-delay: 0.48s; }
 
   .nav-links .mobile-actions {
     opacity: 0;
-    transition: opacity 0.4s ease 0.45s;
+    transition: opacity 0.4s ease 0.5s;
   }
 
   .nav-links.mobile-open .mobile-actions {
@@ -674,5 +680,24 @@ onUnmounted(() => {
   animation: gradientShift 2s ease infinite !important;
   transform: translateY(-2px) scale(1.02) !important;
   box-shadow: 0 8px 25px rgba(45,27,84,0.5), 0 0 0 2px #D4AF37 !important;
+}
+
+/* Neun Menuepunkte passen bei 3rem Abstand und 1.1rem nur oberhalb von
+   Full-HD in eine Zeile. Darunter werden nur Abstand und Schriftgrad
+   gestuft - Versalien, Gold-Hover und Unterstrich bleiben. Muss hinter
+   den Basisregeln stehen (gleiche Spezifitaet, Reihenfolge entscheidet). */
+@media (max-width: 1920px) and (min-width: 1441px) {
+  .nav-links { gap: 1.5rem; }
+  .nav-links a { font-size: 0.95rem; letter-spacing: 1.2px; }
+}
+@media (max-width: 1700px) and (min-width: 1441px) {
+  .nav-links { gap: 1.1rem; }
+  .nav-links a { font-size: 0.88rem; letter-spacing: 1px; }
+  .btn-login, .btn-register { padding: 0.55rem 1.3rem; font-size: 0.9rem; }
+}
+@media (max-width: 1500px) and (min-width: 1441px) {
+  .nav-links { gap: 0.85rem; }
+  .nav-links a { font-size: 0.8rem; letter-spacing: 0.8px; }
+  .btn-login, .btn-register { padding: 0.5rem 1.1rem; font-size: 0.85rem; }
 }
 </style>

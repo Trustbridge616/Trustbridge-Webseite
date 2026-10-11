@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/module-persona.schema.json",
+  "title": "FinderPersonaModule",
+  "description": "KI-Persönlichkeit und Gesprächsführung. Enthält mehrere Stile (warm, klar, philosophisch, spirituell, sachlich …) mit Regeln, wann sie gelten. Kann den Sicherheitskern nicht außer Kraft setzen — die Engine sendet den Kern immer zuerst.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "slug", "title", "voice", "styles", "default_style", "conversation_rules"],
+  "properties": {
+    "kind": { "const": "persona" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "language"],
+      "properties": {
+        "address": { "type": "string", "enum": ["du", "Sie"] },
+        "language": { "type": "string", "enum": ["de", "en", "es"] },
+        "sentence_length": { "type": "string", "enum": ["kurz", "mittel", "lang"] },
+        "always": { "type": "array", "items": { "type": "string" }, "description": "Was immer gilt (z. B. keine Ausrufezeichen)." },
+        "never": { "type": "array", "items": { "type": "string" }, "description": "Formulierungen und Haltungen, die nie vorkommen." }
+      }
+    },
+    "styles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "description", "rules"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "rules": { "type": "array", "items": { "type": "string" } },
+          "examples": { "type": "array", "items": { "type": "string" }, "description": "Beispielsätze in diesem Stil." },
+          "applies_when": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Wann dieser Stil passt. Die Engine gibt den Stil vor, wenn phases/journeys matchen; signals/topics wertet die KI aus.",
+            "properties": {
+              "phases": { "type": "array", "items": { "type": "string" } },
+              "journeys": { "type": "array", "items": { "type": "string" } },
+              "topics": { "type": "array", "items": { "type": "string" } },
+              "signals": { "type": "array", "items": { "type": "string" }, "description": "Nutzersignale in Worten, z. B. 'wirkt überfordert', 'fragt nach Hintergründen'." }
+            }
+          }
+        }
+      }
+    },
+    "default_style": { "type": "string" },
+    "conversation_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mirror", "explain", "ask", "encourage"],
+      "properties": {
+        "mirror": { "$ref": "#/$defs/rule" },
+        "explain": { "$ref": "#/$defs/rule" },
+        "ask": { "$ref": "#/$defs/rule" },
+        "encourage": { "$ref": "#/$defs/rule" },
+        "switch_to_visual": { "$ref": "#/$defs/rule" },
+        "max_questions_per_turn": { "type": "integer", "minimum": 1, "maximum": 1 },
+        "max_words_per_message": { "type": "integer", "minimum": 30, "maximum": 200 }
+      }
+    },
+    "closing_rules": { "type": "string", "description": "Wie ein Gespräch abgeschlossen wird." },
+    "forbidden": { "type": "array", "items": { "type": "string" }, "description": "Zusätzliche Verbote über den Sicherheitskern hinaus (z. B. 'nie \"du musst\"')." }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "how"],
+      "properties": {
+        "when": { "type": "string" },
+        "how": { "type": "string" },
+        "example": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trustbridge.de/finder/schemas/module-journey.schema.json",
+  "title": "FinderJourneyModule",
+  "description": "Nutzerreise (Themenmodul). Wird im Finder Studio über Formulare bearbeitet, versioniert in finder_module_versions.config gespeichert und von der Engine als Methodik-Block in den Prompt gerendert. Alle Texte in Bens Worten — die KI liest purpose/background/deepen_* als Anweisung.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "slug", "title", "language", "entry", "goal", "background", "persona_ref", "astro", "facts", "phases", "next_steps", "finder_card"],
+  "properties": {
+    "kind": { "const": "journey" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "title": { "type": "string" },
+    "language": { "type": "string", "enum": ["de", "en", "es"] },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["situations"],
+      "properties": {
+        "situations": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Einstiegssätze, wie Nutzer die Situation schildern könnten." },
+        "match_hints": { "type": "array", "items": { "type": "string" }, "description": "Stichworte für die spätere automatische Modulwahl." },
+        "intro": { "type": "string", "description": "Text im Intro-Panel der Seite." }
+      }
+    },
+    "goal": { "type": "string", "description": "Erkenntnisziel der gesamten Reise." },
+    "background": { "type": "string", "description": "Hintergrund, Haltung und Methodik dieser Reise in Bens Worten. Die KI liest das als Kontext." },
+    "persona_ref": { "type": "string", "description": "slug des Persona-Moduls." },
+    "default_style": { "type": ["string", "null"], "description": "Stil-ID aus dem Persona-Modul, falls abweichend vom Persona-Default." },
+    "reflection_refs": { "type": "array", "items": { "type": "string" }, "description": "slugs von Reflexionsmodell-Modulen." },
+    "astro": { "$ref": "#/$defs/astro_settings" },
+    "facts": { "type": "array", "items": { "$ref": "#/$defs/fact_def" }, "description": "Welche Fakten die KI erfassen soll. Nur diese Schlüssel sind in FinderTurn.facts erlaubt." },
+    "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/phase" } },
+    "branches": { "type": "array", "items": { "$ref": "#/$defs/branch" } },
+    "next_steps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["framing", "templates"],
+      "properties": {
+        "framing": { "type": "string", "description": "Wie ein nächster Schritt beschaffen sein soll (z. B. klein, konkret, 48 Stunden)." },
+        "templates": { "type": "array", "items": { "$ref": "#/$defs/card_option" } }
+      }
+    },
+    "finder_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rows"],
+      "properties": {
+        "headline_rule": { "type": "string", "description": "Regel, wie die Kurzüberschrift der Finder Card gebildet wird." },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "from_facts"],
+            "properties": {
+              "label": { "type": "string" },
+              "from_facts": { "type": "array", "items": { "type": "string" } },
+              "note": { "type": "string", "description": "Hinweis an die KI, wie diese Zeile formuliert wird." }
+            }
+          }
+        }
+      }
+    },
+    "method_notes": {
+      "type": "object",
+      "description": "Methodik-Block je Phase (Baustein method_note), Schlüssel = Phasen-ID oder 'finale'.",
+      "additionalProperties": { "$ref": "#/$defs/method_note" }
+    },
+    "panther_notes": {
+      "type": "object",
+      "description": "Kurze neutrale Panther-Hinweise je Phase (Toast). Schlüssel = Phasen-ID.",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_turns": { "type": "integer", "minimum": 1 },
+        "max_turns_per_phase": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "component_type": {
+      "type": "string",
+      "enum": ["choice_cards", "free_text", "method_note", "finder_card", "protocol", "panther_note", "safety_notice", "astro_consent", "astro_perspective", "decision_fork", "development_map", "cycle_view", "video", "exercise", "learning_card", "insight_card"]
+    },
+    "intent": {
+      "type": "string",
+      "enum": ["question", "mirror", "explain", "perspective", "astro_perspective", "exercise", "next_step", "closing", "safety"]
+    },
+    "icon": {
+      "type": "string",
+      "enum": ["check", "x", "check-circle", "x-circle", "help-circle", "pause-circle", "message-circle", "shuffle", "compass", "briefcase", "home", "heart", "users", "user", "activity", "target", "shield", "zap", "sliders", "lock", "clock", "flag", "eye", "volume-x", "more-horizontal", "smile", "corner-up-right", "feather", "repeat"]
+    },
+    "card_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "title", "icon"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "label": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "maxLength": 90 },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "fact_def": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "label", "description"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "label": { "type": "string", "description": "Anzeige im Protokoll und in der Finder Card." },
+        "description": { "type": "string", "description": "Was genau erfasst wird (Anweisung an die KI)." },
+        "kind": { "type": "string", "enum": ["text", "choice", "category"], "default": "text" },
+        "choices": { "type": "array", "items": { "type": "string" }, "description": "Erlaubte Werte bei kind=choice/category." }
+      }
+    },
+    "method_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "text", "strong", "sub"],
+      "properties": {
+        "title": { "type": "string" },
+        "text": { "type": "string" },
+        "strong": { "type": "string" },
+        "sub": { "type": "string" }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "purpose", "fact_key"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+        "text": { "type": "string", "description": "Leitfrage in Bens Formulierung. Die KI darf sie situationsabhängig anpassen, nicht ersetzen." },
+        "purpose": { "type": "string", "description": "Wozu die Frage dient — Anweisung an die KI." },
+        "fact_key": { "type": "string", "description": "Welchen Fakt die Antwort füllt (facts[].key)." },
+        "deepen_if": { "type": "array", "items": { "type": "string" }, "description": "Bedingungen, bei denen vertieft statt weitergegangen wird." },
+        "deepen_how": { "type": "string", "description": "Wie vertieft wird." },
+        "answer_strategy": { "type": "string", "description": "Wie die KI auf die Antwort reagiert (spiegeln, einordnen, erklären …), bevor es weitergeht." },
+        "components": { "type": "array", "items": { "$ref": "#/$defs/component_type" }, "description": "Welche Bausteine zur Frage angeboten werden." },
+        "card_pool": { "type": "array", "items": { "$ref": "#/$defs/card_option" }, "description": "Kacheln für choice_cards (2–6). Die KI darf eine Auswahl daraus treffen, keine neuen erfinden." },
+        "style": { "type": ["string", "null"], "description": "Persona-Stil für diese Frage, falls abweichend." },
+        "optional": { "type": "boolean", "default": false },
+        "variants": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["when_fact", "cases"],
+          "description": "Abhängig vom Wert eines früheren Fakts andere Formulierung/Kacheln.",
+          "properties": {
+            "when_fact": { "type": "string" },
+            "cases": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "text": { "type": "string" },
+                  "purpose": { "type": "string" },
+                  "card_pool": { "type": "array", "items": { "$ref": "#/$defs/card_option" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "goal", "questions", "gate"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+        "label": { "type": "string" },
+        "goal": { "type": "string", "description": "Erkenntnisziel der Phase." },
+        "style": { "type": ["string", "null"], "description": "Persona-Stil für diese Phase, falls abweichend." },
+        "questions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/question" }, "description": "Fragen-Pool. Reihenfolge = Vorschlag; die KI wählt nach purpose und Gesprächsverlauf." },
+        "question_order": { "type": "string", "enum": ["fixed", "ai_chooses"], "default": "ai_chooses" },
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requires_facts"],
+          "description": "Deterministisch von der Engine geprüft, bevor die Phase wechselt.",
+          "properties": {
+            "requires_facts": { "type": "array", "items": { "type": "string" } },
+            "min_turns": { "type": "integer", "minimum": 0 },
+            "max_turns": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "allowed_intents": { "type": "array", "items": { "$ref": "#/$defs/intent" } },
+        "allowed_components": { "type": "array", "items": { "$ref": "#/$defs/component_type" } },
+        "astro": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowed"],
+          "properties": {
+            "allowed": { "type": "boolean" },
+            "when": { "type": "string", "description": "Bedingung in Worten, wann die astrologische Perspektive hier passt." }
+          }
+        },
+        "closing": { "type": ["string", "null"], "enum": [null, "finder_card"], "description": "Abschlussbaustein der Reise." }
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "when", "then"],
+      "description": "Deklarative Verzweigung — von der Engine ausgewertet, nicht von der KI.",
+      "properties": {
+        "id": { "type": "string" },
+        "when": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fact"],
+          "properties": {
+            "fact": { "type": "string" },
+            "equals": { "type": "string" },
+            "in": { "type": "array", "items": { "type": "string" } },
+            "exists": { "type": "boolean" },
+            "contains": { "type": "string" }
+          }
+        },
+        "then": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goto_phase": { "type": "string" },
+            "skip_question": { "type": "string" },
+            "insert_note": { "type": "string", "description": "Zusätzliche Anweisung an die KI für die nächsten Schritte." },
+            "style": { "type": "string" },
+            "offer_astro": { "type": "boolean" },
+            "boundary_notice": { "type": "string", "enum": ["medical", "legal", "tax", "financial"] }
+          }
+        }
+      }
+    },
+    "astro_settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "house_system"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "house_system": { "type": "string", "enum": ["placidus", "whole_sign"], "description": "Im Studio einstellbar; pro Session fixiert. Beide Systeme werden immer berechnet, dieses wird gedeutet." },
+        "rules_ref": { "type": ["string", "null"], "description": "slug des Astro-Regel-Moduls." },
+        "offer_consent": { "type": "boolean", "description": "Darf die KI den Baustein astro_consent anbieten?" },
+        "earliest_phase": { "type": ["string", "null"], "description": "Erst ab dieser Phase astrologische Perspektiven." },
+        "never_in": { "type": "array", "items": { "type": "string" }, "description": "Phasen-IDs ohne Astrologie." },
+        "general_transits_without_profile": { "type": "boolean", "description": "Ohne Geburtsdaten nur allgemeine aktuelle Konstellationen (Mondphase, große Transite)." }
+      }
+    }
+  }
+}
