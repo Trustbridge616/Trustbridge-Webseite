@@ -22,8 +22,15 @@
       <div class="hero-glow g2"></div>
       <div class="hero-inner">
         <span class="hero-tag">TRUSTBRIDGE</span>
-        <h1>Deine Auswahl treffen</h1>
-        <p class="hero-sub">Der Weg zu deinem Einkaufsvorteil.</p>
+        <h1>Architekt der Neuzeit</h1>
+        <p class="hero-sub">Entfalte dein höchstes Potenzial</p>
+        <p class="hero-intro">
+          Dein Leben funktioniert, aber fühlt es sich noch nach deinem an?
+        </p>
+        <p class="hero-close">
+          Warte nicht, bis etwas zerbricht.<br />
+          Wachstum kann heißen, etwas Ganzes loszulassen.
+        </p>
       </div>
     </div>
 
@@ -37,8 +44,8 @@
 
         <div class="system-intro-panel">
           <div class="intro-text-side">
-            <h3>Wir wachsen miteinander</h3>
-            <p>Du bekommst Ware mit echtem Einkaufsvorteil. Wir können größer einkaufen. Dadurch entstehen bessere Deals. Davon profitierst du wieder.</p>
+            <h3>Eine Zeit des Wandels</h3>
+            <p>Wir leben in einer Zeit des schnellen Wandels. Alte Muster, Ängste und Prägungen werden sichtbarer – und genau darin entstehen neue Möglichkeiten, uns selbst klarer zu erkennen, alte Grenzen zu überwinden und unser Leben bewusster neu auszurichten.</p>
           </div>
           <div class="intro-img-side">
             <img src="/panther-muenze-legacy-nobg.png" class="panther-coin-img" alt="Legacy Panther Münze">
@@ -404,9 +411,21 @@ body { font-family: 'Century Gothic', system-ui, sans-serif; }
   text-shadow: 0 0 50px rgba(124,58,237,0.25);
 }
 .hero-sub {
-  color: #D9CFE8; font-size: 1.2rem; margin: 0;
+  color: #8EF5D2; font-size: 1.25rem; font-weight: 700; margin: 0;
   font-family: 'Century Gothic', system-ui, sans-serif;
   letter-spacing: 0.5px;
+  text-shadow: 0 0 20px rgba(142,245,210,0.35);
+}
+.hero-intro {
+  color: #C4B8D8; font-size: 1.02rem; line-height: 1.8;
+  margin: 1.5rem auto 0; max-width: 680px;
+  font-family: 'Century Gothic', system-ui, sans-serif;
+}
+.hero-close {
+  color: #F7F1FF; font-size: 1.18rem; font-weight: 700; line-height: 1.6;
+  margin: 1.6rem auto 0; max-width: 620px;
+  font-family: 'Century Gothic', system-ui, sans-serif;
+  text-shadow: 0 0 30px rgba(124,58,237,0.35);
 }
 
 /* ══════════════════════════════════════
@@ -1745,9 +1764,8 @@ body.legacy-mode-active .water-overlay {
 }
 
 /* Hero Overrides */
-body.legacy-mode-active .hero-tag {
-  color: #8EF5D2 !important; text-shadow: 0 0 25px rgba(142,245,210,0.6) !important;
-}
+/* TRUSTBRIDGE-Eyebrow bleibt gold (Gründervorgabe 15.08.2026) —
+   die frühere Mint-Umfärbung im Abo-Modus ist hier bewusst entfernt. */
 body.legacy-mode-active .g2 { background: rgba(142,245,210,0.15) !important; }
 
 /* FAQ Overrides */
