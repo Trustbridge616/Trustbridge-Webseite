@@ -118,6 +118,12 @@ Route::get('/login', function () {
 })->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
+// Finder Lab — experimenteller, reversibler UX-Prototyp (12.10.2026), nur lokal.
+// Rückbau: diese Route, Pages/FinderLab.vue, Components/FinderLab/ (siehe README dort).
+if (app()->environment('local')) {
+    Route::get('/finder-lab', fn () => Inertia::render('FinderLab'))->name('finder-lab');
+}
+
 // Debug-Login nur in der lokalen Umgebung (in Produktion wäre das ein Auth-Bypass)
 if (app()->environment('local')) {
     Route::get('/login-dev', function (Request $request) {
